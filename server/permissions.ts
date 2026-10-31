@@ -33,7 +33,8 @@ export type Permission =
   | 'backup:manage' // see backup status, run a backup now
   | 'settings:manage' // clinic details
   | 'user:manage'
-  | 'audit:read';
+  | 'audit:read'
+  | 'record:export'; // download a patient's complete record
 
 const MATRIX: Record<Role, Permission[]> = {
   doctor: [
@@ -69,6 +70,7 @@ const MATRIX: Record<Role, Permission[]> = {
     'backup:manage',
     'user:manage',
     'audit:read',
+    'record:export',
   ],
   nurse: [
     'patient:read_basic',
