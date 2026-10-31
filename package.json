@@ -5,8 +5,10 @@
   "scripts": {
     "start": "tsx server/index.ts",
     "dev": "cross-env-shell CLINIC_DATA_DIR=.devdata tsx watch server/index.ts",
+    "dev:web": "vite",
+    "build": "vite build",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p web"
   },
   "keywords": [],
   "author": "",

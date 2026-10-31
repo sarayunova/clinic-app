@@ -203,6 +203,7 @@ describe('appointments', () => {
     const { desk } = await seedUsers();
     const { pid, appt } = await patientAndAppt(desk);
     expect(appt.status).toBe('scheduled');
+    expect(appt.scheduledTime).toBe('10:30'); // clinic-local, whatever timezone the client is in
     const list = (await call('GET', `/api/appointments?date=${today()}`, desk)).body as Json[];
     expect(list).toHaveLength(1);
     expect(list[0].patientName).toBe('Asha Verma');

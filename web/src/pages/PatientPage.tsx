@@ -1,0 +1,313 @@
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ApiError, api, type Patient } from '../api';
+import { useAuth } from '../auth';
+import { BookAppointment } from '../components/BookAppointment';
+import { AllergyBadge, ErrorBanner, Field, fieldErrorsOf, formatAge } from '../components/ui';
+
+type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
+interface FieldDef {
+  key: string;
+  label: string;
+  kind: Kind;
+  options?: [string, string][];
+  hint?: string;
+  wide?: boolean;
+}
+interface Section {
+  title: string;
+  writePerm: string;
+  readPerm: string;
+  fields: FieldDef[];
+}
+
+const SECTIONS: Section[] = [
+  {
+    title: 'Identity and contact',
+    writePerm: 'patient:write_demographics',
+    readPerm: 'patient:read_basic',
+    fields: [
+      { key: 'fullName', label: 'Full name', kind: 'text', wide: true },
+      { key: 'dateOfBirth', label: 'Date of birth', kind: 'date' },
+      { key: 'estimatedAgeYears', label: 'Estimated age (years)', kind: 'int', hint: 'Use only if date of birth is unknown' },
+      { key: 'phone', label: 'Phone', kind: 'tel' },
+      { key: 'address', label: 'Address', kind: 'textarea', wide: true },
+      { key: 'emergencyContactName', label: 'Emergency contact name', kind: 'text' },
+      { key: 'emergencyContactPhone', label: 'Emergency contact phone', kind: 'tel' },
+    ],
+  },
+  {
+    title: 'Allergies',
+    writePerm: 'patient:write_allergies',
+    readPerm: 'patient:read_basic',
+    fields: [
+      {
+        key: 'allergyStatus',
+        label: 'Allergy status',
+        kind: 'select',
+        options: [
+          ['unknown', 'Not yet recorded'],
+          ['none', 'No known allergies'],
+          ['known', 'Has allergies'],
+        ],
+      },
+      { key: 'allergyDetails', label: 'Allergy and reaction', kind: 'textarea', wide: true },
+    ],
+  },
+  {
+    title: 'Clinical history',
+    writePerm: 'patient:write_clinical',
+    readPerm: 'patient:read_clinical',
+    fields: [
+      { key: 'medicalHistory', label: 'Medical history', kind: 'textarea', wide: true },
+      { key: 'surgicalHistory', label: 'Surgical history', kind: 'textarea', wide: true },
+      { key: 'familyHistory', label: 'Family history', kind: 'textarea', wide: true },
+      { key: 'menstrualHistory', label: 'Menstrual history', kind: 'textarea', wide: true },
+      { key: 'lastMenstrualPeriod', label: 'Last menstrual period', kind: 'date', hint: 'As reported; nothing is calculated from it' },
+      {
+        key: 'menopauseStatus',
+        label: 'Menopause status',
+        kind: 'select',
+        options: [
+          ['unknown', 'Unknown'],
+          ['not_applicable', 'Not applicable'],
+          ['pre', 'Pre-menopausal'],
+          ['peri', 'Peri-menopausal'],
+          ['post', 'Post-menopausal'],
+        ],
+      },
+      { key: 'obstetricHistory', label: 'Obstetric history', kind: 'textarea', wide: true },
+      { key: 'gravida', label: 'Gravida', kind: 'int' },
+      { key: 'para', label: 'Para', kind: 'int' },
+      { key: 'ongoingMedicines', label: 'Ongoing medicines', kind: 'textarea', wide: true },
+      { key: 'clinicalNotes', label: 'Clinical notes', kind: 'textarea', wide: true },
+    ],
+  },
+];
+
+const ALL_FIELDS = SECTIONS.flatMap((s) => s.fields);
+const DEFAULT_FORM: Record<string, string> = Object.fromEntries(ALL_FIELDS.map((f) => [f.key, f.key === 'allergyStatus' || f.key === 'menopauseStatus' ? 'unknown' : '']));
+
+const toForm = (p: Patient): Record<string, string> =>
+  Object.fromEntries(ALL_FIELDS.map((f) => [f.key, p[f.key] == null ? DEFAULT_FORM[f.key]! : String(p[f.key])]));
+
+function toValue(def: FieldDef, s: string): string | number | null {
+  const t = s.trim();
+  if (def.kind === 'int') return t === '' ? null : Number(t);
+  if (def.kind === 'select') return t;
+  return t === '' ? null : t;
+}
+
+export function PatientPage() {
+  const { id } = useParams();
+  const isNew = id === undefined;
+  const nav = useNavigate();
+  const { can } = useAuth();
+
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [form, setForm] = useState<Record<string, string>>(DEFAULT_FORM);
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [error, setError] = useState<unknown>(null);
+  const [saved, setSaved] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [booking, setBooking] = useState(false);
+  const [dupes, setDupes] = useState<{ id: number; patientNumber: string; fullName: string; phone: string | null }[] | null>(null);
+
+  const load = useCallback(async () => {
+    if (isNew) return;
+    try {
+      const p = await api<Patient>('GET', `/api/patients/${id}`);
+      setPatient(p);
+      setForm(toForm(p));
+      setLoadError(null);
+    } catch (e) {
+      setLoadError(e);
+    }
+  }, [id, isNew]);
+
+  useEffect(() => {
+    setPatient(null);
+    setSaved(false);
+    setError(null);
+    setDupes(null);
+    setForm(DEFAULT_FORM);
+    void load();
+  }, [load]);
+
+  const baseline = useMemo(() => (patient ? toForm(patient) : DEFAULT_FORM), [patient]);
+  const changedKeys = ALL_FIELDS.filter((f) => form[f.key] !== baseline[f.key]).map((f) => f.key);
+  const fe = fieldErrorsOf(error);
+  // Long form: bring the error banner into view so a save failure is never missed.
+  useEffect(() => {
+    if (error) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [error]);
+  const canWrite = (perm: string) => can(perm);
+
+  const payload = () => {
+    const out: Record<string, string | number | null> = {};
+    for (const f of ALL_FIELDS) if (changedKeys.includes(f.key) || (isNew && f.key === 'fullName')) out[f.key] = toValue(f, form[f.key]!);
+    return out;
+  };
+
+  async function create(confirmedDuplicates: boolean) {
+    setBusy(true);
+    setError(null);
+    try {
+      if (!confirmedDuplicates) {
+        const body = payload();
+        const check = await api<{ possibleDuplicates: NonNullable<typeof dupes> }>('POST', '/api/patients/check-duplicates', {
+          fullName: body.fullName,
+          dateOfBirth: body.dateOfBirth ?? null,
+          phone: body.phone ?? null,
+        });
+        if (check.possibleDuplicates.length) {
+          setDupes(check.possibleDuplicates);
+          return;
+        }
+      }
+      const r = await api<{ patient: Patient }>('POST', '/api/patients', payload());
+      nav(`/patients/${r.patient.id}`, { replace: true });
+    } catch (e) {
+      setError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    setSaved(false);
+    if (isNew) return create(dupes !== null);
+    if (!patient || changedKeys.length === 0) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const p = await api<Patient>('PATCH', `/api/patients/${patient.id}`, { ...payload(), version: patient.version });
+      setPatient(p);
+      setForm(toForm(p));
+      setSaved(true);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!isNew && loadError) return <div className="page narrow"><ErrorBanner error={loadError} /><Link to="/patients">Back to search</Link></div>;
+  if (!isNew && !patient) return <p className="muted">Loading…</p>;
+
+  const conflict = error instanceof ApiError && error.status === 409;
+
+  return (
+    <div className="page narrow">
+      <p><Link to="/patients">← Patients</Link></p>
+      {isNew ? (
+        <h1>Register patient</h1>
+      ) : (
+        <header className="patient-head">
+          <div>
+            <h1>{patient!.fullName}</h1>
+            <div className="muted">
+              {patient!.patientNumber} · {formatAge(patient!.ageYears, patient!.ageIsEstimated)}
+              {typeof patient!.phone === 'string' && patient!.phone ? ` · ${patient!.phone}` : ''}
+            </div>
+          </div>
+          {can('appointment:create') && (
+            <button className="btn primary" onClick={() => setBooking((b) => !b)}>
+              + Book appointment
+            </button>
+          )}
+        </header>
+      )}
+
+      {!isNew && (
+        <div className={`allergy-banner ${patient!.allergyStatus}`}>
+          <AllergyBadge status={patient!.allergyStatus} details={patient!.allergyDetails} />
+        </div>
+      )}
+
+      {booking && patient && (
+        <BookAppointment patient={{ id: patient.id, name: patient.fullName }} onCancel={() => setBooking(false)} onBooked={() => setBooking(false)} />
+      )}
+
+      {dupes && (
+        <div className="banner warn" role="alert">
+          <strong>This may be a patient who is already registered:</strong>
+          <ul>
+            {dupes.map((d) => (
+              <li key={d.id}>
+                <Link to={`/patients/${d.id}`}>{d.fullName}</Link> · {d.patientNumber}
+                {d.phone ? ` · ${d.phone}` : ''}
+              </li>
+            ))}
+          </ul>
+          <p className="small">Families often share a phone number, so this is only a warning.</p>
+          <div className="row">
+            <button type="button" className="btn primary" disabled={busy} onClick={() => void create(true)}>
+              Register as a new patient anyway
+            </button>
+            <button type="button" className="btn" onClick={() => setDupes(null)}>
+              Go back and edit
+            </button>
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={submit} className="stack">
+        <ErrorBanner error={error} />
+        {conflict && (
+          <button type="button" className="btn" onClick={() => { setError(null); void load(); }}>
+            Reload the latest version (your unsaved changes will be lost)
+          </button>
+        )}
+        {saved && <div className="banner ok" role="status">Saved.</div>}
+
+        {SECTIONS.filter((s) => can(s.readPerm)).map((s) => {
+          const editable = canWrite(s.writePerm);
+          if (isNew && !editable) return null; // e.g. nobody registering needs a section they cannot fill
+          return (
+            <fieldset key={s.title} className="card" disabled={!editable}>
+              <legend>{s.title}{!editable && <span className="muted small"> (read only)</span>}</legend>
+              <div className="grid2">
+                {s.fields.map((f) => {
+                  if (f.key === 'allergyDetails' && form.allergyStatus !== 'known') return null;
+                  return (
+                    <div key={f.key} className={f.wide ? 'span2' : ''}>
+                      <Field label={f.label} error={fe[f.key]} hint={f.hint}>
+                        {f.kind === 'textarea' ? (
+                          <textarea rows={3} value={form[f.key]} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
+                        ) : f.kind === 'select' ? (
+                          <select value={form[f.key]} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}>
+                            {f.options!.map(([v, l]) => (
+                              <option key={v} value={v}>{l}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type={f.kind === 'int' ? 'number' : f.kind}
+                            inputMode={f.kind === 'int' ? 'numeric' : undefined}
+                            min={f.kind === 'int' ? 0 : undefined}
+                            value={form[f.key]}
+                            onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+                            required={f.key === 'fullName'}
+                          />
+                        )}
+                      </Field>
+                    </div>
+                  );
+                })}
+              </div>
+            </fieldset>
+          );
+        })}
+
+        <div className="sticky-actions">
+          <button className="btn primary" disabled={busy || (!isNew && changedKeys.length === 0)}>
+            {busy ? 'Saving…' : isNew ? 'Register patient' : 'Save changes'}
+          </button>
+          {!isNew && changedKeys.length > 0 && <span className="muted small">Unsaved changes</span>}
+        </div>
+      </form>
+    </div>
+  );
+}
