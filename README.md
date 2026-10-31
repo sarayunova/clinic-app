@@ -12,7 +12,7 @@ Requires Node.js 24.
 ```
 npm install
 npm run build       # builds the web UI into dist/web (needed before npm start)
-npm test            # 135 API tests
+npm test            # 146 API tests
 npm run typecheck   # server + web
 npm run dev         # API with sample data in ./.devdata, auto-restart
 npm run dev:web     # UI dev server on :5173 (proxies /api to :3080)
@@ -36,6 +36,7 @@ The app only listens on this computer until HTTPS is set up (see `docs/HTTPS-SET
 | Start / complete consultation | yes | no | no |
 | Open consultation, view records and prescriptions | yes | yes | no |
 | Record vitals | yes | yes | no |
+| Move an admitted patient to another bed | yes | yes | no |
 | Nurse station board (who needs vitals, ward round, medicines that may be due) | yes | yes | no |
 | Upload and view patient documents (scans, reports) | yes | yes | no |
 | Remove a document | yes | no | no |
@@ -116,12 +117,16 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
   withheld or refused. A medicine is marked "May be due" only when its frequency is clearly worded ("every 8 hours", OD, BD, TDS,
   QID, "twice daily"...) and that interval has passed; anything else (PRN, once weekly, "at night"...) shows "Check chart". It is a
   reminder, not a schedule, and no clinical alert thresholds are applied. Opening the board is audited; the automatic refresh is not.
+- Bed transfer (doctor and nurse, "Move to another bed" on the admission page): choose a free bed and give a reason; the move can be
+  back-dated but not into the future, before the admission, or before the previous move. The old bed is free at once. Every move is
+  kept permanently (from, to, when, why, who), shown on the admission, listed in the patient export and audited. Discharged patients
+  cannot be moved. Moves cannot be edited or deleted.
 - Starts automatically with Windows (scheduled task that restarts the server if it stops, with logs): `docs/AUTO-START.md`,
   `scripts/install-autostart.ps1`. Not yet installed on a real clinic computer.
 
 ## Remaining before real clinic use
 
-- IPD: bed transfer. The nurse station shows medicines that may be due, but there is no timed round list, no overdue alarms and no clinical alert thresholds (the doctor must decide those).
+- IPD: The nurse station shows medicines that may be due, but there is no timed round list, no overdue alarms and no clinical alert thresholds (the doctor must decide those).
 - Billing: charges are typed in by hand (no price list); no daily collection report; link from a consultation not yet in the UI.
 - Printing: paper layout (A4 margins, page breaks, letterhead logo) not yet tried on the clinic's printer.
 - HTTPS: do the one-time setup on the clinic computer and install the certificate on each device; there is no http-to-https redirect. Install the automatic start (`docs/AUTO-START.md`) and check it survives a restart.

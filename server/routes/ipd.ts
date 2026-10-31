@@ -42,6 +42,15 @@ const admissionPatch = z
     treatmentPlan: text(4000).optional(),
   })
   .strict();
+const transferSchema = z
+  .object({
+    toBedId: z.number().int().min(1),
+    reason: z.string().trim().min(2, 'Give a reason for the move').max(300),
+    transferDate: date.optional(),
+    transferTime: clock.optional(),
+    version: z.number().int().min(1),
+  })
+  .strict();
 const listSchema = z.object({ status: z.enum(['admitted', 'discharged', 'all']).default('admitted') });
 
 const ENTRY_TYPES = ['doctor_round', 'nursing_note', 'observation', 'procedure', 'investigation'] as const;
@@ -210,12 +219,30 @@ export function registerIpdRoutes(app: FastifyInstance, { db, cfg }: Ctx): void 
     return originals;
   }
 
+  /** Every move of this admission, oldest first, with the beds' names as they are now. */
+  function transfersOf(admissionId: number) {
+    return (
+      db
+        .prepare(
+          `SELECT t.id, t.transferred_at, t.reason, u.full_name AS by_name, f.room AS from_room, f.label AS from_label, d.room AS to_room, d.label AS to_label
+             FROM bed_transfers t JOIN users u ON u.id = t.transferred_by JOIN beds f ON f.id = t.from_bed_id JOIN beds d ON d.id = t.to_bed_id
+            WHERE t.admission_id = ? ORDER BY t.transferred_at, t.id`,
+        )
+        .all(admissionId) as Row[]
+    ).map((r) => ({
+      ...camelize(r),
+      date: localDate(new Date(r.transferred_at as string), tz),
+      time: localTime(r.transferred_at as string, tz),
+    }));
+  }
+
   function present(id: number, user: { id: number; role: Role }) {
     const row = db.prepare(`${ADMISSION_SELECT} WHERE a.id = ?`).get(id) as Row | undefined;
     if (!row) throw notFound('Admission');
     const out = presentRow(row, user.role);
     if (can(user.role, 'ipd:read')) {
       out.entries = entriesOf(id, user);
+      out.transfers = transfersOf(id);
       out.orders = medicinesOf(db, tz, id, user);
       out.discharge = dischargeOf(db, tz, id);
     }
@@ -299,6 +326,49 @@ export function registerIpdRoutes(app: FastifyInstance, { db, cfg }: Ctx): void 
         ...keys.map((k) => changes[k] as string | null), nowIso(), id,
       );
       audit(db, { actorId: user.id, action: 'admission.update', entity: 'admission', entityId: id, detail });
+    });
+    return present(id, user);
+  });
+
+  app.post('/api/admissions/:id/transfer', async (req) => {
+    const user = requirePerm(req, 'bed:transfer');
+    const id = idOf((req.params as { id: string }).id, 'Admission');
+    const b = parse(transferSchema, req.body);
+    const at = instant(b.transferDate, b.transferTime, 'transfer', 'transferDate');
+    tx(db, () => {
+      const cur = db.prepare('SELECT status, version, bed_id, admitted_at FROM admissions WHERE id = ?').get(id) as
+        | { status: string; version: number; bed_id: number; admitted_at: string }
+        | undefined;
+      if (!cur) throw notFound('Admission');
+      if (cur.status !== 'admitted') throw badRequest('This patient has been discharged; they can no longer be moved');
+      if (cur.version !== b.version) throw conflict('This admission was changed by someone else. Reload it and try again.', { currentVersion: cur.version });
+      if (b.toBedId === cur.bed_id) throw badRequest('The patient is already in that bed', [{ field: 'toBedId', message: 'Already in this bed' }]);
+      const to = db.prepare('SELECT active, room, label FROM beds WHERE id = ?').get(b.toBedId) as { active: number; room: string; label: string } | undefined;
+      if (!to) throw notFound('Bed');
+      if (!to.active) throw badRequest('That bed is not in use', [{ field: 'toBedId', message: 'Bed is not in use' }]);
+      if (db.prepare("SELECT 1 FROM admissions WHERE bed_id = ? AND status = 'admitted'").get(b.toBedId)) {
+        throw conflict(`Bed ${to.room} / ${to.label} is already occupied`);
+      }
+      const last = (db.prepare('SELECT MAX(transferred_at) AS t FROM bed_transfers WHERE admission_id = ?').get(id) as { t: string | null }).t;
+      const earliest = last && last > cur.admitted_at ? last : cur.admitted_at;
+      if (at < earliest) {
+        throw badRequest(last ? 'The move cannot be earlier than the previous move' : 'The move cannot be earlier than the admission', [
+          { field: 'transferDate', message: 'Too early' },
+        ]);
+      }
+      const from = db.prepare('SELECT room, label FROM beds WHERE id = ?').get(cur.bed_id) as { room: string; label: string };
+      const now = nowIso();
+      db.prepare('INSERT INTO bed_transfers(admission_id, from_bed_id, to_bed_id, transferred_at, reason, transferred_by, created_at) VALUES (?,?,?,?,?,?,?)').run(
+        id, cur.bed_id, b.toBedId, at, b.reason, user.id, now,
+      );
+      db.prepare('UPDATE admissions SET bed_id = ?, version = version + 1, updated_at = ? WHERE id = ?').run(b.toBedId, now, id);
+      audit(db, {
+        actorId: user.id,
+        action: 'admission.transfer',
+        entity: 'admission',
+        entityId: id,
+        detail: { bed: { from: `${from.room} / ${from.label}`, to: `${to.room} / ${to.label}` }, reason: b.reason, at },
+      });
     });
     return present(id, user);
   });

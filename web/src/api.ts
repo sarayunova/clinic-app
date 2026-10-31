@@ -218,6 +218,18 @@ export interface CareEntry {
   canCorrect: boolean;
 }
 
+export interface BedTransfer {
+  id: number;
+  date: string;
+  time: string;
+  fromRoom: string;
+  fromLabel: string;
+  toRoom: string;
+  toLabel: string;
+  reason: string;
+  byName: string;
+}
+
 export interface Admission {
   id: number;
   admissionNumber: string;
@@ -242,6 +254,8 @@ export interface Admission {
   initialAssessment?: string | null;
   treatmentPlan?: string | null;
   entries?: CareEntry[];
+  /** Every move between beds, oldest first (clinical view only). */
+  transfers?: BedTransfer[];
   orders?: MedicineOrder[];
   discharge?: { summary: DischargeSummary | null; addenda: DischargeAddendum[] };
   dischargedDate?: string;
