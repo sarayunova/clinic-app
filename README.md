@@ -12,7 +12,7 @@ Requires Node.js 24.
 ```
 npm install
 npm run build       # builds the web UI into dist/web (needed before npm start)
-npm test            # 28 API tests
+npm test            # 42 API tests
 npm run typecheck   # server + web
 npm run dev         # API with sample data in ./.devdata, auto-restart
 npm run dev:web     # UI dev server on :5173 (proxies /api to :3080)
@@ -54,6 +54,12 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
   Finalising locks the notes and completes the appointment. Later corrections ("Amend") need a reason; the finalised
   original stays on record as revision 1 and every amendment keeps a full snapshot, author, time and reason.
   The patient profile lists the patient's visits. The system never suggests diagnoses or doses.
+- **IPD, part 1 (admissions and care record)**: Wards board (rooms and beds, occupancy, allergy badge; doctor adds or takes beds
+  out of use). Doctor or nurse admits a patient to a free bed (one active admission per patient and per bed, optional backdated
+  admission time). Doctor edits diagnosis, assessment and plan (audited). Care record is append-only: nursing notes and
+  observations (nurse or doctor), doctor rounds, procedures and investigations (doctor). Mistakes are fixed by a correction with a
+  reason; the original stays visible, struck through. Reception sees only basic admission details.
+  Not built yet: discharge (so beds stay occupied), bed transfer, medicine orders and administration.
 - API:
 
 - Setup, login (scrypt hashes, 30 min idle / 12 h absolute sessions, lockout after 5 failures), forced password change for new accounts.
@@ -69,7 +75,7 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
 - Rescheduling an appointment (for now: cancel and rebook).
 - Printable prescription from a finalised consultation (see printing below).
 - Billing charges created from a consultation.
-- IPD: beds, admissions, care entries, medicine orders vs administration, discharge summary.
+- IPD part 2: medicine orders vs administration records, discharge summary and discharge (releases the bed), bed transfer.
 - Billing: itemised invoices, payments, receipts, adjustments.
 - Printable prescription / discharge summary / invoice / receipt.
 - Attachments (private storage, type and size limits).

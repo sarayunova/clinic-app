@@ -7,6 +7,7 @@ import { badRequest, conflict, notFound, parse } from '../errors.js';
 import { isRealDate, localDate, localTime, nowIso } from '../time.js';
 import { camelize, toSnake } from '../util.js';
 import { ageYears } from './patients.js';
+import { measure, round1 } from '../validation.js';
 
 // ---------- Schemas ----------
 
@@ -50,11 +51,6 @@ const amendSchema = contentShape
   .extend({ version: z.number().int().min(1), reason: z.string().trim().min(5, 'Give a reason (at least 5 characters)').max(500) })
   .strict();
 
-const measure = (min: number, max: number, integer = false) => {
-  const range = `Enter a value between ${min} and ${max}`;
-  const n = z.number({ error: 'Enter a number' });
-  return (integer ? n.int(range) : n).min(min, range).max(max, range).nullable().optional();
-};
 const vitalsSchema = z
   .object({
     systolicMmhg: measure(40, 300, true),
@@ -66,8 +62,6 @@ const vitalsSchema = z
     note: optText(500),
   })
   .strict();
-
-const round1 = (n: number | null | undefined) => (n == null ? null : Math.round(n * 10) / 10);
 
 type Row = Record<string, unknown>;
 

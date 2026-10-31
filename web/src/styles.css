@@ -172,6 +172,17 @@ fieldset.card legend { font-weight: 700; padding: 0 0.4rem; }
 .cards > li > .row { margin-bottom: 0.2rem; }
 a.list-item { text-decoration: none; }
 
+/* ---------- Wards / admissions ---------- */
+.bed-grid { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.6rem; }
+.bed { display: grid; gap: 0.35rem; align-content: start; border-top: 5px solid var(--border); }
+.bed.occupied { border-top-color: var(--primary); }
+.bed.free { border-top-color: #3d9a5b; }
+.bed-label { font-weight: 700; }
+.pre { white-space: pre-wrap; }
+.superseded .pre, .superseded > div:not(:first-child) { text-decoration: line-through; text-decoration-color: var(--muted); opacity: 0.75; }
+.correction { margin-top: 0.6rem; padding: 0.6rem 0.75rem; border-left: 4px solid #d98e04; background: var(--bg); border-radius: 0 var(--radius) var(--radius) 0; display: grid; gap: 0.2rem; }
+.correction-form { margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px dashed var(--border); }
+
 /* ---------- Auth ---------- */
 .auth-wrap { min-height: 100vh; display: grid; place-items: center; padding: 1rem; }
 .auth-card { width: 100%; max-width: 420px; }

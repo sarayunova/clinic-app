@@ -6,6 +6,9 @@ import { PatientsPage } from './pages/Patients';
 import { PatientPage } from './pages/PatientPage';
 import { UsersPage } from './pages/Users';
 import { VisitPage } from './pages/VisitPage';
+import { WardsPage } from './pages/Wards';
+import { AdmitPage } from './pages/AdmitPage';
+import { AdmissionPage } from './pages/AdmissionPage';
 
 export function App() {
   const { state } = useAuth();
@@ -21,6 +24,7 @@ function Shell() {
   const links = [
     { to: '/', label: 'Today', icon: '📅', end: true },
     { to: '/patients', label: 'Patients', icon: '👥', end: false },
+    { to: '/wards', label: 'Wards', icon: '🛏️', end: false },
     ...(can('user:manage') ? [{ to: '/users', label: 'Staff', icon: '🔑', end: false }] : []),
     { to: '/account', label: 'Account', icon: '⚙️', end: false },
   ];
@@ -49,6 +53,9 @@ function Shell() {
           <Route path="/patients/new" element={<PatientPage />} />
           <Route path="/patients/:id" element={<PatientPage />} />
           <Route path="/visits/:id" element={can('visit:read') ? <VisitPage /> : <Navigate to="/" replace />} />
+          <Route path="/wards" element={<WardsPage />} />
+          <Route path="/admissions/new" element={can('admission:create') ? <AdmitPage /> : <Navigate to="/wards" replace />} />
+          <Route path="/admissions/:id" element={<AdmissionPage />} />
           <Route path="/users" element={can('user:manage') ? <UsersPage /> : <Navigate to="/" replace />} />
           <Route path="/account" element={<ChangePasswordPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

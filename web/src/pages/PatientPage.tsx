@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ApiError, api, type Patient, type VisitSummary } from '../api';
+import { ApiError, api, type Admission, type Patient, type VisitSummary } from '../api';
 import { useAuth } from '../auth';
 import { BookAppointment } from '../components/BookAppointment';
 import { AllergyBadge, ErrorBanner, Field, fieldErrorsOf, formatAge } from '../components/ui';
@@ -112,6 +112,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
+  const [admissions, setAdmissions] = useState<Admission[] | null>(null);
   const [dupes, setDupes] = useState<{ id: number; patientNumber: string; fullName: string; phone: string | null }[] | null>(null);
 
   const load = useCallback(async () => {
@@ -130,6 +131,12 @@ export function PatientPage() {
     setVisits(null);
     if (isNew || !can('visit:read')) return;
     api<VisitSummary[]>('GET', `/api/patients/${id}/visits`).then(setVisits, () => setVisits([]));
+  }, [id, isNew, can]);
+
+  useEffect(() => {
+    setAdmissions(null);
+    if (isNew || !can('ipd:read_basic')) return;
+    api<Admission[]>('GET', `/api/patients/${id}/admissions`).then(setAdmissions, () => setAdmissions([]));
   }, [id, isNew, can]);
 
   useEffect(() => {
@@ -258,6 +265,32 @@ export function PatientPage() {
             </button>
           </div>
         </div>
+      )}
+
+      {admissions && (admissions.length > 0 || can('admission:create')) && (
+        <section className="card stack">
+          <div className="page-head" style={{ marginBottom: 0 }}>
+            <h2 style={{ margin: 0 }}>Admissions</h2>
+            {can('admission:create') && !admissions.some((a) => a.status === 'admitted') && (
+              <Link className="btn" to={`/admissions/new?patientId=${patient!.id}`}>
+                Admit patient
+              </Link>
+            )}
+          </div>
+          {admissions.length === 0 && <p className="muted">Not admitted before.</p>}
+          <ul className="list">
+            {admissions.map((a) => (
+              <li key={a.id}>
+                <Link className="list-item" to={`/admissions/${a.id}`}>
+                  <strong>
+                    {a.admissionNumber} · {a.admittedDate} · {a.status === 'admitted' ? `Admitted, ${a.bedRoom} / Bed ${a.bedLabel}` : 'Discharged'}
+                  </strong>
+                  {a.reason && <span className="muted">{a.reason}</span>}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       {visits && (

@@ -176,3 +176,70 @@ export interface VisitSummary {
   complaints: string | null;
   amendments: number;
 }
+
+// ---------- Inpatient care ----------
+
+export interface Bed {
+  id: number;
+  room: string;
+  label: string;
+  active: boolean;
+  occupied: boolean;
+  admissionId?: number | null;
+  admissionNumber?: string | null;
+  patientId?: number | null;
+  patientName?: string | null;
+  patientNumber?: string | null;
+  allergyStatus?: 'unknown' | 'none' | 'known' | null;
+  allergyDetails?: string | null;
+  dayNumber?: number | null;
+}
+
+export type EntryType = 'doctor_round' | 'nursing_note' | 'observation' | 'procedure' | 'investigation';
+
+export interface CareEntry {
+  id: number;
+  entryType: EntryType;
+  clinicalDate: string;
+  clinicalTime: string;
+  createdDate: string;
+  createdTime: string;
+  authorId: number;
+  authorName: string;
+  content: string | null;
+  systolicMmhg: number | null;
+  diastolicMmhg: number | null;
+  pulseBpm: number | null;
+  temperatureC: number | null;
+  spo2Pct: number | null;
+  respRate: number | null;
+  correctionReason: string | null;
+  corrections: CareEntry[];
+  canCorrect: boolean;
+}
+
+export interface Admission {
+  id: number;
+  admissionNumber: string;
+  patientId: number;
+  patientNumber: string;
+  patientName: string;
+  ageYears: number | null;
+  ageIsEstimated: boolean;
+  allergyStatus: 'unknown' | 'none' | 'known';
+  allergyDetails: string | null;
+  bedId: number;
+  bedRoom: string;
+  bedLabel: string;
+  admittedDate: string;
+  admittedTime: string;
+  dayNumber: number | null;
+  status: 'admitted' | 'discharged';
+  version: number;
+  // clinical (absent for reception)
+  reason?: string;
+  diagnosis?: string | null;
+  initialAssessment?: string | null;
+  treatmentPlan?: string | null;
+  entries?: CareEntry[];
+}
