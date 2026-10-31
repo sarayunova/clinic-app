@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api, type Appointment, type AppointmentStatus } from '../api';
 import { useAuth } from '../auth';
 import { BookAppointment } from '../components/BookAppointment';
+import { Reschedule } from '../components/Reschedule';
 import { AllergyBadge, ErrorBanner, STATUS_LABEL, todayLocal } from '../components/ui';
 
 interface Action {
@@ -48,6 +49,7 @@ export function Dashboard() {
   const [error, setError] = useState<unknown>(null);
   const [booking, setBooking] = useState(false);
   const [confirming, setConfirming] = useState<string | null>(null);
+  const [moving, setMoving] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -90,6 +92,7 @@ export function Dashboard() {
   }
 
   const count = (s: AppointmentStatus[]) => items?.filter((a) => s.includes(a.status)).length ?? 0;
+  const canMove = (a: Appointment) => a.status === 'scheduled' && can('appointment:create');
   const isToday = date === todayLocal();
   /** Consultation button: doctor/nurse, once the patient is checked in or a record already exists. */
   const showVisit = (a: Appointment) =>
@@ -178,11 +181,16 @@ export function Dashboard() {
                           </div>
                         </div>
                       </div>
-                      {(actions.length > 0 || showVisit(a)) && (
+                      {(actions.length > 0 || showVisit(a) || canMove(a)) && (
                         <div className="row wrap">
                           {showVisit(a) && (
                             <button className="btn" onClick={() => void openConsultation(a)}>
                               {a.visitId && (a.visitStatus === 'final' || a.status === 'completed') ? 'View record' : 'Open consultation'}
+                            </button>
+                          )}
+                          {canMove(a) && (
+                            <button className="btn" onClick={() => setMoving(moving === a.id ? null : a.id)}>
+                              Reschedule
                             </button>
                           )}
                           {actions.map((x) => {
@@ -201,6 +209,16 @@ export function Dashboard() {
                             );
                           })}
                         </div>
+                      )}
+                      {moving === a.id && (
+                        <Reschedule
+                          appointment={a}
+                          onCancel={() => setMoving(null)}
+                          onDone={() => {
+                            setMoving(null);
+                            void load();
+                          }}
+                        />
                       )}
                     </li>
                   );

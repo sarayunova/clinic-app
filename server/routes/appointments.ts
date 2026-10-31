@@ -31,6 +31,14 @@ const createSchema = z
     reason: z.string().trim().min(2, 'Reason is required').max(500),
   })
   .strict();
+const rescheduleSchema = z
+  .object({
+    date,
+    time: createSchema.shape.time,
+    reason: createSchema.shape.reason.optional(),
+    version: z.number().int().min(1),
+  })
+  .strict();
 const listSchema = z.object({ date: date.optional() });
 const statusSchema = z.object({ status: z.enum(STATUSES), version: z.number().int().min(1) }).strict();
 
@@ -107,6 +115,42 @@ export function registerAppointmentRoutes(app: FastifyInstance, { db, cfg }: Ctx
         .run(body.status, nowIso(), id, body.version);
       if (r.changes !== 1) throw conflict('This appointment was changed by someone else. Reload and try again.');
       audit(db, { actorId: user.id, action: 'appointment.status', entity: 'appointment', entityId: id, detail: { from: cur.status, to: body.status } });
+      return present(get(id)!, user.role);
+    });
+  });
+
+  /** Moves a not-yet-arrived appointment to another date/time. Same record, so history and links stay intact. */
+  app.patch('/api/appointments/:id/reschedule', async (req) => {
+    const user = requirePerm(req, 'appointment:create');
+    const id = Number((req.params as { id: string }).id);
+    if (!Number.isInteger(id) || id < 1) throw notFound('Appointment');
+    const body = parse(rescheduleSchema, req.body);
+    const at = localToUtcIso(body.date, body.time, cfg.timezone);
+    if (!at) throw badRequest('That date and time do not exist');
+    if (body.date < localDate(new Date(), cfg.timezone)) throw badRequest('Appointments cannot be moved to a past date');
+    return tx(db, () => {
+      const cur = db
+        .prepare('SELECT patient_id, status, version, scheduled_at, reason FROM appointments WHERE id = ?')
+        .get(id) as { patient_id: number; status: Status; version: number; scheduled_at: string; reason: string } | undefined;
+      if (!cur) throw notFound('Appointment');
+      if (cur.version !== body.version) throw conflict('This appointment was changed by someone else. Reload and try again.', { currentVersion: cur.version });
+      if (cur.status !== 'scheduled') throw badRequest('Only an appointment that has not yet started can be rescheduled. Cancel and rebook instead.');
+      const dup = db
+        .prepare("SELECT 1 FROM appointments WHERE patient_id = ? AND scheduled_at = ? AND id != ? AND status IN ('scheduled','waiting','in_consultation')")
+        .get(cur.patient_id, at, id);
+      if (dup) throw conflict('This patient already has an appointment at that time');
+      const reason = body.reason ?? cur.reason;
+      const r = db
+        .prepare('UPDATE appointments SET scheduled_at = ?, scheduled_date = ?, reason = ?, version = version + 1, updated_at = ? WHERE id = ? AND version = ?')
+        .run(at, body.date, reason, nowIso(), id, body.version);
+      if (r.changes !== 1) throw conflict('This appointment was changed by someone else. Reload and try again.');
+      audit(db, {
+        actorId: user.id,
+        action: 'appointment.reschedule',
+        entity: 'appointment',
+        entityId: id,
+        detail: { scheduledAt: { from: cur.scheduled_at, to: at }, ...(reason !== cur.reason ? { reason: { from: cur.reason, to: reason } } : {}) },
+      });
       return present(get(id)!, user.role);
     });
   });
