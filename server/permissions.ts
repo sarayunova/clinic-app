@@ -16,6 +16,13 @@ export type Permission =
   | 'visit:write' // edit draft consultation content and prescription
   | 'visit:finalise' // finalise and amend
   | 'vitals:write'
+  | 'bed:manage'
+  | 'ipd:read_basic' // who is admitted where (no clinical content)
+  | 'ipd:read' // clinical admission records and care entries
+  | 'admission:create'
+  | 'admission:write' // edit diagnosis, assessment, treatment plan
+  | 'care:write_nursing' // nursing notes, observations
+  | 'care:write_clinical' // doctor rounds, procedures, investigations
   | 'user:manage'
   | 'audit:read';
 
@@ -35,6 +42,13 @@ const MATRIX: Record<Role, Permission[]> = {
     'visit:write',
     'visit:finalise',
     'vitals:write',
+    'bed:manage',
+    'ipd:read_basic',
+    'ipd:read',
+    'admission:create',
+    'admission:write',
+    'care:write_nursing',
+    'care:write_clinical',
     'user:manage',
     'audit:read',
   ],
@@ -47,6 +61,10 @@ const MATRIX: Record<Role, Permission[]> = {
     'visit:read',
     'visit:create',
     'vitals:write',
+    'ipd:read_basic',
+    'ipd:read',
+    'admission:create',
+    'care:write_nursing',
   ],
   attender: [
     'patient:read_basic',
@@ -54,6 +72,7 @@ const MATRIX: Record<Role, Permission[]> = {
     'appointment:read',
     'appointment:create',
     'appointment:status_front',
+    'ipd:read_basic',
   ],
 };
 
