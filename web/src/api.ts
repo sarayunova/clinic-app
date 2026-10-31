@@ -242,4 +242,69 @@ export interface Admission {
   initialAssessment?: string | null;
   treatmentPlan?: string | null;
   entries?: CareEntry[];
+  orders?: MedicineOrder[];
+  discharge?: { summary: DischargeSummary | null; addenda: DischargeAddendum[] };
+  dischargedDate?: string;
+  dischargedTime?: string;
+}
+
+export interface MedRecord {
+  id: number;
+  outcome: 'given' | 'withheld' | 'refused';
+  givenDate: string;
+  givenTime: string;
+  scheduledDate: string | null;
+  scheduledTime: string | null;
+  createdDate: string;
+  createdTime: string;
+  doseGiven: string | null;
+  reason: string | null;
+  recordedBy: number;
+  recordedByName: string;
+  correctionReason: string | null;
+  corrections: MedRecord[];
+  canCorrect: boolean;
+}
+
+export interface MedicineOrder {
+  id: number;
+  medicine: string;
+  strength: string | null;
+  dose: string;
+  route: string | null;
+  frequency: string;
+  instructions: string | null;
+  startDate: string;
+  startTime: string;
+  orderedByName: string;
+  active: boolean;
+  stoppedDate: string | null;
+  stoppedTime: string | null;
+  stopReason: string | null;
+  stoppedByName: string | null;
+  records: MedRecord[];
+}
+
+export interface DischargeSummary {
+  finalDiagnosis: string;
+  findings: string | null;
+  course: string | null;
+  procedures: string | null;
+  conditionAtDischarge: string;
+  dischargeMedicines: string | null;
+  instructions: string | null;
+  warningSigns: string | null;
+  followUp: string | null;
+  writtenByName: string;
+  finalisedDate: string;
+  finalisedTime: string;
+}
+
+export interface DischargeAddendum {
+  id: number;
+  content: string;
+  reason: string;
+  authorName: string;
+  createdDate: string;
+  createdTime: string;
 }
