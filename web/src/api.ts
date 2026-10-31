@@ -378,3 +378,15 @@ export interface ClinicSettings {
   doctorName: string;
   registrationNo: string;
 }
+
+export interface BackupStatus {
+  configured: boolean;
+  dir: string;
+  intervalHours: number;
+  keep: number;
+  lastSuccess: { at: string; file: string; sizeBytes: number } | null;
+  lastFailure: { at: string; error: string } | null;
+  healthy: boolean;
+  warnings: string[];
+  files: { name: string; sizeBytes: number; at: string }[];
+}

@@ -12,7 +12,7 @@ Requires Node.js 24.
 ```
 npm install
 npm run build       # builds the web UI into dist/web (needed before npm start)
-npm test            # 69 API tests
+npm test            # 79 API tests
 npm run typecheck   # server + web
 npm run dev         # API with sample data in ./.devdata, auto-restart
 npm run dev:web     # UI dev server on :5173 (proxies /api to :3080)
@@ -73,6 +73,11 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
   how a mistaken payment is reversed) or cancel an invoice (only when no money is held). Nothing posted is edited or deleted.
   Balance = charges + adjustments - payments + refunds. Invoices can link to an admission. Printable invoice and receipt/refund
   note; clinic name, address, phone and doctor registration number are set by the doctor under "Clinic". No tax is applied.
+- **Backups**: automatic encrypted backups (AES-256-GCM, passphrase-derived key) while the app runs, each re-opened and
+  integrity-checked right after writing, old ones pruned, history kept in the database. The doctor sees status and "Back up now"
+  under Clinic, and a warning bar everywhere if backups are off, failing or stale, or stored on the same disk as the data.
+  `npm run backup` takes one by hand; `npm run restore -- <file> [--replace]` checks or restores one (current database is
+  moved aside, never deleted; refuses while the server runs). See `docs/BACKUP-AND-RESTORE.md` for setup and the monthly drill.
 - **Printable clinical documents**: prescription from a finalised consultation (medicines table, allergies, advice, follow-up,
   signature line; the assessment is only printed if ticked) and discharge summary from a discharged admission (including any
   addenda). Both use the clinic letterhead from "Clinic" and show the print time. Every print is recorded in the audit log.
@@ -95,7 +100,7 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
 - Printing: paper layout (A4 margins, page breaks, letterhead logo) not yet tried on the clinic's printer.
 - Attachments (private storage, type and size limits).
 - HTTPS for LAN access from other devices.
-- Encrypted automated backups and a tested restore (database + attachments).
+- Backups: copy the backup folder off the computer (USB / second machine); do a practice restore before real data; attachments once they exist.
 - Audit of exports; patient record export.
 - Login lockout is in memory (resets on restart); no screen-lock timer in the UI yet.
 - Confirm privacy, retention and clinical-document rules for the clinic's location.

@@ -4,9 +4,16 @@ import { fileURLToPath } from 'node:url';
 import { loadConfig } from './config.js';
 import { openDb } from './db.js';
 import { buildApp } from './app.js';
+import { startBackupScheduler } from './backup.js';
+import { pidFile, serverIsRunning } from './restore.js';
 
 const cfg = loadConfig();
+if (serverIsRunning(cfg)) {
+  console.error('Another clinic server is already running on this data directory.');
+  process.exit(1);
+}
 const db = openDb(cfg.dbFile);
+fs.writeFileSync(pidFile(cfg), String(process.pid));
 const webRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'web');
 const hasUi = fs.existsSync(path.join(webRoot, 'index.html'));
 if (!hasUi) console.warn('Web UI not built (run `npm run build`). Serving the API only.');
@@ -19,7 +26,11 @@ if (cfg.host !== '127.0.0.1' && cfg.host !== 'localhost') {
   console.warn('WARNING: listening beyond this computer. HTTPS is not set up yet - do not use with real patient data.');
 }
 
+const stopBackups = startBackupScheduler(db, cfg);
+
 const shutdown = async () => {
+  stopBackups();
+  fs.rmSync(pidFile(cfg), { force: true });
   await app.close();
   db.close();
   process.exit(0);
