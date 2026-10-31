@@ -5,6 +5,7 @@ import { Dashboard } from './pages/Dashboard';
 import { PatientsPage } from './pages/Patients';
 import { PatientPage } from './pages/PatientPage';
 import { UsersPage } from './pages/Users';
+import { VisitPage } from './pages/VisitPage';
 
 export function App() {
   const { state } = useAuth();
@@ -47,6 +48,7 @@ function Shell() {
           <Route path="/patients" element={<PatientsPage />} />
           <Route path="/patients/new" element={<PatientPage />} />
           <Route path="/patients/:id" element={<PatientPage />} />
+          <Route path="/visits/:id" element={can('visit:read') ? <VisitPage /> : <Navigate to="/" replace />} />
           <Route path="/users" element={can('user:manage') ? <UsersPage /> : <Navigate to="/" replace />} />
           <Route path="/account" element={<ChangePasswordPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

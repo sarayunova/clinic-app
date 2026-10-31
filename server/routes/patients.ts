@@ -94,7 +94,7 @@ const searchSchema = z.object({ q: z.string().trim().min(2, 'Type at least 2 cha
 
 // ---------- Helpers ----------
 
-function ageYears(dob: string, today: string): number {
+export function ageYears(dob: string, today: string): number {
   const [y, m, d] = dob.split('-').map(Number) as [number, number, number];
   const [ty, tm, td] = today.split('-').map(Number) as [number, number, number];
   return ty - y - (tm < m || (tm === m && td < d) ? 1 : 0);

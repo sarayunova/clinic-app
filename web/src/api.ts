@@ -70,6 +70,9 @@ export interface Appointment {
   patientPhone: string | null;
   allergyStatus: 'unknown' | 'none' | 'known';
   allergyDetails: string | null;
+  /** Present only for roles allowed to read consultations. */
+  visitId?: number | null;
+  visitStatus?: 'draft' | 'final' | null;
 }
 
 export interface PatientSummary {
@@ -100,4 +103,76 @@ export interface UserRow {
   role: Role;
   active: boolean;
   mustChangePassword: boolean;
+}
+
+// ---------- OPD consultation ----------
+
+export interface PrescriptionItem {
+  medicine: string;
+  strength: string | null;
+  dose: string | null;
+  route: string | null;
+  frequency: string | null;
+  duration: string | null;
+  instructions: string | null;
+}
+
+export interface VitalsEntry {
+  id: number;
+  recordedTime: string;
+  recordedByName: string;
+  systolicMmhg: number | null;
+  diastolicMmhg: number | null;
+  pulseBpm: number | null;
+  temperatureC: number | null;
+  weightKg: number | null;
+  heightCm: number | null;
+  note: string | null;
+}
+
+export interface RevisionMeta {
+  revisionNo: number;
+  kind: 'final' | 'amendment';
+  authorName: string;
+  atDate: string;
+  atTime: string;
+  reason: string | null;
+  changes: Record<string, { from: unknown; to: unknown }> | null;
+}
+
+export interface Visit {
+  id: number;
+  patientId: number;
+  appointmentId: number | null;
+  status: 'draft' | 'final';
+  version: number;
+  visitDate: string;
+  visitTime: string;
+  patientNumber: string;
+  patientName: string;
+  ageYears: number | null;
+  ageIsEstimated: boolean;
+  allergyStatus: 'unknown' | 'none' | 'known';
+  allergyDetails: string | null;
+  complaints: string | null;
+  history: string | null;
+  examination: string | null;
+  assessment: string | null;
+  antenatalNotes: string | null;
+  investigations: string | null;
+  advice: string | null;
+  followUpDate: string | null;
+  finalisedByName: string | null;
+  prescriptionItems: PrescriptionItem[];
+  vitals: VitalsEntry[];
+  revisions: RevisionMeta[];
+}
+
+export interface VisitSummary {
+  id: number;
+  visitDate: string;
+  status: 'draft' | 'final';
+  assessment: string | null;
+  complaints: string | null;
+  amendments: number;
 }
