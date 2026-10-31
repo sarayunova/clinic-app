@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ApiError, api, type Admission, type CareEntry, type EntryType } from '../api';
 import { useAuth } from '../auth';
+import { BedMove } from '../components/BedMove';
 import { Medicines } from '../components/Medicines';
 import { Discharge } from '../components/Discharge';
 import { startInvoice } from '../money';
@@ -112,6 +113,7 @@ export function AdmissionPage() {
       {!clinical && <p className="muted">Clinical details are visible to the doctor and nurses only.</p>}
       {clinical && (
         <>
+          <BedMove adm={adm} onMoved={(a) => { setAdm(a); setNotice('Patient moved.'); }} />
           <Details adm={adm} canEdit={can('admission:write') && active} onSaved={(a) => { setAdm(a); setNotice('Saved.'); }} onError={setError} />
           {active && <AddEntry adm={adm} onAdded={(a) => { setAdm(a); setNotice('Entry added.'); }} />}
           <Medicines adm={adm} onChanged={load} onNotice={setNotice} />

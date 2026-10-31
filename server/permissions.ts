@@ -38,7 +38,8 @@ export type Permission =
   | 'attachment:read' // view uploaded documents
   | 'attachment:write' // upload documents
   | 'attachment:void' // remove (void) a document
-  | 'station:read'; // ward and outpatient task board
+  | 'station:read' // ward and outpatient task board
+  | 'bed:transfer'; // move an admitted patient to another bed
 
 const MATRIX: Record<Role, Permission[]> = {
   doctor: [
@@ -79,6 +80,7 @@ const MATRIX: Record<Role, Permission[]> = {
     'attachment:write',
     'attachment:void',
     'station:read',
+    'bed:transfer',
   ],
   nurse: [
     'patient:read_basic',
@@ -97,6 +99,7 @@ const MATRIX: Record<Role, Permission[]> = {
     'attachment:read',
     'attachment:write',
     'station:read',
+    'bed:transfer',
   ],
   attender: [
     'patient:read_basic',

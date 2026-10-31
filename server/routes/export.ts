@@ -11,7 +11,7 @@ const rows = (db: DB, sql: string, ...args: (string | number)[]): Row[] => (db.p
 const inList = (ids: unknown[]) => ids.map(() => '?').join(',') || 'NULL';
 
 /** Fields that hold a staff user id. Used to list who those people were, without exporting every user. */
-const STAFF_FIELDS = new Set(['createdBy', 'finalisedBy', 'recordedBy', 'authorId', 'orderedBy', 'stoppedBy', 'receivedBy', 'authorisedBy', 'writtenBy', 'uploadedBy', 'voidedBy']);
+const STAFF_FIELDS = new Set(['createdBy', 'finalisedBy', 'recordedBy', 'authorId', 'orderedBy', 'stoppedBy', 'receivedBy', 'authorisedBy', 'writtenBy', 'uploadedBy', 'voidedBy', 'transferredBy']);
 
 function collectStaffIds(node: unknown, out = new Set<number>()): Set<number> {
   if (Array.isArray(node)) node.forEach((n) => collectStaffIds(n, out));
@@ -46,6 +46,7 @@ export function buildPatientExport(db: DB, patientId: number) {
     const aid = a.id as number;
     return {
       ...a,
+      bedTransfers: rows(db, 'SELECT * FROM bed_transfers WHERE admission_id = ? ORDER BY transferred_at, id', aid),
       careEntries: rows(db, 'SELECT * FROM care_entries WHERE admission_id = ? ORDER BY id', aid),
       medicineOrders: rows(db, 'SELECT * FROM medicine_orders WHERE admission_id = ? ORDER BY id', aid).map((o) => ({
         ...o,
