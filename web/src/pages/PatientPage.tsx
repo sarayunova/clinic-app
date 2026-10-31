@@ -234,6 +234,11 @@ export function PatientPage() {
               {typeof patient!.phone === 'string' && patient!.phone ? ` · ${patient!.phone}` : ''}
             </div>
           </div>
+          {can('audit:read') && (
+            <Link className="btn small" to={`/audit?patientId=${patient!.id}&patient=${encodeURIComponent(`${patient!.fullName} (${patient!.patientNumber})`)}`}>
+              Who has accessed this record
+            </Link>
+          )}
           {can('appointment:create') && (
             <button className="btn primary" onClick={() => setBooking((b) => !b)}>
               + Book appointment

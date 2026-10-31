@@ -16,6 +16,7 @@ import { InvoicePage } from './pages/InvoicePage';
 import { InvoicePrint, ReceiptPrint } from './pages/PrintPages';
 import { DischargePrint, PrescriptionPrint } from './pages/ClinicalPrints';
 import { SettingsPage } from './pages/SettingsPage';
+import { AuditPage } from './pages/AuditPage';
 
 export function App() {
   const { state } = useAuth();
@@ -52,6 +53,7 @@ function Shell() {
     ...(can('billing:read') ? [{ to: '/billing', label: 'Billing', icon: '💳', end: false }] : []),
     ...(can('settings:manage') ? [{ to: '/settings', label: 'Clinic', icon: '🏥', end: false }] : []),
     ...(can('user:manage') ? [{ to: '/users', label: 'Staff', icon: '🔑', end: false }] : []),
+    ...(can('audit:read') ? [{ to: '/audit', label: 'Audit', icon: '🔍', end: false }] : []),
     { to: '/account', label: 'Account', icon: '⚙️', end: false },
   ];
   return (
@@ -91,6 +93,7 @@ function Shell() {
           <Route path="/invoices/:id/receipts/:pid" element={can('billing:read') ? <ReceiptPrint /> : <Navigate to="/" replace />} />
           <Route path="/settings" element={can('settings:manage') ? <SettingsPage /> : <Navigate to="/" replace />} />
           <Route path="/users" element={can('user:manage') ? <UsersPage /> : <Navigate to="/" replace />} />
+          <Route path="/audit" element={can('audit:read') ? <AuditPage /> : <Navigate to="/" replace />} />
           <Route path="/account" element={<ChangePasswordPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

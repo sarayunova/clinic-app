@@ -12,7 +12,7 @@ Requires Node.js 24.
 ```
 npm install
 npm run build       # builds the web UI into dist/web (needed before npm start)
-npm test            # 79 API tests
+npm test            # 87 API tests
 npm run typecheck   # server + web
 npm run dev         # API with sample data in ./.devdata, auto-restart
 npm run dev:web     # UI dev server on :5173 (proxies /api to :3080)
@@ -89,11 +89,13 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
 - Patients: sequential numbers, search by name/number/phone, duplicate warning (does not block), unknown vs none allergy, field-level permissions, stale-edit rejection (409).
 - Appointments: clinic-timezone aware, status transitions enforced per role.
 - Append-only audit log (database triggers block edit/delete), with before/after values and record views.
+- Audit log viewer (doctor only, "Audit" in the menu): filter by person, action, date range or one patient; shows what changed
+  (before → after); newest first with "load older entries". Opening the log is itself recorded. The patient page has a
+  "Who has accessed this record" link.
 
 ## Remaining before real clinic use
 
 - Nurse-specific screens (vitals, observations) - these need the OPD/IPD records below.
-- Audit log viewer in the UI (the log is recorded and readable via the API).
 - Rescheduling an appointment (for now: cancel and rebook).
 - IPD: bed transfer; medication round / due-dose view for nurses; discharge summary print.
 - Billing: charges are typed in by hand (no price list); no daily collection report; link from a consultation not yet in the UI.
