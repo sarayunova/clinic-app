@@ -34,7 +34,10 @@ export type Permission =
   | 'settings:manage' // clinic details
   | 'user:manage'
   | 'audit:read'
-  | 'record:export'; // download a patient's complete record
+  | 'record:export' // download a patient's complete record
+  | 'attachment:read' // view uploaded documents
+  | 'attachment:write' // upload documents
+  | 'attachment:void'; // remove (void) a document
 
 const MATRIX: Record<Role, Permission[]> = {
   doctor: [
@@ -71,6 +74,9 @@ const MATRIX: Record<Role, Permission[]> = {
     'user:manage',
     'audit:read',
     'record:export',
+    'attachment:read',
+    'attachment:write',
+    'attachment:void',
   ],
   nurse: [
     'patient:read_basic',
@@ -86,6 +92,8 @@ const MATRIX: Record<Role, Permission[]> = {
     'admission:create',
     'care:write_nursing',
     'med:administer',
+    'attachment:read',
+    'attachment:write',
   ],
   attender: [
     'patient:read_basic',

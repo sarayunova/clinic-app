@@ -27,6 +27,7 @@ const PATIENT_OF = `CASE a.entity
   WHEN 'visit' THEN (SELECT patient_id FROM visits WHERE id = CAST(a.entity_id AS INTEGER))
   WHEN 'admission' THEN (SELECT patient_id FROM admissions WHERE id = CAST(a.entity_id AS INTEGER))
   WHEN 'invoice' THEN (SELECT patient_id FROM invoices WHERE id = CAST(a.entity_id AS INTEGER))
+  WHEN 'attachment' THEN (SELECT patient_id FROM attachments WHERE id = CAST(a.entity_id AS INTEGER))
 END`;
 
 type Row = Record<string, unknown>;

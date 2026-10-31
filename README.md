@@ -12,7 +12,7 @@ Requires Node.js 24.
 ```
 npm install
 npm run build       # builds the web UI into dist/web (needed before npm start)
-npm test            # 110 API tests
+npm test            # 125 API tests
 npm run typecheck   # server + web
 npm run dev         # API with sample data in ./.devdata, auto-restart
 npm run dev:web     # UI dev server on :5173 (proxies /api to :3080)
@@ -36,6 +36,8 @@ The app only listens on this computer until HTTPS is set up (see `docs/HTTPS-SET
 | Start / complete consultation | yes | no | no |
 | Open consultation, view records and prescriptions | yes | yes | no |
 | Record vitals | yes | yes | no |
+| Upload and view patient documents (scans, reports) | yes | yes | no |
+| Remove a document | yes | no | no |
 | Write / finalise / amend consultation and prescription | yes | no | no |
 | Manage users, read audit log, download a full patient record | yes | no | no |
 
@@ -105,13 +107,17 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
   patient's details, appointments, consultations (vitals, prescriptions, revisions), admissions (care record, medicine
   orders and administrations, discharge summary and addenda) and bills (lines, payments, adjustments), plus the names and roles
   of the staff who appear in it. No passwords or sessions. The file is NOT encrypted. Every download is audited.
+- Patient documents: PDF, JPEG or PNG, up to 10 MB each, added from the "Documents" section of a patient page with a title, type
+  and date, optionally tied to a consultation or admission. The file type is checked from the file's contents, not its name.
+  Files are stored inside the database (so every backup and restore includes them) and can only be opened through the app by
+  signed-in doctor/nurse; each upload, open, download and removal is audited. Documents are never edited or erased: the doctor
+  can "remove" one with a reason, which hides it (it stays in the database and backups).
 - Nurse-specific screens (vitals, observations) - these need the OPD/IPD records below.
 - IPD: bed transfer; medication round / due-dose view for nurses; discharge summary print.
 - Billing: charges are typed in by hand (no price list); no daily collection report; link from a consultation not yet in the UI.
 - Printing: paper layout (A4 margins, page breaks, letterhead logo) not yet tried on the clinic's printer.
-- Attachments (private storage, type and size limits).
 - HTTPS: do the one-time setup on the clinic computer and install the certificate on each device; there is no http-to-https redirect and no automatic start with Windows.
-- Backups: copy the backup folder off the computer (USB / second machine); do a practice restore before real data; attachments once they exist.
+- Backups: copy the backup folder off the computer (USB / second machine); do a practice restore before real data.
 - Login lockout is in memory (resets on restart); no screen-lock timer in the UI yet.
 - Confirm privacy, retention and clinical-document rules for the clinic's location.
 - BitLocker on the server PC; UPS; named owner for backups and updates.

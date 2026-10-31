@@ -62,7 +62,7 @@ describe('patient record export', () => {
 
     const doc = (await call('GET', `/api/patients/${asha.id}/export`, doctor)).body;
     expect(doc.patient).toMatchObject({ id: asha.id, fullName: 'Asha Verma', phone: '9876543210' });
-    expect(doc.counts).toEqual({ appointments: 1, visits: 1, admissions: 1, invoices: 1 });
+    expect(doc.counts).toEqual({ appointments: 1, visits: 1, admissions: 1, invoices: 1, attachments: 0 });
     expect(doc.visits[0]).toMatchObject({ id: visit.id });
     expect(doc.visits[0]).toHaveProperty('vitals');
     expect(doc.admissions[0]).toMatchObject({ id: adm.id, bedRoom: 'Room 1', bedLabel: 'A' });
@@ -89,6 +89,6 @@ describe('patient record export', () => {
     const log = (await call('GET', `/api/audit?action=patient.export&patientId=${asha.id}`, doctor)).body as Json[];
     expect(log).toHaveLength(2);
     expect(log[0]).toMatchObject({ label: 'Downloaded a full copy of a patient record', actor: 'Dr Rao', patientName: 'Asha Verma' });
-    expect(log[0].detail).toEqual({ appointments: 0, visits: 0, admissions: 0, invoices: 0 });
+    expect(log[0].detail).toEqual({ appointments: 0, visits: 0, admissions: 0, invoices: 0, attachments: 0 });
   });
 });

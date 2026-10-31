@@ -74,3 +74,10 @@ patient counts match.
 - Attachments (scans, reports) do not exist in the app yet; when they do, backups must include them.
 - The app does not start by itself when Windows starts. Until it does, make sure it is running during clinic hours and overnight is not guaranteed.
 - This protects against loss and damage. It does not replace disk encryption (BitLocker) on the clinic computer.
+
+## Uploaded documents are inside the backup
+
+Scans and reports uploaded to a patient are stored inside the database, so every backup and every restore includes them,
+with nothing extra to copy. The trade-off is size: each backup is a full copy, so as documents accumulate the database and
+each daily backup grow with them (10 MB is the limit per file). Check the size of the backup folder now and then, make sure
+the backup disk has room for 30 copies, and tell whoever maintains the system if backups start taking long or the disk fills.
