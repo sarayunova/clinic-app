@@ -223,3 +223,13 @@ dl.sheet-meta dt { font-weight: 600; } dl.sheet-meta dd { margin: 0; }
 .sheet-foot { margin-top: 1.5rem; border-top: 1px solid #bbb; padding-top: 0.4rem; color: #444; }
 .signature { margin-top: 3rem; width: 16rem; margin-left: auto; text-align: center; break-inside: avoid; }
 .signature-line { border-top: 1px solid #000; margin-bottom: 0.25rem; }
+
+/* ---------- Audit log ---------- */
+.audit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.6rem; }
+.audit-grid label span { display: block; font-weight: 600; font-size: 0.92rem; margin-bottom: 0.2rem; }
+.audit-list { margin-top: 1rem; }
+.audit-detail { margin: 0.4rem 0; display: grid; gap: 0.15rem; }
+.audit-detail > div { display: flex; gap: 0.5rem; }
+.audit-detail dt { font-weight: 600; min-width: 8rem; }
+.audit-detail dd { margin: 0; overflow-wrap: anywhere; }
+.linklike { background: none; border: 0; padding: 0 0.2rem; cursor: pointer; font: inherit; color: inherit; }
