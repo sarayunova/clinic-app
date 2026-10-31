@@ -11,13 +11,15 @@ Requires Node.js 24.
 
 ```
 npm install
+npm run build       # builds the web UI into dist/web (needed before npm start)
 npm test            # 17 API tests
-npm run typecheck
-npm run dev         # sample data in ./.devdata, auto-restart
-npm start           # real data in %LOCALAPPDATA%\ClinicApp (override with CLINIC_DATA_DIR)
+npm run typecheck   # server + web
+npm run dev         # API with sample data in ./.devdata, auto-restart
+npm run dev:web     # UI dev server on :5173 (proxies /api to :3080)
+npm start           # serves UI + API; real data in %LOCALAPPDATA%\ClinicApp (override with CLINIC_DATA_DIR)
 ```
 
-Open http://127.0.0.1:3080. On first run `POST /api/setup` creates the doctor account.
+Open http://127.0.0.1:3080. On first run the app shows a setup screen to create the doctor account.
 The server listens on this computer only. `HOST`, `PORT` and `CLINIC_TZ` (default `Asia/Kolkata`) are configurable.
 Do not set `HOST` to expose it on the network until HTTPS exists (see below).
 
@@ -36,7 +38,13 @@ Do not set `HOST` to expose it on the network until HTTPS exists (see below).
 
 Role boundaries for nurse and attender are my assumptions - confirm with the doctor.
 
-## Built so far (API only)
+## Built so far
+
+- **Web UI** (PC, tablet, phone: sidebar on desktop, bottom tab bar on small screens, 46px touch targets, light/dark):
+  login, first-run setup, forced password change, Today dashboard (check-in / start / complete, allergy alert on every card),
+  patient search + registration (duplicate warning) + profile editing with role-limited sections, staff accounts (doctor),
+  automatic screen lock after 15 minutes of inactivity.
+- API:
 
 - Setup, login (scrypt hashes, 30 min idle / 12 h absolute sessions, lockout after 5 failures), forced password change for new accounts.
 - Users and roles; deactivation ends sessions.
@@ -46,7 +54,9 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
 
 ## Remaining before real clinic use
 
-- **No user interface yet** (responsive for PC, tablet, phone; large touch targets for nurse screens).
+- Nurse-specific screens (vitals, observations) - these need the OPD/IPD records below.
+- Audit log viewer in the UI (the log is recorded and readable via the API).
+- Rescheduling an appointment (for now: cancel and rebook).
 - OPD consultations, prescriptions, finalisation and versioned amendments.
 - IPD: beds, admissions, care entries, medicine orders vs administration, discharge summary.
 - Billing: itemised invoices, payments, receipts, adjustments.

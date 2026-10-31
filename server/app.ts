@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import cookie from '@fastify/cookie';
+import fastifyStatic from '@fastify/static';
 import type { DB } from './db.js';
 import type { Config } from './config.js';
 import { LoginThrottle, resolveSession, type SessionUser } from './auth.js';
@@ -24,6 +25,8 @@ export interface Ctx {
   throttle: LoginThrottle;
   /** Set true when served over HTTPS so the session cookie is marked Secure. */
   secureCookies: boolean;
+  /** Folder holding the built web UI (dist/web). Omit for API-only (tests). */
+  webRoot?: string;
 }
 
 export const SESSION_COOKIE = 'clinic_session';
@@ -97,9 +100,14 @@ export async function buildApp(ctx: Omit<Ctx, 'throttle'> & { throttle?: LoginTh
     return reply.status(500).send({ error: { code: 'server_error', message: 'Something went wrong. Nothing was saved.' } });
   });
 
-  app.setNotFoundHandler((_req, reply) =>
-    reply.status(404).send({ error: { code: 'not_found', message: 'Not found' } }),
-  );
+  if (ctx.webRoot) {
+    await app.register(fastifyStatic, { root: ctx.webRoot });
+  }
+  app.setNotFoundHandler((req, reply) => {
+    // Single-page app: unknown non-API GETs get index.html so client-side routes survive a refresh.
+    if (ctx.webRoot && req.method === 'GET' && !req.url.startsWith('/api/')) return reply.sendFile('index.html');
+    return reply.status(404).send({ error: { code: 'not_found', message: 'Not found' } });
+  });
 
   registerAuthRoutes(app, full);
   registerUserRoutes(app, full);

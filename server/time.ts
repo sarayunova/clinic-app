@@ -34,6 +34,13 @@ export function localDate(instant: Date, tz: string): string {
   );
 }
 
+/** Clinic-local wall-clock time (HH:MM, 24 h) for a UTC instant. */
+export function localTime(isoInstant: string, tz: string): string {
+  return new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(
+    new Date(isoInstant),
+  );
+}
+
 export const nowIso = () => new Date().toISOString();
 
 export function isRealDate(s: string): boolean {
