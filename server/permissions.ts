@@ -37,7 +37,8 @@ export type Permission =
   | 'record:export' // download a patient's complete record
   | 'attachment:read' // view uploaded documents
   | 'attachment:write' // upload documents
-  | 'attachment:void'; // remove (void) a document
+  | 'attachment:void' // remove (void) a document
+  | 'station:read'; // ward and outpatient task board
 
 const MATRIX: Record<Role, Permission[]> = {
   doctor: [
@@ -77,6 +78,7 @@ const MATRIX: Record<Role, Permission[]> = {
     'attachment:read',
     'attachment:write',
     'attachment:void',
+    'station:read',
   ],
   nurse: [
     'patient:read_basic',
@@ -94,6 +96,7 @@ const MATRIX: Record<Role, Permission[]> = {
     'med:administer',
     'attachment:read',
     'attachment:write',
+    'station:read',
   ],
   attender: [
     'patient:read_basic',

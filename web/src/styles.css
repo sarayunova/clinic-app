@@ -233,3 +233,8 @@ dl.sheet-meta dt { font-weight: 600; } dl.sheet-meta dd { margin: 0; }
 .audit-detail dt { font-weight: 600; min-width: 8rem; }
 .audit-detail dd { margin: 0; overflow-wrap: anywhere; }
 .linklike { background: none; border: 0; padding: 0 0.2rem; cursor: pointer; font: inherit; color: inherit; }
+
+/* ---------- Nurse station ---------- */
+.station-meds { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.4rem; }
+.station-med { border-left: 3px solid var(--border); padding: 0.3rem 0.6rem; }
+.station-med.may_be_due { border-left-color: var(--warn-text); background: var(--warn-bg); border-radius: 0 6px 6px 0; }
