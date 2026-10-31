@@ -11,7 +11,7 @@ const rows = (db: DB, sql: string, ...args: (string | number)[]): Row[] => (db.p
 const inList = (ids: unknown[]) => ids.map(() => '?').join(',') || 'NULL';
 
 /** Fields that hold a staff user id. Used to list who those people were, without exporting every user. */
-const STAFF_FIELDS = new Set(['createdBy', 'finalisedBy', 'recordedBy', 'authorId', 'orderedBy', 'stoppedBy', 'receivedBy', 'authorisedBy', 'writtenBy']);
+const STAFF_FIELDS = new Set(['createdBy', 'finalisedBy', 'recordedBy', 'authorId', 'orderedBy', 'stoppedBy', 'receivedBy', 'authorisedBy', 'writtenBy', 'uploadedBy', 'voidedBy']);
 
 function collectStaffIds(node: unknown, out = new Set<number>()): Set<number> {
   if (Array.isArray(node)) node.forEach((n) => collectStaffIds(n, out));
@@ -63,7 +63,14 @@ export function buildPatientExport(db: DB, patientId: number) {
     adjustments: rows(db, 'SELECT * FROM adjustments WHERE invoice_id = ? ORDER BY id', i.id as number),
   }));
 
-  const record = { patient, appointments, visits, admissions, invoices };
+  // Document details only. The files themselves are downloaded one by one from the patient page (each download is audited).
+  const attachments = rows(
+    db,
+    'SELECT id, visit_id, admission_id, doc_type, title, document_date, original_name, mime, size_bytes, sha256, uploaded_by, created_at, voided_at, voided_by, void_reason FROM attachments WHERE patient_id = ? ORDER BY id',
+    patientId,
+  );
+
+  const record = { patient, appointments, visits, admissions, invoices, attachments };
   const ids = [...collectStaffIds(record)];
   const staff = ids.length ? rows(db, `SELECT id, full_name, role FROM users WHERE id IN (${inList(ids)}) ORDER BY id`, ...ids) : [];
   return { ...record, staff };
@@ -84,6 +91,7 @@ export function registerExportRoutes(app: FastifyInstance, { db, cfg }: Ctx): vo
         visits: rec.visits.length,
         admissions: rec.admissions.length,
         invoices: rec.invoices.length,
+        attachments: rec.attachments.length,
       };
       audit(db, { actorId: user.id, action: 'patient.export', entity: 'patient', entityId: id, detail: counts });
       return { data: rec, counts };
@@ -96,7 +104,7 @@ export function registerExportRoutes(app: FastifyInstance, { db, cfg }: Ctx): vo
       exportedAt: nowIso(),
       exportedBy: { id: user.id, name: user.fullName },
       timezone: cfg.timezone,
-      note: 'Amounts are in paise (1/100 rupee). Times are UTC unless a field says otherwise. Contains confidential patient information.',
+      note: 'Amounts are in paise (1/100 rupee). Times are UTC unless a field says otherwise. Uploaded documents are listed here without their files; download the files from the patient page. Contains confidential patient information.',
       counts,
       ...data,
     };
