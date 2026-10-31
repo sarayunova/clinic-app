@@ -4,7 +4,7 @@ import { requirePerm, type Ctx } from '../app.js';
 import { tx } from '../db.js';
 import { audit } from '../audit.js';
 import { badRequest, conflict, forbidden, notFound, parse } from '../errors.js';
-import { can } from '../permissions.js';
+import { can, type Role } from '../permissions.js';
 import { isRealDate, localDate, localTime, localToUtcIso, nowIso } from '../time.js';
 import { camelize } from '../util.js';
 
@@ -37,22 +37,27 @@ const statusSchema = z.object({ status: z.enum(STATUSES), version: z.number().in
 const SELECT = `
   SELECT a.id, a.patient_id, a.scheduled_at, a.scheduled_date, a.reason, a.status, a.version, a.created_at, a.updated_at,
          p.patient_number, p.full_name AS patient_name, p.phone AS patient_phone,
-         p.allergy_status, p.allergy_details
-    FROM appointments a JOIN patients p ON p.id = a.patient_id`;
+         p.allergy_status, p.allergy_details, v.id AS visit_id, v.status AS visit_status
+    FROM appointments a JOIN patients p ON p.id = a.patient_id
+    LEFT JOIN visits v ON v.appointment_id = a.id`;
 
 export function registerAppointmentRoutes(app: FastifyInstance, { db, cfg }: Ctx): void {
   const get = (id: number) => db.prepare(`${SELECT} WHERE a.id = ?`).get(id);
   /** camelCase row plus the clinic-local time, so clients never format times in their own timezone. */
-  const present = (row: object) => {
+  const present = (row: object, role: Role) => {
     const o = camelize(row);
+    if (!can(role, 'visit:read')) {
+      delete o.visitId; // reception does not see consultation records
+      delete o.visitStatus;
+    }
     return { ...o, scheduledTime: localTime(o.scheduledAt as string, cfg.timezone) };
   };
 
   app.get('/api/appointments', async (req) => {
-    requirePerm(req, 'appointment:read');
+    const user = requirePerm(req, 'appointment:read');
     const q = parse(listSchema, req.query);
     const day = q.date ?? localDate(new Date(), cfg.timezone);
-    return db.prepare(`${SELECT} WHERE a.scheduled_date = ? ORDER BY a.scheduled_at, a.id`).all(day).map(present);
+    return db.prepare(`${SELECT} WHERE a.scheduled_date = ? ORDER BY a.scheduled_at, a.id`).all(day).map((r) => present(r, user.role));
   });
 
   app.post('/api/appointments', async (req, reply) => {
@@ -79,7 +84,7 @@ export function registerAppointmentRoutes(app: FastifyInstance, { db, cfg }: Ctx
       audit(db, { actorId: user.id, action: 'appointment.create', entity: 'appointment', entityId: aid, detail: { patientId: body.patientId, at } });
       return aid;
     });
-    return reply.status(201).send(present(get(id)!));
+    return reply.status(201).send(present(get(id)!, user.role));
   });
 
   app.patch('/api/appointments/:id/status', async (req) => {
@@ -102,7 +107,7 @@ export function registerAppointmentRoutes(app: FastifyInstance, { db, cfg }: Ctx
         .run(body.status, nowIso(), id, body.version);
       if (r.changes !== 1) throw conflict('This appointment was changed by someone else. Reload and try again.');
       audit(db, { actorId: user.id, action: 'appointment.status', entity: 'appointment', entityId: id, detail: { from: cur.status, to: body.status } });
-      return present(get(id)!);
+      return present(get(id)!, user.role);
     });
   });
 }

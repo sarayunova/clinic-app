@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api, type Appointment, type AppointmentStatus } from '../api';
 import { useAuth } from '../auth';
 import { BookAppointment } from '../components/BookAppointment';
@@ -42,6 +42,7 @@ const GROUPS: { title: string; statuses: AppointmentStatus[] }[] = [
 
 export function Dashboard() {
   const { can } = useAuth();
+  const nav = useNavigate();
   const [date, setDate] = useState(todayLocal());
   const [items, setItems] = useState<Appointment[] | null>(null);
   const [error, setError] = useState<unknown>(null);
@@ -77,8 +78,22 @@ export function Dashboard() {
     await load();
   }
 
+  async function openConsultation(a: Appointment) {
+    try {
+      const v = a.visitId
+        ? { id: a.visitId }
+        : await api<{ id: number }>('POST', '/api/visits', { patientId: a.patientId, appointmentId: a.id });
+      nav(`/visits/${v.id}`);
+    } catch (e) {
+      setError(e);
+    }
+  }
+
   const count = (s: AppointmentStatus[]) => items?.filter((a) => s.includes(a.status)).length ?? 0;
   const isToday = date === todayLocal();
+  /** Consultation button: doctor/nurse, once the patient is checked in or a record already exists. */
+  const showVisit = (a: Appointment) =>
+    can('visit:read') && (a.visitId != null || (can('visit:create') && (a.status === 'waiting' || a.status === 'in_consultation')));
 
   return (
     <div className="page">
@@ -163,8 +178,13 @@ export function Dashboard() {
                           </div>
                         </div>
                       </div>
-                      {actions.length > 0 && (
+                      {(actions.length > 0 || showVisit(a)) && (
                         <div className="row wrap">
+                          {showVisit(a) && (
+                            <button className="btn" onClick={() => void openConsultation(a)}>
+                              {a.visitId && (a.visitStatus === 'final' || a.status === 'completed') ? 'View record' : 'Open consultation'}
+                            </button>
+                          )}
                           {actions.map((x) => {
                             const key = `${a.id}:${x.to}`;
                             if (x.destructive && confirming !== key) {

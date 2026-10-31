@@ -12,7 +12,7 @@ Requires Node.js 24.
 ```
 npm install
 npm run build       # builds the web UI into dist/web (needed before npm start)
-npm test            # 17 API tests
+npm test            # 28 API tests
 npm run typecheck   # server + web
 npm run dev         # API with sample data in ./.devdata, auto-restart
 npm run dev:web     # UI dev server on :5173 (proxies /api to :3080)
@@ -34,6 +34,9 @@ Do not set `HOST` to expose it on the network until HTTPS exists (see below).
 | Edit clinical history | yes | no | no |
 | Book appointments, mark waiting/cancelled/absent | yes | status only | yes |
 | Start / complete consultation | yes | no | no |
+| Open consultation, view records and prescriptions | yes | yes | no |
+| Record vitals | yes | yes | no |
+| Write / finalise / amend consultation and prescription | yes | no | no |
 | Manage users, read audit log | yes | no | no |
 
 Role boundaries for nurse and attender are my assumptions - confirm with the doctor.
@@ -44,6 +47,13 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
   login, first-run setup, forced password change, Today dashboard (check-in / start / complete, allergy alert on every card),
   patient search + registration (duplicate warning) + profile editing with role-limited sections, staff accounts (doctor),
   automatic screen lock after 15 minutes of inactivity.
+- **OPD consultation** (doctor and nurse; hidden from reception): opened from the Today list once a patient is checked in.
+  Nurse and doctor record vitals as separate dated entries with units (never overwritten; a correction is a new reading).
+  Doctor writes complaints, history, examination, assessment, antenatal notes, investigations, advice, follow-up date and
+  prescription items (medicine, strength, dose, route, frequency, duration, instructions) as a draft.
+  Finalising locks the notes and completes the appointment. Later corrections ("Amend") need a reason; the finalised
+  original stays on record as revision 1 and every amendment keeps a full snapshot, author, time and reason.
+  The patient profile lists the patient's visits. The system never suggests diagnoses or doses.
 - API:
 
 - Setup, login (scrypt hashes, 30 min idle / 12 h absolute sessions, lockout after 5 failures), forced password change for new accounts.
@@ -57,7 +67,8 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
 - Nurse-specific screens (vitals, observations) - these need the OPD/IPD records below.
 - Audit log viewer in the UI (the log is recorded and readable via the API).
 - Rescheduling an appointment (for now: cancel and rebook).
-- OPD consultations, prescriptions, finalisation and versioned amendments.
+- Printable prescription from a finalised consultation (see printing below).
+- Billing charges created from a consultation.
 - IPD: beds, admissions, care entries, medicine orders vs administration, discharge summary.
 - Billing: itemised invoices, payments, receipts, adjustments.
 - Printable prescription / discharge summary / invoice / receipt.

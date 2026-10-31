@@ -11,6 +11,11 @@ export type Permission =
   | 'appointment:create'
   | 'appointment:status_front' // scheduled / waiting / cancelled / absent
   | 'appointment:status_clinical' // in_consultation / completed
+  | 'visit:read' // consultation records of any patient
+  | 'visit:create'
+  | 'visit:write' // edit draft consultation content and prescription
+  | 'visit:finalise' // finalise and amend
+  | 'vitals:write'
   | 'user:manage'
   | 'audit:read';
 
@@ -25,6 +30,11 @@ const MATRIX: Record<Role, Permission[]> = {
     'appointment:create',
     'appointment:status_front',
     'appointment:status_clinical',
+    'visit:read',
+    'visit:create',
+    'visit:write',
+    'visit:finalise',
+    'vitals:write',
     'user:manage',
     'audit:read',
   ],
@@ -34,6 +44,9 @@ const MATRIX: Record<Role, Permission[]> = {
     'patient:write_allergies',
     'appointment:read',
     'appointment:status_front',
+    'visit:read',
+    'visit:create',
+    'vitals:write',
   ],
   attender: [
     'patient:read_basic',

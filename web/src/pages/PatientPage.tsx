@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ApiError, api, type Patient } from '../api';
+import { ApiError, api, type Patient, type VisitSummary } from '../api';
 import { useAuth } from '../auth';
 import { BookAppointment } from '../components/BookAppointment';
 import { AllergyBadge, ErrorBanner, Field, fieldErrorsOf, formatAge } from '../components/ui';
@@ -111,6 +111,7 @@ export function PatientPage() {
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
+  const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [dupes, setDupes] = useState<{ id: number; patientNumber: string; fullName: string; phone: string | null }[] | null>(null);
 
   const load = useCallback(async () => {
@@ -124,6 +125,12 @@ export function PatientPage() {
       setLoadError(e);
     }
   }, [id, isNew]);
+
+  useEffect(() => {
+    setVisits(null);
+    if (isNew || !can('visit:read')) return;
+    api<VisitSummary[]>('GET', `/api/patients/${id}/visits`).then(setVisits, () => setVisits([]));
+  }, [id, isNew, can]);
 
   useEffect(() => {
     setPatient(null);
@@ -251,6 +258,26 @@ export function PatientPage() {
             </button>
           </div>
         </div>
+      )}
+
+      {visits && (
+        <section className="card stack">
+          <h2 style={{ margin: 0 }}>Visits</h2>
+          {visits.length === 0 && <p className="muted">No consultations recorded yet.</p>}
+          <ul className="list">
+            {visits.map((v) => (
+              <li key={v.id}>
+                <Link className="list-item" to={`/visits/${v.id}`}>
+                  <strong>
+                    {v.visitDate} · {v.status === 'draft' ? 'Draft' : 'Finalised'}
+                    {v.amendments > 0 ? ` · amended ${v.amendments}×` : ''}
+                  </strong>
+                  <span className="muted">{v.assessment ?? v.complaints ?? 'No notes yet'}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       <form onSubmit={submit} className="stack">
