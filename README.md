@@ -12,7 +12,7 @@ Requires Node.js 24.
 ```
 npm install
 npm run build       # builds the web UI into dist/web (needed before npm start)
-npm test            # 67 API tests
+npm test            # 69 API tests
 npm run typecheck   # server + web
 npm run dev         # API with sample data in ./.devdata, auto-restart
 npm run dev:web     # UI dev server on :5173 (proxies /api to :3080)
@@ -73,6 +73,10 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
   how a mistaken payment is reversed) or cancel an invoice (only when no money is held). Nothing posted is edited or deleted.
   Balance = charges + adjustments - payments + refunds. Invoices can link to an admission. Printable invoice and receipt/refund
   note; clinic name, address, phone and doctor registration number are set by the doctor under "Clinic". No tax is applied.
+- **Printable clinical documents**: prescription from a finalised consultation (medicines table, allergies, advice, follow-up,
+  signature line; the assessment is only printed if ticked) and discharge summary from a discharged admission (including any
+  addenda). Both use the clinic letterhead from "Clinic" and show the print time. Every print is recorded in the audit log.
+  A draft consultation cannot be printed. Print layout hides the menu and buttons; the browser's print dialog does the rest.
 - API:
 
 - Setup, login (scrypt hashes, 30 min idle / 12 h absolute sessions, lockout after 5 failures), forced password change for new accounts.
@@ -86,10 +90,9 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
 - Nurse-specific screens (vitals, observations) - these need the OPD/IPD records below.
 - Audit log viewer in the UI (the log is recorded and readable via the API).
 - Rescheduling an appointment (for now: cancel and rebook).
-- Printable prescription from a finalised consultation (see printing below).
 - IPD: bed transfer; medication round / due-dose view for nurses; discharge summary print.
 - Billing: charges are typed in by hand (no price list); no daily collection report; link from a consultation not yet in the UI.
-- Printable prescription / discharge summary / invoice / receipt.
+- Printing: paper layout (A4 margins, page breaks, letterhead logo) not yet tried on the clinic's printer.
 - Attachments (private storage, type and size limits).
 - HTTPS for LAN access from other devices.
 - Encrypted automated backups and a tested restore (database + attachments).
