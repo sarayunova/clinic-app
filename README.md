@@ -12,7 +12,7 @@ Requires Node.js 24.
 ```
 npm install
 npm run build       # builds the web UI into dist/web (needed before npm start)
-npm test            # 146 API tests
+npm test            # 164 API tests
 npm run typecheck   # server + web
 npm run dev         # API with sample data in ./.devdata, auto-restart
 npm run dev:web     # UI dev server on :5173 (proxies /api to :3080)
@@ -20,7 +20,7 @@ npm start           # serves UI + API; real data in %LOCALAPPDATA%\ClinicApp (ov
 ```
 
 Open http://127.0.0.1:3080. On first run the app shows a setup screen to create the doctor account.
-The server listens on this computer only. `HOST`, `PORT` and `CLINIC_TZ` (default `Asia/Kolkata`) are configurable.
+The server listens on this computer only. `HOST`, `PORT` and `CLINIC_TZ` (default `Asia/Kolkata`) are configurable, and so is `CLINIC_SCREEN_LOCK_MINUTES` (default 5; 0 turns the automatic screen lock off).
 The app only listens on this computer until HTTPS is set up (see `docs/HTTPS-SETUP.md`); it refuses to start on the network without it.
 
 ## Roles
@@ -38,6 +38,7 @@ The app only listens on this computer until HTTPS is set up (see `docs/HTTPS-SET
 | Record vitals | yes | yes | no |
 | Move an admitted patient to another bed | yes | yes | no |
 | Nurse station board (who needs vitals, ward round, medicines that may be due) | yes | yes | no |
+| Change the billing price list | yes | no | no |
 | Upload and view patient documents (scans, reports) | yes | yes | no |
 | Remove a document | yes | no | no |
 | Write / finalise / amend consultation and prescription | yes | no | no |
@@ -77,6 +78,11 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
   how a mistaken payment is reversed) or cancel an invoice (only when no money is held). Nothing posted is edited or deleted.
   Balance = charges + adjustments - payments + refunds. Invoices can link to an admission. Printable invoice and receipt/refund
   note; clinic name, address, phone and doctor registration number are set by the doctor under "Clinic". No tax is applied.
+  The doctor keeps a **price list** (Billing > Price list: add, rename, re-price, switch off; nothing is deleted). While editing a
+  draft, staff pick an item and its name and price are *copied* onto the line, so a later price change never alters an invoice.
+  Billing has a **collection report** (payments, refunds and net by method, staff member and day, invoices issued, every
+  transaction; clinic-local days, up to a year; printable; each view is audited). A finalised consultation shows its invoices and a
+  button to start one for that visit.
 - **Backups**: automatic encrypted backups (AES-256-GCM, passphrase-derived key) while the app runs, each re-opened and
   integrity-checked right after writing, old ones pruned, history kept in the database. The doctor sees status and "Back up now"
   under Clinic, and a warning bar everywhere if backups are off, failing or stale, or stored on the same disk as the data.
@@ -92,7 +98,8 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
   The doctor sees certificate status, expiry warnings and a certificate download under Clinic. See `docs/HTTPS-SETUP.md`.
 - API:
 
-- Setup, login (scrypt hashes, 30 min idle / 12 h absolute sessions, lockout after 5 failures), forced password change for new accounts.
+- Setup, login (scrypt hashes, 30 min idle / 12 h absolute sessions, lockout after 5 failures, kept in the database so a restart does not clear it), forced password change for new accounts.
+- **Screen lock**: after 5 idle minutes (or the "Lock screen" button) the screen is covered and the server refuses every request except unlock and log out, so reloading the page or opening another tab does not get past it. Unlocking needs the password (wrong guesses count towards the same 5-failure lockout; lock, unlock and failures go to the audit log). Typed-in work stays on the page. A locked session is not kept alive and ends at the normal idle limit; after 15 idle minutes the user is logged out anyway.
 - Users and roles; deactivation ends sessions.
 - Patients: sequential numbers, search by name/number/phone, duplicate warning (does not block), unknown vs none allergy, field-level permissions, stale-edit rejection (409).
 - Appointments: clinic-timezone aware, status transitions enforced per role.
@@ -127,10 +134,9 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
 ## Remaining before real clinic use
 
 - IPD: The nurse station shows medicines that may be due, but there is no timed round list, no overdue alarms and no clinical alert thresholds (the doctor must decide those).
-- Billing: charges are typed in by hand (no price list); no daily collection report; link from a consultation not yet in the UI.
+- Billing: the price list starts empty; the doctor needs to enter the clinic's standard charges.
 - Printing: paper layout (A4 margins, page breaks, letterhead logo) not yet tried on the clinic's printer.
 - HTTPS: do the one-time setup on the clinic computer and install the certificate on each device; there is no http-to-https redirect. Install the automatic start (`docs/AUTO-START.md`) and check it survives a restart.
 - Backups: copy the backup folder off the computer (USB / second machine); do a practice restore before real data.
-- Login lockout is in memory (resets on restart); no screen-lock timer in the UI yet.
 - Confirm privacy, retention and clinical-document rules for the clinic's location.
 - BitLocker on the server PC; UPS; named owner for backups and updates.

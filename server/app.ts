@@ -20,6 +20,7 @@ import { registerPrintLogRoutes } from './routes/printlog.js';
 import { registerExportRoutes } from './routes/export.js';
 import { registerAttachmentRoutes } from './routes/attachments.js';
 import { registerStationRoutes } from './routes/station.js';
+import { registerPricingRoutes } from './routes/pricing.js';
 import { registerBackupRoutes } from './routes/backups.js';
 import { registerSecurityRoutes } from './routes/security.js';
 import type { LoadedTls } from './tls.js';
@@ -46,8 +47,9 @@ export interface Ctx {
 export const SESSION_COOKIE = 'clinic_session';
 
 /** Requires a logged-in user. Users who must change their password are blocked from everything else. */
-export function requireUser(req: FastifyRequest, opts: { allowMustChange?: boolean } = {}): SessionUser {
+export function requireUser(req: FastifyRequest, opts: { allowMustChange?: boolean; allowLocked?: boolean } = {}): SessionUser {
   if (!req.user) throw unauthorized();
+  if (req.user.locked && !opts.allowLocked) throw new HttpError(423, 'screen_locked', 'The screen is locked. Enter your password to continue.');
   if (req.user.mustChangePassword && !opts.allowMustChange) {
     throw new HttpError(403, 'password_change_required', 'You must change your password before continuing');
   }
@@ -63,7 +65,7 @@ export function requirePerm(req: FastifyRequest, perm: Permission): SessionUser 
 export async function buildApp(ctx: Omit<Ctx, 'throttle'> & { throttle?: LoginThrottle }): Promise<FastifyInstance> {
   const full: Ctx = {
     ...ctx,
-    throttle: ctx.throttle ?? new LoginThrottle(ctx.cfg.loginMaxFailures, ctx.cfg.loginLockMinutes),
+    throttle: ctx.throttle ?? new LoginThrottle(ctx.cfg.loginMaxFailures, ctx.cfg.loginLockMinutes, ctx.db),
   };
   const app = Fastify({
     logger: false,
@@ -143,6 +145,7 @@ export async function buildApp(ctx: Omit<Ctx, 'throttle'> & { throttle?: LoginTh
   registerExportRoutes(app, full);
   registerAttachmentRoutes(app, full);
   registerStationRoutes(app, full);
+  registerPricingRoutes(app, full);
   registerBackupRoutes(app, full);
   registerSecurityRoutes(app, full);
   registerAuditRoutes(app, full);

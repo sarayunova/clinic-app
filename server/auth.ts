@@ -47,6 +47,8 @@ export interface SessionUser {
   fullName: string;
   role: Role;
   mustChangePassword: boolean;
+  /** The screen is locked: the session is still valid but only unlock and log out are allowed. */
+  locked: boolean;
 }
 
 const sha256 = (s: string) => crypto.createHash('sha256').update(s).digest('hex');
@@ -70,11 +72,11 @@ export function resolveSession(db: DB, cfg: Config, token: string | undefined): 
   const hash = sha256(token);
   const row = db
     .prepare(
-      `SELECT s.last_seen_at, s.expires_at, u.id, u.username, u.full_name, u.role, u.active, u.must_change_password
+      `SELECT s.last_seen_at, s.expires_at, s.locked_at, u.id, u.username, u.full_name, u.role, u.active, u.must_change_password
          FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ?`,
     )
     .get(hash) as
-    | { last_seen_at: string; expires_at: string; id: number; username: string; full_name: string; role: Role; active: number; must_change_password: number }
+    | { last_seen_at: string; expires_at: string; locked_at: string | null; id: number; username: string; full_name: string; role: Role; active: number; must_change_password: number }
     | undefined;
   if (!row) return null;
   const now = Date.now();
@@ -83,8 +85,9 @@ export function resolveSession(db: DB, cfg: Config, token: string | undefined): 
     db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(hash);
     return null;
   }
-  // Refresh activity at most once a minute to limit writes.
-  if (now - Date.parse(row.last_seen_at) > 60_000) {
+  // Refresh activity at most once a minute to limit writes. A locked session is not refreshed: background polling must not
+  // keep a locked, unattended screen alive, so it ends at the normal idle limit.
+  if (!row.locked_at && now - Date.parse(row.last_seen_at) > 60_000) {
     db.prepare('UPDATE sessions SET last_seen_at = ? WHERE token_hash = ?').run(new Date(now).toISOString(), hash);
   }
   return {
@@ -93,7 +96,16 @@ export function resolveSession(db: DB, cfg: Config, token: string | undefined): 
     fullName: row.full_name,
     role: row.role,
     mustChangePassword: row.must_change_password === 1,
+    locked: row.locked_at != null,
   };
+}
+
+export function lockSession(db: DB, token: string | undefined): void {
+  if (token) db.prepare('UPDATE sessions SET locked_at = ? WHERE token_hash = ? AND locked_at IS NULL').run(new Date().toISOString(), sha256(token));
+}
+
+export function unlockSession(db: DB, token: string | undefined): void {
+  if (token) db.prepare('UPDATE sessions SET locked_at = NULL, last_seen_at = ? WHERE token_hash = ?').run(new Date().toISOString(), sha256(token));
 }
 
 export function destroySession(db: DB, token: string | undefined): void {
@@ -105,29 +117,61 @@ export function destroyUserSessions(db: DB, userId: number, exceptToken?: string
   else db.prepare('DELETE FROM sessions WHERE user_id = ?').run(userId);
 }
 
-// ---------- Login throttling (in memory; resets on restart) ----------
+// ---------- Login throttling ----------
 
+/**
+ * Counts failed logins per username and locks the name for a few minutes after too many.
+ * With a database the counts survive a server restart (restarting the server must not clear a lockout);
+ * without one (some tests) they live in memory.
+ */
 export class LoginThrottle {
-  private attempts = new Map<string, { fails: number; lockedUntil: number }>();
-  constructor(private max: number, private lockMinutes: number) {}
+  private memory = new Map<string, { fails: number; lockedUntil: number }>();
+  constructor(private max: number, private lockMinutes: number, private db?: DB) {}
+
+  private read(k: string): { fails: number; lockedUntil: number } {
+    if (!this.db) return this.memory.get(k) ?? { fails: 0, lockedUntil: 0 };
+    const r = this.db.prepare('SELECT fails, locked_until FROM login_attempts WHERE username = ?').get(k) as
+      | { fails: number; locked_until: number }
+      | undefined;
+    return r ? { fails: r.fails, lockedUntil: r.locked_until } : { fails: 0, lockedUntil: 0 };
+  }
+
+  private write(k: string, a: { fails: number; lockedUntil: number }): void {
+    if (!this.db) {
+      this.memory.set(k, a);
+      return;
+    }
+    this.db
+      .prepare(
+        `INSERT INTO login_attempts(username, fails, locked_until, updated_at) VALUES (?,?,?,?)
+         ON CONFLICT(username) DO UPDATE SET fails = excluded.fails, locked_until = excluded.locked_until, updated_at = excluded.updated_at`,
+      )
+      .run(k, a.fails, a.lockedUntil, new Date().toISOString());
+    // Names that were only ever mistyped are forgotten after a day, so random usernames cannot fill the table.
+    this.db
+      .prepare('DELETE FROM login_attempts WHERE locked_until < ? AND updated_at < ?')
+      .run(Date.now(), new Date(Date.now() - 86_400_000).toISOString());
+  }
 
   /** Seconds remaining if locked, else 0. */
   lockedFor(username: string): number {
-    const a = this.attempts.get(username.toLowerCase());
-    if (!a || a.lockedUntil <= Date.now()) return 0;
+    const a = this.read(username.toLowerCase());
+    if (a.lockedUntil <= Date.now()) return 0;
     return Math.ceil((a.lockedUntil - Date.now()) / 1000);
   }
   fail(username: string): void {
     const k = username.toLowerCase();
-    const a = this.attempts.get(k) ?? { fails: 0, lockedUntil: 0 };
+    const a = this.read(k);
     a.fails += 1;
     if (a.fails >= this.max) {
       a.lockedUntil = Date.now() + this.lockMinutes * 60_000;
       a.fails = 0;
     }
-    this.attempts.set(k, a);
+    this.write(k, a);
   }
   succeed(username: string): void {
-    this.attempts.delete(username.toLowerCase());
+    const k = username.toLowerCase();
+    if (!this.db) this.memory.delete(k);
+    else this.db.prepare('DELETE FROM login_attempts WHERE username = ?').run(k);
   }
 }

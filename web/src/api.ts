@@ -33,7 +33,9 @@ export async function api<T = unknown>(method: 'GET' | 'POST' | 'PUT' | 'PATCH' 
   const data = text ? JSON.parse(text) : null;
   if (!res.ok) {
     const e = data?.error ?? {};
-    if (res.status === 401 && !url.startsWith('/api/auth/login')) window.dispatchEvent(new Event('clinic:unauthorized'));
+    // A wrong password on the login or unlock form is an ordinary error, not "your session ended".
+    if (res.status === 401 && !url.startsWith('/api/auth/login') && !url.startsWith('/api/auth/unlock')) window.dispatchEvent(new Event('clinic:unauthorized'));
+    if (res.status === 423) window.dispatchEvent(new Event('clinic:locked'));
     throw new ApiError(res.status, e.code ?? 'error', e.message ?? `Request failed (${res.status})`, e.details);
   }
   return data as T;
@@ -51,6 +53,10 @@ export interface Me {
   role: Role;
   mustChangePassword: boolean;
   permissions: Permission[];
+  /** The screen is locked on the server (survives a page reload). */
+  locked: boolean;
+  /** Idle minutes before the screen locks itself; 0 = never. */
+  screenLockMinutes: number;
 }
 
 export type AppointmentStatus = 'scheduled' | 'waiting' | 'in_consultation' | 'completed' | 'cancelled' | 'absent';
@@ -383,6 +389,51 @@ export interface Invoice {
   lines?: InvoiceLine[];
   adjustments?: InvoiceAdjustment[];
   payments?: InvoicePayment[];
+}
+
+export interface PriceItem {
+  id: number;
+  category: InvoiceCategory;
+  name: string;
+  pricePaise: number;
+  active: 0 | 1;
+}
+
+interface CollectionBucket {
+  count: number;
+  paidPaise: number;
+  refundedPaise: number;
+  netPaise: number;
+}
+
+export interface CollectionReport {
+  from: string;
+  to: string;
+  count: number;
+  paidPaise: number;
+  refundedPaise: number;
+  netPaise: number;
+  byMethod: (CollectionBucket & { method: PayMethod })[];
+  byStaff: (CollectionBucket & { name: string })[];
+  byDay: (CollectionBucket & { date: string })[];
+  invoicesIssued: { count: number; totalPaise: number };
+  transactions: {
+    id: number;
+    kind: 'payment' | 'refund';
+    receiptNumber: string;
+    amountPaise: number;
+    method: PayMethod;
+    reference: string | null;
+    date: string;
+    time: string;
+    receivedByName: string;
+    invoiceId: number;
+    invoiceNumber: string;
+    patientId: number;
+    patientNumber: string;
+    patientName: string;
+  }[];
+  truncated: boolean;
 }
 
 export interface ClinicSettings {

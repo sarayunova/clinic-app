@@ -238,3 +238,9 @@ dl.sheet-meta dt { font-weight: 600; } dl.sheet-meta dd { margin: 0; }
 .station-meds { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.4rem; }
 .station-med { border-left: 3px solid var(--border); padding: 0.3rem 0.6rem; }
 .station-med.may_be_due { border-left-color: var(--warn-text); background: var(--warn-bg); border-radius: 0 6px 6px 0; }
+
+/* ---------- Screen lock ---------- */
+.shell[inert] { visibility: hidden; }
+.lock-overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 1rem; background: var(--bg); }
+.lock-card { width: 100%; max-width: 420px; }
+@media print { .lock-overlay { display: none; } }

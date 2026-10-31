@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { Link, useParams } from 'react-router-dom';
 import { ApiError, api, type PrescriptionItem, type Visit, type VitalsEntry } from '../api';
 import { useAuth } from '../auth';
+import { VisitInvoice } from '../components/VisitInvoice';
 import { AllergyBadge, ErrorBanner, Field, fieldErrorsOf, formatAge } from '../components/ui';
 
 const TEXT_FIELDS = [
@@ -189,6 +190,7 @@ export function VisitPage() {
       )}
       {notice && <div className="banner ok" role="status">{notice}</div>}
 
+      {!isDraft && <VisitInvoice patientId={visit.patientId} visitId={visit.id} />}
       <VitalsCard visit={visit} canAdd={isDraft && can('vitals:write')} onAdded={adopt} />
 
       <form onSubmit={(e) => { e.preventDefault(); if (isDraft) void saveDraft(); }} className="stack">
