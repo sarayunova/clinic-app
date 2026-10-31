@@ -190,3 +190,6 @@ a.list-item { text-decoration: none; }
 .inactive { opacity: 0.65; }
 
 @media print { .nav, .btn, .sticky-actions { display: none !important; } .shell { display: block; } }
+
+ul.plain { list-style: none; margin: 0.75rem 0 0; padding: 0; display: grid; gap: 0.75rem; }
+ul.plain > li { border-top: 1px solid var(--border, #ddd); padding-top: 0.5rem; }

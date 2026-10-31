@@ -9,6 +9,8 @@ import { isRealDate, localDate, localTime, localToUtcIso, nowIso } from '../time
 import { camelize, toSnake } from '../util.js';
 import { measure, round1 } from '../validation.js';
 import { ageYears } from './patients.js';
+import { medicinesOf } from './medicines.js';
+import { dischargeOf } from './discharge.js';
 
 const date = z.string().refine(isRealDate, 'Must be a valid date (YYYY-MM-DD)');
 const clock = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use 24-hour HH:MM');
@@ -66,16 +68,9 @@ const MEASURES = ['systolicMmhg', 'diastolicMmhg', 'pulseBpm', 'temperatureC', '
 
 type Row = Record<string, unknown>;
 
-export function registerIpdRoutes(app: FastifyInstance, { db, cfg }: Ctx): void {
-  const tz = cfg.timezone;
-  const idOf = (raw: unknown, what: string) => {
-    const id = Number(raw);
-    if (!Number.isInteger(id) || id < 1) throw notFound(what);
-    return id;
-  };
-
-  /** Clinic-local date+time (or "now" if both blank) to a UTC instant; never in the future. */
-  function instant(d: string | undefined, t: string | undefined, label: string, dateField: string): string {
+/** Clinic-local date+time (or "now" if both blank) to a UTC instant; never in the future. */
+export function makeInstant(tz: string) {
+  return function instant(d: string | undefined, t: string | undefined, label: string, dateField: string): string {
     if ((d === undefined) !== (t === undefined)) {
       throw badRequest(`Enter both the ${label} date and time, or leave both blank`, [{ field: dateField, message: 'Enter both date and time' }]);
     }
@@ -86,7 +81,19 @@ export function registerIpdRoutes(app: FastifyInstance, { db, cfg }: Ctx): void 
       throw badRequest(`The ${label} time cannot be in the future`, [{ field: dateField, message: 'Cannot be in the future' }]);
     }
     return iso;
-  }
+  };
+}
+
+
+export function registerIpdRoutes(app: FastifyInstance, { db, cfg }: Ctx): void {
+  const tz = cfg.timezone;
+  const idOf = (raw: unknown, what: string) => {
+    const id = Number(raw);
+    if (!Number.isInteger(id) || id < 1) throw notFound(what);
+    return id;
+  };
+
+  const instant = makeInstant(tz);
 
   const dayNumber = (admittedAtIso: string) => {
     const a = Date.parse(localDate(new Date(admittedAtIso), tz));
@@ -207,7 +214,11 @@ export function registerIpdRoutes(app: FastifyInstance, { db, cfg }: Ctx): void 
     const row = db.prepare(`${ADMISSION_SELECT} WHERE a.id = ?`).get(id) as Row | undefined;
     if (!row) throw notFound('Admission');
     const out = presentRow(row, user.role);
-    if (can(user.role, 'ipd:read')) out.entries = entriesOf(id, user);
+    if (can(user.role, 'ipd:read')) {
+      out.entries = entriesOf(id, user);
+      out.orders = medicinesOf(db, tz, id, user);
+      out.discharge = dischargeOf(db, tz, id);
+    }
     return out;
   }
 

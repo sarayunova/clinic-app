@@ -23,6 +23,9 @@ export type Permission =
   | 'admission:write' // edit diagnosis, assessment, treatment plan
   | 'care:write_nursing' // nursing notes, observations
   | 'care:write_clinical' // doctor rounds, procedures, investigations
+  | 'order:write' // order and stop medicines
+  | 'med:administer' // record given / withheld / refused
+  | 'discharge:write' // discharge summary and addenda
   | 'user:manage'
   | 'audit:read';
 
@@ -49,6 +52,9 @@ const MATRIX: Record<Role, Permission[]> = {
     'admission:write',
     'care:write_nursing',
     'care:write_clinical',
+    'order:write',
+    'med:administer',
+    'discharge:write',
     'user:manage',
     'audit:read',
   ],
@@ -65,6 +71,7 @@ const MATRIX: Record<Role, Permission[]> = {
     'ipd:read',
     'admission:create',
     'care:write_nursing',
+    'med:administer',
   ],
   attender: [
     'patient:read_basic',

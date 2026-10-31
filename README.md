@@ -12,7 +12,7 @@ Requires Node.js 24.
 ```
 npm install
 npm run build       # builds the web UI into dist/web (needed before npm start)
-npm test            # 42 API tests
+npm test            # 52 API tests
 npm run typecheck   # server + web
 npm run dev         # API with sample data in ./.devdata, auto-restart
 npm run dev:web     # UI dev server on :5173 (proxies /api to :3080)
@@ -59,7 +59,13 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
   admission time). Doctor edits diagnosis, assessment and plan (audited). Care record is append-only: nursing notes and
   observations (nurse or doctor), doctor rounds, procedures and investigations (doctor). Mistakes are fixed by a correction with a
   reason; the original stays visible, struck through. Reception sees only basic admission details.
-  Not built yet: discharge (so beds stay occupied), bed transfer, medicine orders and administration.
+- **IPD, part 2 (medicines and discharge)**: the doctor orders medicines (medicine, strength, dose, route, frequency, instructions);
+  an order is never edited, only stopped once with a reason. Doctor or nurse records what was actually given, withheld or refused
+  (dose, actual time, optional due time, reason when not given) as separate append-only records; mistakes are corrected with a
+  reason and the original stays. Doctor discharges with a summary (final diagnosis, condition, findings, course, procedures,
+  take-home medicines, instructions, warning signs, follow-up): this frees the bed and stops running medicines. The summary is
+  immutable; later additions are addenda with a reason. Discharge cannot be earlier than the admission or the latest entry.
+  The system does not check doses, interactions or allergies against orders.
 - API:
 
 - Setup, login (scrypt hashes, 30 min idle / 12 h absolute sessions, lockout after 5 failures), forced password change for new accounts.
@@ -75,7 +81,7 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
 - Rescheduling an appointment (for now: cancel and rebook).
 - Printable prescription from a finalised consultation (see printing below).
 - Billing charges created from a consultation.
-- IPD part 2: medicine orders vs administration records, discharge summary and discharge (releases the bed), bed transfer.
+- IPD: bed transfer; medication round / due-dose view for nurses; discharge summary print.
 - Billing: itemised invoices, payments, receipts, adjustments.
 - Printable prescription / discharge summary / invoice / receipt.
 - Attachments (private storage, type and size limits).

@@ -13,6 +13,8 @@ import { registerAppointmentRoutes } from './routes/appointments.js';
 import { registerAuditRoutes } from './routes/audit.js';
 import { registerVisitRoutes } from './routes/visits.js';
 import { registerIpdRoutes } from './routes/ipd.js';
+import { registerMedicineRoutes } from './routes/medicines.js';
+import { registerDischargeRoutes } from './routes/discharge.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -117,6 +119,8 @@ export async function buildApp(ctx: Omit<Ctx, 'throttle'> & { throttle?: LoginTh
   registerAppointmentRoutes(app, full);
   registerVisitRoutes(app, full);
   registerIpdRoutes(app, full);
+  registerMedicineRoutes(app, full);
+  registerDischargeRoutes(app, full);
   registerAuditRoutes(app, full);
 
   app.get('/api/health', async () => ({ ok: true }));

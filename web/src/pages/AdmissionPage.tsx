@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ApiError, api, type Admission, type CareEntry, type EntryType } from '../api';
 import { useAuth } from '../auth';
+import { Medicines } from '../components/Medicines';
+import { Discharge } from '../components/Discharge';
 import { AllergyBadge, ErrorBanner, Field, fieldErrorsOf, formatAge, todayLocal } from '../components/ui';
 
 const TYPE_LABEL: Record<EntryType, string> = {
@@ -102,6 +104,8 @@ export function AdmissionPage() {
         <>
           <Details adm={adm} canEdit={can('admission:write') && active} onSaved={(a) => { setAdm(a); setNotice('Saved.'); }} onError={setError} />
           {active && <AddEntry adm={adm} onAdded={(a) => { setAdm(a); setNotice('Entry added.'); }} />}
+          <Medicines adm={adm} onChanged={load} onNotice={setNotice} />
+          <Discharge adm={adm} onChanged={load} onNotice={setNotice} />
           <Timeline adm={adm} onChanged={(a) => { setAdm(a); setNotice('Correction recorded.'); }} />
         </>
       )}
