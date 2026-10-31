@@ -100,9 +100,6 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
 - Audit log viewer (doctor only, "Audit" in the menu): filter by person, action, date range or one patient; shows what changed
   (before → after); newest first with "load older entries". Opening the log is itself recorded. The patient page has a
   "Who has accessed this record" link.
-
-## Remaining before real clinic use
-
 - Patient record export (doctor only): "Download full record" at the bottom of a patient page saves one JSON file with the
   patient's details, appointments, consultations (vitals, prescriptions, revisions), admissions (care record, medicine
   orders and administrations, discharge summary and addenda) and bills (lines, payments, adjustments), plus the names and roles
@@ -112,11 +109,16 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
   Files are stored inside the database (so every backup and restore includes them) and can only be opened through the app by
   signed-in doctor/nurse; each upload, open, download and removal is audited. Documents are never edited or erased: the doctor
   can "remove" one with a reason, which hides it (it stays in the database and backups).
+- Starts automatically with Windows (scheduled task that restarts the server if it stops, with logs): `docs/AUTO-START.md`,
+  `scripts/install-autostart.ps1`. Not yet installed on a real clinic computer.
+
+## Remaining before real clinic use
+
 - Nurse-specific screens (vitals, observations) - these need the OPD/IPD records below.
 - IPD: bed transfer; medication round / due-dose view for nurses; discharge summary print.
 - Billing: charges are typed in by hand (no price list); no daily collection report; link from a consultation not yet in the UI.
 - Printing: paper layout (A4 margins, page breaks, letterhead logo) not yet tried on the clinic's printer.
-- HTTPS: do the one-time setup on the clinic computer and install the certificate on each device; there is no http-to-https redirect and no automatic start with Windows.
+- HTTPS: do the one-time setup on the clinic computer and install the certificate on each device; there is no http-to-https redirect. Install the automatic start (`docs/AUTO-START.md`) and check it survives a restart.
 - Backups: copy the backup folder off the computer (USB / second machine); do a practice restore before real data.
 - Login lockout is in memory (resets on restart); no screen-lock timer in the UI yet.
 - Confirm privacy, retention and clinical-document rules for the clinic's location.

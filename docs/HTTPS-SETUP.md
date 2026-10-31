@@ -73,4 +73,4 @@ If you change the computer name or address, run it with the new `--name/--ip` an
 - The session cookie is marked *Secure* and the browser is told to keep using HTTPS for this address.
 - It does not protect a stolen or unlocked device, or the data on the clinic computer's disk (use BitLocker),
   and it does not make it safe to expose the app to the internet.
-- The app does not start by itself when Windows starts, and there is no automatic redirect from `http://` to `https://`.
+- There is no automatic redirect from `http://` to `https://`. To start the app by itself when Windows starts, see `AUTO-START.md`.
