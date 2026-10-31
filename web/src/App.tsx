@@ -1,4 +1,6 @@
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { api, type BackupStatus } from './api';
 import { useAuth, useMe } from './auth';
 import { AuthScreens, ChangePasswordPage } from './pages/AuthScreens';
 import { Dashboard } from './pages/Dashboard';
@@ -20,6 +22,23 @@ export function App() {
   if (state.status !== 'ready') return <AuthScreens />;
   if (state.me.mustChangePassword) return <AuthScreens forceChange />;
   return <Shell />;
+}
+
+/** Tells the doctor, on every screen, when backups are not working. */
+function BackupWarning() {
+  const [warn, setWarn] = useState<string | null>(null);
+  useEffect(() => {
+    const check = () => api<BackupStatus>('GET', '/api/backups').then((s) => setWarn(s.healthy ? null : (s.warnings[0] ?? 'Backups need attention.')), () => {});
+    check();
+    const t = window.setInterval(check, 10 * 60_000);
+    return () => window.clearInterval(t);
+  }, []);
+  if (!warn) return null;
+  return (
+    <div className="banner warn no-print" role="alert">
+      <strong>Backups need attention.</strong> {warn} <NavLink to="/settings">Open Clinic details</NavLink>
+    </div>
+  );
 }
 
 function Shell() {
@@ -53,6 +72,7 @@ function Shell() {
         </div>
       </nav>
       <main className="main">
+        {can('backup:manage') && <BackupWarning />}
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/patients" element={<PatientsPage />} />

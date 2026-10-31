@@ -1,4 +1,5 @@
 import os from 'node:os';
+import fs from 'node:fs';
 import path from 'node:path';
 
 export interface Config {
@@ -12,6 +13,18 @@ export interface Config {
   /** Failed logins allowed per username before a temporary lock. */
   loginMaxFailures: number;
   loginLockMinutes: number;
+  /** Where encrypted backups are written. Should be a different disk from dataDir. */
+  backupDir: string;
+  /** Null = automatic backups off. Never stored in the database or sent to the browser. */
+  backupPassphrase: string | null;
+  backupKeep: number;
+  backupIntervalHours: number;
+}
+
+function passphraseFromEnv(): string | null {
+  const file = process.env.CLINIC_BACKUP_PASSPHRASE_FILE;
+  if (file) return fs.readFileSync(file, 'utf8').replace(/[\r\n]+$/, '');
+  return process.env.CLINIC_BACKUP_PASSPHRASE ?? null;
 }
 
 export function loadConfig(overrides: Partial<Config> = {}): Config {
@@ -30,6 +43,10 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     sessionMaxHours: 12,
     loginMaxFailures: 5,
     loginLockMinutes: 5,
+    backupDir: process.env.CLINIC_BACKUP_DIR ?? path.join(dataDir, 'backups'),
+    backupPassphrase: passphraseFromEnv(),
+    backupKeep: Number(process.env.CLINIC_BACKUP_KEEP ?? 30),
+    backupIntervalHours: Number(process.env.CLINIC_BACKUP_INTERVAL_HOURS ?? 24),
   };
   return { ...base, ...overrides };
 }

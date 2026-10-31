@@ -30,6 +30,7 @@ export type Permission =
   | 'invoice:write' // create, edit draft, issue
   | 'payment:take' // record payments
   | 'billing:authorise' // adjustments, refunds, cancelling an invoice
+  | 'backup:manage' // see backup status, run a backup now
   | 'settings:manage' // clinic details
   | 'user:manage'
   | 'audit:read';
@@ -65,6 +66,7 @@ const MATRIX: Record<Role, Permission[]> = {
     'payment:take',
     'billing:authorise',
     'settings:manage',
+    'backup:manage',
     'user:manage',
     'audit:read',
   ],
