@@ -10,6 +10,7 @@ export const ACTION_LABELS: Record<string, string> = {
   'patient.create': 'Registered a patient',
   'patient.update': 'Changed patient details',
   'patient.view': 'Opened a patient record',
+  'station.view': 'Opened the nurse station board',
   'attachment.upload': 'Uploaded a document',
   'attachment.view': 'Opened a document',
   'attachment.download': 'Downloaded a document',
