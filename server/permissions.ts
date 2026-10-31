@@ -26,6 +26,11 @@ export type Permission =
   | 'order:write' // order and stop medicines
   | 'med:administer' // record given / withheld / refused
   | 'discharge:write' // discharge summary and addenda
+  | 'billing:read' // invoices, payments, balances
+  | 'invoice:write' // create, edit draft, issue
+  | 'payment:take' // record payments
+  | 'billing:authorise' // adjustments, refunds, cancelling an invoice
+  | 'settings:manage' // clinic details
   | 'user:manage'
   | 'audit:read';
 
@@ -55,6 +60,11 @@ const MATRIX: Record<Role, Permission[]> = {
     'order:write',
     'med:administer',
     'discharge:write',
+    'billing:read',
+    'invoice:write',
+    'payment:take',
+    'billing:authorise',
+    'settings:manage',
     'user:manage',
     'audit:read',
   ],
@@ -80,6 +90,9 @@ const MATRIX: Record<Role, Permission[]> = {
     'appointment:create',
     'appointment:status_front',
     'ipd:read_basic',
+    'billing:read',
+    'invoice:write',
+    'payment:take',
   ],
 };
 

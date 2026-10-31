@@ -12,7 +12,7 @@ Requires Node.js 24.
 ```
 npm install
 npm run build       # builds the web UI into dist/web (needed before npm start)
-npm test            # 52 API tests
+npm test            # 67 API tests
 npm run typecheck   # server + web
 npm run dev         # API with sample data in ./.devdata, auto-restart
 npm run dev:web     # UI dev server on :5173 (proxies /api to :3080)
@@ -66,6 +66,13 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
   take-home medicines, instructions, warning signs, follow-up): this frees the bed and stops running medicines. The summary is
   immutable; later additions are addenda with a reason. Discharge cannot be earlier than the admission or the latest entry.
   The system does not check doses, interactions or allergies against orders.
+- **Billing** (doctor and reception; hidden from nurses): invoices start as editable drafts (category, description, whole-number
+  quantity, price in rupees, stored as integer paise) and are issued with an invoice number (INV000001), after which the charges
+  are locked. Payments are separate records with receipt numbers (R000001), method, optional reference and time; a payment cannot
+  exceed the balance. Only the doctor can add a discount, write-off or correction (signed, with a reason), refund (F000001; also
+  how a mistaken payment is reversed) or cancel an invoice (only when no money is held). Nothing posted is edited or deleted.
+  Balance = charges + adjustments - payments + refunds. Invoices can link to an admission. Printable invoice and receipt/refund
+  note; clinic name, address, phone and doctor registration number are set by the doctor under "Clinic". No tax is applied.
 - API:
 
 - Setup, login (scrypt hashes, 30 min idle / 12 h absolute sessions, lockout after 5 failures), forced password change for new accounts.
@@ -80,9 +87,8 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
 - Audit log viewer in the UI (the log is recorded and readable via the API).
 - Rescheduling an appointment (for now: cancel and rebook).
 - Printable prescription from a finalised consultation (see printing below).
-- Billing charges created from a consultation.
 - IPD: bed transfer; medication round / due-dose view for nurses; discharge summary print.
-- Billing: itemised invoices, payments, receipts, adjustments.
+- Billing: charges are typed in by hand (no price list); no daily collection report; link from a consultation not yet in the UI.
 - Printable prescription / discharge summary / invoice / receipt.
 - Attachments (private storage, type and size limits).
 - HTTPS for LAN access from other devices.

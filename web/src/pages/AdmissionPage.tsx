@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ApiError, api, type Admission, type CareEntry, type EntryType } from '../api';
 import { useAuth } from '../auth';
 import { Medicines } from '../components/Medicines';
 import { Discharge } from '../components/Discharge';
+import { startInvoice } from '../money';
 import { AllergyBadge, ErrorBanner, Field, fieldErrorsOf, formatAge, todayLocal } from '../components/ui';
 
 const TYPE_LABEL: Record<EntryType, string> = {
@@ -49,6 +50,7 @@ const toBody = (vals: Record<string, string>, keys: readonly string[]) => {
 export function AdmissionPage() {
   const { id } = useParams();
   const { can } = useAuth();
+  const nav = useNavigate();
   const [adm, setAdm] = useState<Admission | null>(null);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -93,6 +95,13 @@ export function AdmissionPage() {
         </div>
         <span className={`badge ${active ? 'ok' : ''}`}>{active ? 'Admitted' : 'Discharged'}</span>
       </header>
+      {can('invoice:write') && (
+        <p>
+          <button className="btn small" onClick={() => startInvoice(nav, { patientId: adm.patientId, admissionId: adm.id }).catch(setError)}>
+            Create invoice for this admission
+          </button>
+        </p>
+      )}
       <div className={`allergy-banner ${adm.allergyStatus}`}>
         <AllergyBadge status={adm.allergyStatus} details={adm.allergyDetails} />
       </div>

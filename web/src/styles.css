@@ -193,3 +193,26 @@ a.list-item { text-decoration: none; }
 
 ul.plain { list-style: none; margin: 0.75rem 0 0; padding: 0; display: grid; gap: 0.75rem; }
 ul.plain > li { border-top: 1px solid var(--border, #ddd); padding-top: 0.5rem; }
+
+/* Billing and printed documents */
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { text-align: left; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.table td:nth-child(n+2), .table th:nth-child(n+2) { white-space: nowrap; }
+dl.totals { margin: 0.5rem 0 0; display: grid; gap: 0.25rem; }
+dl.totals > div { display: flex; justify-content: space-between; gap: 1rem; }
+dl.totals dt, dl.totals dd { margin: 0; }
+dl.totals .big { font-size: 1.2rem; font-weight: 700; border-top: 2px solid var(--border); padding-top: 0.4rem; }
+.sheet { background: #fff; color: #000; border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-top: 1rem; }
+.sheet .table th, .sheet .table td { border-color: #bbb; }
+.sheet-head { text-align: center; border-bottom: 2px solid #000; padding-bottom: 0.75rem; margin-bottom: 0.75rem; }
+.sheet-head h1 { margin: 0; }
+.sheet-title { text-align: center; letter-spacing: 0.08em; }
+dl.sheet-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem 1rem; margin: 0 0 1rem; }
+dl.sheet-meta > div { display: flex; gap: 0.5rem; }
+dl.sheet-meta dt { font-weight: 600; } dl.sheet-meta dd { margin: 0; }
+@media print {
+  .no-print, .nav { display: none !important; }
+  .main { padding: 0; }
+  .sheet { border: 0; padding: 0; margin: 0; }
+  body { background: #fff; }
+}
