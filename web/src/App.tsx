@@ -14,6 +14,7 @@ import { AdmissionPage } from './pages/AdmissionPage';
 import { BillingPage } from './pages/Billing';
 import { InvoicePage } from './pages/InvoicePage';
 import { InvoicePrint, ReceiptPrint } from './pages/PrintPages';
+import { DischargePrint, PrescriptionPrint } from './pages/ClinicalPrints';
 import { SettingsPage } from './pages/SettingsPage';
 
 export function App() {
@@ -79,6 +80,8 @@ function Shell() {
           <Route path="/patients/new" element={<PatientPage />} />
           <Route path="/patients/:id" element={<PatientPage />} />
           <Route path="/visits/:id" element={can('visit:read') ? <VisitPage /> : <Navigate to="/" replace />} />
+          <Route path="/visits/:id/print" element={can('visit:read') ? <PrescriptionPrint /> : <Navigate to="/" replace />} />
+          <Route path="/admissions/:id/print" element={can('ipd:read') ? <DischargePrint /> : <Navigate to="/wards" replace />} />
           <Route path="/wards" element={<WardsPage />} />
           <Route path="/admissions/new" element={can('admission:create') ? <AdmitPage /> : <Navigate to="/wards" replace />} />
           <Route path="/admissions/:id" element={<AdmissionPage />} />

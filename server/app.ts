@@ -16,6 +16,7 @@ import { registerIpdRoutes } from './routes/ipd.js';
 import { registerMedicineRoutes } from './routes/medicines.js';
 import { registerDischargeRoutes } from './routes/discharge.js';
 import { registerBillingRoutes } from './routes/billing.js';
+import { registerPrintLogRoutes } from './routes/printlog.js';
 import { registerBackupRoutes } from './routes/backups.js';
 
 declare module 'fastify' {
@@ -124,6 +125,7 @@ export async function buildApp(ctx: Omit<Ctx, 'throttle'> & { throttle?: LoginTh
   registerMedicineRoutes(app, full);
   registerDischargeRoutes(app, full);
   registerBillingRoutes(app, full);
+  registerPrintLogRoutes(app, full);
   registerBackupRoutes(app, full);
   registerAuditRoutes(app, full);
 

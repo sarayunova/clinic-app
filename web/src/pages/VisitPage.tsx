@@ -176,6 +176,7 @@ export function VisitPage() {
         </div>
         <span className={`badge ${isDraft ? 'warn' : 'ok'}`}>{isDraft ? 'Draft' : `Finalised${visit.finalisedByName ? ` by ${visit.finalisedByName}` : ''}`}</span>
       </header>
+      {!isDraft && <p><Link className="btn small" to={`/visits/${visit.id}/print`}>Print prescription</Link></p>}
       <div className={`allergy-banner ${visit.allergyStatus}`}>
         <AllergyBadge status={visit.allergyStatus} details={visit.allergyDetails} />
       </div>

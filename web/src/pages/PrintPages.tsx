@@ -1,6 +1,7 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { api, type ClinicSettings, type Invoice } from '../api';
+import { Sheet } from '../components/Sheet';
 import { ErrorBanner } from '../components/ui';
 import { CATEGORY_LABEL, METHOD_LABEL, formatMoney } from '../money';
 
@@ -14,27 +15,6 @@ function useInvoiceAndClinic() {
     api<ClinicSettings>('GET', '/api/settings').then(setClinic, setError);
   }, [id]);
   return { inv, clinic, error };
-}
-
-function Sheet({ clinic, title, back, children }: { clinic: ClinicSettings; title: string; back: string; children: ReactNode }) {
-  return (
-    <div className="page narrow">
-      <div className="row no-print" style={{ justifyContent: 'space-between' }}>
-        <Link to={back}>← Back</Link>
-        <button className="btn primary" onClick={() => window.print()}>Print</button>
-      </div>
-      <article className="sheet">
-        <header className="sheet-head">
-          <h1>{clinic.clinicName || 'Clinic name not set'}</h1>
-          {clinic.address && <div className="pre">{clinic.address}</div>}
-          <div>{[clinic.phone && `Phone: ${clinic.phone}`, clinic.doctorName, clinic.registrationNo && `Reg. no. ${clinic.registrationNo}`].filter(Boolean).join(' · ')}</div>
-          {!clinic.clinicName && <div className="banner warn no-print">The doctor can add the clinic name and address under “Clinic” in the menu so they print here.</div>}
-        </header>
-        <h2 className="sheet-title">{title}</h2>
-        {children}
-      </article>
-    </div>
-  );
 }
 
 export function InvoicePrint() {

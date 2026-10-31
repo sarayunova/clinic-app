@@ -95,6 +95,7 @@ export function AdmissionPage() {
         </div>
         <span className={`badge ${active ? 'ok' : ''}`}>{active ? 'Admitted' : 'Discharged'}</span>
       </header>
+      {!active && clinical && <p><Link className="btn small" to={`/admissions/${adm.id}/print`}>Print discharge summary</Link></p>}
       {can('invoice:write') && (
         <p>
           <button className="btn small" onClick={() => startInvoice(nav, { patientId: adm.patientId, admissionId: adm.id }).catch(setError)}>

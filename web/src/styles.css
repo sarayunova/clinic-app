@@ -216,3 +216,10 @@ dl.sheet-meta dt { font-weight: 600; } dl.sheet-meta dd { margin: 0; }
   .sheet { border: 0; padding: 0; margin: 0; }
   body { background: #fff; }
 }
+
+/* Clinical documents */
+.sheet-block { margin: 0.75rem 0; break-inside: avoid; }
+.sheet-block h3, .sheet h3 { margin: 0 0 0.2rem; font-size: 1rem; }
+.sheet-foot { margin-top: 1.5rem; border-top: 1px solid #bbb; padding-top: 0.4rem; color: #444; }
+.signature { margin-top: 3rem; width: 16rem; margin-left: auto; text-align: center; break-inside: avoid; }
+.signature-line { border-top: 1px solid #000; margin-bottom: 0.25rem; }
