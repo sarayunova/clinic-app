@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { api, type ClinicSettings } from '../api';
 import { BackupPanel } from '../components/BackupPanel';
+import { SecurityPanel } from '../components/SecurityPanel';
 import { ErrorBanner, Field } from '../components/ui';
 
 export function SettingsPage() {
@@ -42,6 +43,7 @@ export function SettingsPage() {
         {text('registrationNo', 'Medical registration number')}
         <div><button className="btn primary">Save</button></div>
       </form>
+      <SecurityPanel />
       <BackupPanel />
     </div>
   );

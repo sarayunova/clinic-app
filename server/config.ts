@@ -19,6 +19,10 @@ export interface Config {
   backupPassphrase: string | null;
   backupKeep: number;
   backupIntervalHours: number;
+  /** Folder holding ca.crt, server.crt and server.key (HTTPS). */
+  tlsDir: string;
+  /** Escape hatch for a trusted test network only; never for real patient data. */
+  allowInsecureLan: boolean;
 }
 
 function passphraseFromEnv(): string | null {
@@ -47,6 +51,8 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     backupPassphrase: passphraseFromEnv(),
     backupKeep: Number(process.env.CLINIC_BACKUP_KEEP ?? 30),
     backupIntervalHours: Number(process.env.CLINIC_BACKUP_INTERVAL_HOURS ?? 24),
+    tlsDir: process.env.CLINIC_TLS_DIR ?? path.join(dataDir, 'tls'),
+    allowInsecureLan: process.env.CLINIC_ALLOW_INSECURE_LAN === '1',
   };
   return { ...base, ...overrides };
 }
