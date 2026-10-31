@@ -390,3 +390,11 @@ export interface BackupStatus {
   warnings: string[];
   files: { name: string; sizeBytes: number; at: string }[];
 }
+
+export interface SecurityStatus {
+  https: boolean;
+  reachableFromNetwork: boolean;
+  cert: { names: string[]; notAfter: string; daysLeft: number } | null;
+  warnings: string[];
+  caAvailable: boolean;
+}

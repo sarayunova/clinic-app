@@ -18,6 +18,8 @@ import { registerDischargeRoutes } from './routes/discharge.js';
 import { registerBillingRoutes } from './routes/billing.js';
 import { registerPrintLogRoutes } from './routes/printlog.js';
 import { registerBackupRoutes } from './routes/backups.js';
+import { registerSecurityRoutes } from './routes/security.js';
+import type { LoadedTls } from './tls.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -34,6 +36,8 @@ export interface Ctx {
   secureCookies: boolean;
   /** Folder holding the built web UI (dist/web). Omit for API-only (tests). */
   webRoot?: string;
+  /** Loaded HTTPS material, if the server is serving HTTPS. */
+  tls?: LoadedTls | null;
 }
 
 export const SESSION_COOKIE = 'clinic_session';
@@ -58,7 +62,12 @@ export async function buildApp(ctx: Omit<Ctx, 'throttle'> & { throttle?: LoginTh
     ...ctx,
     throttle: ctx.throttle ?? new LoginThrottle(ctx.cfg.loginMaxFailures, ctx.cfg.loginLockMinutes),
   };
-  const app = Fastify({ logger: false, bodyLimit: 1_000_000, trustProxy: false });
+  const app = Fastify({
+    logger: false,
+    bodyLimit: 1_000_000,
+    trustProxy: false,
+    ...(ctx.tls ? { https: { key: ctx.tls.key, cert: ctx.tls.cert, minVersion: 'TLSv1.2' as const } } : {}),
+  });
   await app.register(cookie);
 
   app.decorateRequest('user', null);
@@ -92,6 +101,8 @@ export async function buildApp(ctx: Omit<Ctx, 'throttle'> & { throttle?: LoginTh
       "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'",
     );
     if (req.url.startsWith('/api/')) reply.header('Cache-Control', 'no-store');
+    // Tell browsers to keep using HTTPS for this host (one day: short enough to recover from a certificate mistake).
+    if (full.tls) reply.header('Strict-Transport-Security', 'max-age=86400');
     return payload;
   });
 
@@ -127,6 +138,7 @@ export async function buildApp(ctx: Omit<Ctx, 'throttle'> & { throttle?: LoginTh
   registerBillingRoutes(app, full);
   registerPrintLogRoutes(app, full);
   registerBackupRoutes(app, full);
+  registerSecurityRoutes(app, full);
   registerAuditRoutes(app, full);
 
   app.get('/api/health', async () => ({ ok: true }));
