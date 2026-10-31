@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ApiError, api, type Admission, type Patient, type VisitSummary } from '../api';
+import { ApiError, api, type Admission, type Invoice, type Patient, type VisitSummary } from '../api';
 import { useAuth } from '../auth';
 import { BookAppointment } from '../components/BookAppointment';
+import { PAYMENT_STATE_LABEL, formatMoney, startInvoice } from '../money';
 import { AllergyBadge, ErrorBanner, Field, fieldErrorsOf, formatAge } from '../components/ui';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
@@ -113,6 +114,7 @@ export function PatientPage() {
   const [booking, setBooking] = useState(false);
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
+  const [invoices, setInvoices] = useState<Invoice[] | null>(null);
   const [dupes, setDupes] = useState<{ id: number; patientNumber: string; fullName: string; phone: string | null }[] | null>(null);
 
   const load = useCallback(async () => {
@@ -137,6 +139,12 @@ export function PatientPage() {
     setAdmissions(null);
     if (isNew || !can('ipd:read_basic')) return;
     api<Admission[]>('GET', `/api/patients/${id}/admissions`).then(setAdmissions, () => setAdmissions([]));
+  }, [id, isNew, can]);
+
+  useEffect(() => {
+    setInvoices(null);
+    if (isNew || !can('billing:read')) return;
+    api<Invoice[]>('GET', `/api/patients/${id}/invoices`).then(setInvoices, () => setInvoices([]));
   }, [id, isNew, can]);
 
   useEffect(() => {
@@ -286,6 +294,30 @@ export function PatientPage() {
                     {a.admissionNumber} · {a.admittedDate} · {a.status === 'admitted' ? `Admitted, ${a.bedRoom} / Bed ${a.bedLabel}` : 'Discharged'}
                   </strong>
                   {a.reason && <span className="muted">{a.reason}</span>}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {invoices && (
+        <section className="card stack">
+          <div className="page-head" style={{ marginBottom: 0 }}>
+            <h2 style={{ margin: 0 }}>Bills</h2>
+            {can('invoice:write') && (
+              <button type="button" className="btn" onClick={() => startInvoice(nav, { patientId: patient!.id }).catch(setError)}>
+                New invoice
+              </button>
+            )}
+          </div>
+          {invoices.length === 0 && <p className="muted">No invoices yet.</p>}
+          <ul className="list">
+            {invoices.map((i) => (
+              <li key={i.id}>
+                <Link className="list-item" to={`/invoices/${i.id}`}>
+                  <strong>{i.invoiceNumber ?? 'Draft'} · {i.issuedDate ?? 'not issued'} · {formatMoney(i.totalPaise)}</strong>
+                  <span className="muted">{PAYMENT_STATE_LABEL[i.paymentState]}{i.status === 'issued' && i.balancePaise > 0 ? ` · due ${formatMoney(i.balancePaise)}` : ''}</span>
                 </Link>
               </li>
             ))}

@@ -17,7 +17,7 @@ export class ApiError extends Error {
   }
 }
 
-export async function api<T = unknown>(method: 'GET' | 'POST' | 'PATCH', url: string, body?: unknown): Promise<T> {
+export async function api<T = unknown>(method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', url: string, body?: unknown): Promise<T> {
   let res: Response;
   try {
     res = await fetch(url, {
@@ -307,4 +307,74 @@ export interface DischargeAddendum {
   authorName: string;
   createdDate: string;
   createdTime: string;
+}
+
+export type InvoiceCategory = 'consultation' | 'investigation' | 'procedure' | 'room_bed' | 'other';
+export type PayMethod = 'cash' | 'upi' | 'card' | 'bank_transfer' | 'cheque' | 'other';
+
+export interface InvoiceLine {
+  id?: number;
+  category: InvoiceCategory;
+  description: string;
+  quantity: number;
+  unitPricePaise: number;
+  amountPaise?: number;
+}
+
+export interface InvoicePayment {
+  id: number;
+  kind: 'payment' | 'refund';
+  receiptNumber: string;
+  amountPaise: number;
+  method: PayMethod;
+  reference: string | null;
+  reason: string | null;
+  paidDate: string;
+  paidTime: string;
+  receivedByName: string;
+}
+
+export interface InvoiceAdjustment {
+  id: number;
+  amountPaise: number;
+  kind: 'discount' | 'write_off' | 'correction';
+  reason: string;
+  authorisedByName: string;
+  createdDate: string;
+  createdTime: string;
+}
+
+export interface Invoice {
+  id: number;
+  invoiceNumber: string | null;
+  patientId: number;
+  patientNumber: string;
+  patientName: string;
+  visitId: number | null;
+  admissionId: number | null;
+  admissionNumber: string | null;
+  visitDate: string | null;
+  status: 'draft' | 'issued' | 'cancelled';
+  paymentState: 'draft' | 'cancelled' | 'unpaid' | 'part_paid' | 'paid' | 'credit';
+  notes: string | null;
+  issuedDate: string | null;
+  issuedTime: string | null;
+  cancelReason: string | null;
+  linesPaise: number;
+  adjustmentsPaise: number;
+  totalPaise: number;
+  netPaidPaise: number;
+  refundedPaise: number;
+  balancePaise: number;
+  lines?: InvoiceLine[];
+  adjustments?: InvoiceAdjustment[];
+  payments?: InvoicePayment[];
+}
+
+export interface ClinicSettings {
+  clinicName: string;
+  address: string;
+  phone: string;
+  doctorName: string;
+  registrationNo: string;
 }
