@@ -1,6 +1,6 @@
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { api, type BackupStatus } from './api';
+import { api, type BackupStatus, type SecurityStatus } from './api';
 import { useAuth, useMe } from './auth';
 import { AuthScreens, ChangePasswordPage } from './pages/AuthScreens';
 import { Dashboard } from './pages/Dashboard';
@@ -26,19 +26,33 @@ export function App() {
   return <Shell />;
 }
 
-/** Tells the doctor, on every screen, when backups are not working. */
-function BackupWarning() {
+/** Tells the doctor, on every screen, when backups or the secure connection need attention. */
+function SystemWarning() {
   const [warn, setWarn] = useState<string | null>(null);
   useEffect(() => {
-    const check = () => api<BackupStatus>('GET', '/api/backups').then((s) => setWarn(s.healthy ? null : (s.warnings[0] ?? 'Backups need attention.')), () => {});
-    check();
-    const t = window.setInterval(check, 10 * 60_000);
+    const check = async () => {
+      const found: string[] = [];
+      try {
+        const b = await api<BackupStatus>('GET', '/api/backups');
+        if (!b.healthy) found.push(b.warnings[0] ?? 'Backups need attention.');
+      } catch {
+        /* status unavailable: say nothing rather than a false alarm */
+      }
+      try {
+        found.push(...(await api<SecurityStatus>('GET', '/api/security')).warnings);
+      } catch {
+        /* same */
+      }
+      setWarn(found.length ? found.join(' ') : null);
+    };
+    void check();
+    const t = window.setInterval(() => void check(), 10 * 60_000);
     return () => window.clearInterval(t);
   }, []);
   if (!warn) return null;
   return (
     <div className="banner warn no-print" role="alert">
-      <strong>Backups need attention.</strong> {warn} <NavLink to="/settings">Open Clinic details</NavLink>
+      <strong>Needs attention.</strong> {warn} <NavLink to="/settings">Open Clinic details</NavLink>
     </div>
   );
 }
@@ -75,7 +89,7 @@ function Shell() {
         </div>
       </nav>
       <main className="main">
-        {can('backup:manage') && <BackupWarning />}
+        {can('backup:manage') && <SystemWarning />}
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/patients" element={<PatientsPage />} />

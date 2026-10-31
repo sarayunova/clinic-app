@@ -12,7 +12,7 @@ Requires Node.js 24.
 ```
 npm install
 npm run build       # builds the web UI into dist/web (needed before npm start)
-npm test            # 87 API tests
+npm test            # 100 API tests
 npm run typecheck   # server + web
 npm run dev         # API with sample data in ./.devdata, auto-restart
 npm run dev:web     # UI dev server on :5173 (proxies /api to :3080)
@@ -21,7 +21,7 @@ npm start           # serves UI + API; real data in %LOCALAPPDATA%\ClinicApp (ov
 
 Open http://127.0.0.1:3080. On first run the app shows a setup screen to create the doctor account.
 The server listens on this computer only. `HOST`, `PORT` and `CLINIC_TZ` (default `Asia/Kolkata`) are configurable.
-Do not set `HOST` to expose it on the network until HTTPS exists (see below).
+The app only listens on this computer until HTTPS is set up (see `docs/HTTPS-SETUP.md`); it refuses to start on the network without it.
 
 ## Roles
 
@@ -82,6 +82,10 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
   signature line; the assessment is only printed if ticked) and discharge summary from a discharged admission (including any
   addenda). Both use the clinic letterhead from "Clinic" and show the print time. Every print is recorded in the audit log.
   A draft consultation cannot be printed. Print layout hides the menu and buttons; the browser's print dialog does the rest.
+- **HTTPS for the clinic network**: `npm run cert` creates a private clinic certificate authority (key stored encrypted) and a
+  server certificate for the computer name and IP; staff devices install the public `ca.crt` once. With a certificate the app
+  serves HTTPS only (TLS 1.2+, Secure cookie, HSTS). **Without one it refuses to listen on anything but this computer.**
+  The doctor sees certificate status, expiry warnings and a certificate download under Clinic. See `docs/HTTPS-SETUP.md`.
 - API:
 
 - Setup, login (scrypt hashes, 30 min idle / 12 h absolute sessions, lockout after 5 failures), forced password change for new accounts.
@@ -101,7 +105,7 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
 - Billing: charges are typed in by hand (no price list); no daily collection report; link from a consultation not yet in the UI.
 - Printing: paper layout (A4 margins, page breaks, letterhead logo) not yet tried on the clinic's printer.
 - Attachments (private storage, type and size limits).
-- HTTPS for LAN access from other devices.
+- HTTPS: do the one-time setup on the clinic computer and install the certificate on each device; there is no http-to-https redirect and no automatic start with Windows.
 - Backups: copy the backup folder off the computer (USB / second machine); do a practice restore before real data; attachments once they exist.
 - Audit of exports; patient record export.
 - Login lockout is in memory (resets on restart); no screen-lock timer in the UI yet.
