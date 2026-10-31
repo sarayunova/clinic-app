@@ -10,6 +10,7 @@ export const ACTION_LABELS: Record<string, string> = {
   'patient.create': 'Registered a patient',
   'patient.update': 'Changed patient details',
   'patient.view': 'Opened a patient record',
+  'patient.export': 'Downloaded a full copy of a patient record',
   'appointment.create': 'Booked an appointment',
   'appointment.status': 'Changed appointment status',
   'appointment.reschedule': 'Rescheduled an appointment',

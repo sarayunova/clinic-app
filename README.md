@@ -12,7 +12,7 @@ Requires Node.js 24.
 ```
 npm install
 npm run build       # builds the web UI into dist/web (needed before npm start)
-npm test            # 105 API tests
+npm test            # 110 API tests
 npm run typecheck   # server + web
 npm run dev         # API with sample data in ./.devdata, auto-restart
 npm run dev:web     # UI dev server on :5173 (proxies /api to :3080)
@@ -37,7 +37,7 @@ The app only listens on this computer until HTTPS is set up (see `docs/HTTPS-SET
 | Open consultation, view records and prescriptions | yes | yes | no |
 | Record vitals | yes | yes | no |
 | Write / finalise / amend consultation and prescription | yes | no | no |
-| Manage users, read audit log | yes | no | no |
+| Manage users, read audit log, download a full patient record | yes | no | no |
 
 Role boundaries for nurse and attender are my assumptions - confirm with the doctor.
 
@@ -101,6 +101,10 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
 
 ## Remaining before real clinic use
 
+- Patient record export (doctor only): "Download full record" at the bottom of a patient page saves one JSON file with the
+  patient's details, appointments, consultations (vitals, prescriptions, revisions), admissions (care record, medicine
+  orders and administrations, discharge summary and addenda) and bills (lines, payments, adjustments), plus the names and roles
+  of the staff who appear in it. No passwords or sessions. The file is NOT encrypted. Every download is audited.
 - Nurse-specific screens (vitals, observations) - these need the OPD/IPD records below.
 - IPD: bed transfer; medication round / due-dose view for nurses; discharge summary print.
 - Billing: charges are typed in by hand (no price list); no daily collection report; link from a consultation not yet in the UI.
@@ -108,7 +112,6 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
 - Attachments (private storage, type and size limits).
 - HTTPS: do the one-time setup on the clinic computer and install the certificate on each device; there is no http-to-https redirect and no automatic start with Windows.
 - Backups: copy the backup folder off the computer (USB / second machine); do a practice restore before real data; attachments once they exist.
-- Audit of exports; patient record export.
 - Login lockout is in memory (resets on restart); no screen-lock timer in the UI yet.
 - Confirm privacy, retention and clinical-document rules for the clinic's location.
 - BitLocker on the server PC; UPS; named owner for backups and updates.

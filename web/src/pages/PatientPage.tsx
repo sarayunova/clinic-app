@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ApiError, api, type Admission, type Invoice, type Patient, type VisitSummary } from '../api';
 import { useAuth } from '../auth';
 import { BookAppointment } from '../components/BookAppointment';
+import { ExportRecord } from '../components/ExportRecord';
 import { PAYMENT_STATE_LABEL, formatMoney, startInvoice } from '../money';
 import { AllergyBadge, ErrorBanner, Field, fieldErrorsOf, formatAge } from '../components/ui';
 
@@ -405,6 +406,8 @@ export function PatientPage() {
           {!isNew && changedKeys.length > 0 && <span className="muted small">Unsaved changes</span>}
         </div>
       </form>
+
+      {!isNew && can('record:export') && <ExportRecord patientId={patient!.id} patientNumber={patient!.patientNumber} />}
     </div>
   );
 }
