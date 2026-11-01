@@ -27,7 +27,11 @@ export function BillingPage() {
     <div className="page">
       <header className="page-head">
         <h1>Billing</h1>
-        {can('invoice:write') && <button className="btn primary" onClick={() => setCreating((c) => !c)}>+ New invoice</button>}
+        <div className="row wrap">
+          <Link className="btn" to="/billing/report">Collection report</Link>
+          {can('pricelist:manage') && <Link className="btn" to="/billing/prices">Price list</Link>}
+          {can('invoice:write') && <button className="btn primary" onClick={() => setCreating((c) => !c)}>+ New invoice</button>}
+        </div>
       </header>
       <ErrorBanner error={error} />
       {creating && (

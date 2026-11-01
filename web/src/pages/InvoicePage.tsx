@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { api, type Invoice, type InvoiceCategory, type PayMethod } from '../api';
+import { api, type Invoice, type InvoiceCategory, type PayMethod, type PriceItem } from '../api';
 import { useAuth } from '../auth';
 import { ErrorBanner, Field, fieldErrorsOf, todayLocal } from '../components/ui';
 import { CATEGORY_LABEL, METHOD_LABEL, PAYMENT_STATE_LABEL, formatMoney, parseRupees, rupeesText } from '../money';
@@ -73,6 +73,19 @@ function DraftEditor({ inv, onDone }: { inv: Invoice; onDone: (m: string) => Pro
   const [notes, setNotes] = useState(inv.notes ?? '');
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+  const [prices, setPrices] = useState<PriceItem[]>([]);
+  useEffect(() => {
+    api<PriceItem[]>('GET', '/api/price-items').then(setPrices, () => setPrices([]));
+  }, []);
+  /** Copies the name and price onto a line, so a later price change cannot alter this invoice. */
+  function addFromList(id: string) {
+    const item = prices.find((x) => String(x.id) === id);
+    if (!item) return;
+    const line: Row = { category: item.category, description: item.name, quantity: '1', price: rupeesText(item.pricePaise) };
+    // Replace the empty starter row instead of leaving a blank charge above the new one.
+    const untouched = rows.length === 1 && !rows[0]!.description.trim() && !rows[0]!.price.trim();
+    setRows(untouched ? [line] : [...rows, line]);
+  }
 
   const parsed = rows.map((r) => ({ q: /^\d+$/.test(r.quantity) ? Number(r.quantity) : null, p: parseRupees(r.price) }));
   const valid = rows.every((r, i) => r.description.trim() && parsed[i]!.q && parsed[i]!.q! >= 1 && parsed[i]!.p !== null);
@@ -126,7 +139,15 @@ function DraftEditor({ inv, onDone }: { inv: Invoice; onDone: (m: string) => Pro
             </div>
           </div>
         ))}
-        <div><button type="button" className="btn" onClick={() => setRows([...rows, blank])}>+ Add a charge</button></div>
+        <div className="row wrap">
+          {prices.length > 0 && (
+            <select aria-label="Add from the price list" value="" onChange={(e) => addFromList(e.target.value)}>
+              <option value="">+ Add from price list…</option>
+              {prices.map((x) => <option key={x.id} value={x.id}>{x.name} · {formatMoney(x.pricePaise)}</option>)}
+            </select>
+          )}
+          <button type="button" className="btn" onClick={() => setRows([...rows, blank])}>+ Add a blank charge</button>
+        </div>
         <Field label="Notes (printed on the invoice)">
           <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={1000} />
         </Field>

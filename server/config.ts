@@ -13,6 +13,8 @@ export interface Config {
   /** Failed logins allowed per username before a temporary lock. */
   loginMaxFailures: number;
   loginLockMinutes: number;
+  /** The screen locks (password needed to continue) after this many idle minutes. 0 = never lock automatically. */
+  screenLockMinutes: number;
   /** Where encrypted backups are written. Should be a different disk from dataDir. */
   backupDir: string;
   /** Null = automatic backups off. Never stored in the database or sent to the browser. */
@@ -47,6 +49,7 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     sessionMaxHours: 12,
     loginMaxFailures: 5,
     loginLockMinutes: 5,
+    screenLockMinutes: Number(process.env.CLINIC_SCREEN_LOCK_MINUTES ?? 5),
     backupDir: process.env.CLINIC_BACKUP_DIR ?? path.join(dataDir, 'backups'),
     backupPassphrase: passphraseFromEnv(),
     backupKeep: Number(process.env.CLINIC_BACKUP_KEEP ?? 30),

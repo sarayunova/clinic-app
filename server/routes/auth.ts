@@ -7,6 +7,8 @@ import {
   destroySession,
   destroyUserSessions,
   hashPassword,
+  lockSession,
+  unlockSession,
   verifyPassword,
 } from '../auth.js';
 import { tx } from '../db.js';
@@ -28,6 +30,8 @@ const setupSchema = z.object({
   password: z.string(),
 });
 const loginSchema = z.object({ username: z.string().max(100), password: z.string().max(200) });
+const lockSchema = z.object({ reason: z.enum(['manual', 'idle']).default('manual') }).strict();
+const unlockSchema = z.object({ password: z.string().max(200) }).strict();
 const changePasswordSchema = z.object({ currentPassword: z.string().max(200), newPassword: z.string() });
 
 // Verifying against this when a username doesn't exist keeps response timing similar.
@@ -101,8 +105,37 @@ export function registerAuthRoutes(app: FastifyInstance, { db, cfg, throttle, se
   });
 
   app.get('/api/me', async (req) => {
-    const user = requireUser(req, { allowMustChange: true });
-    return { ...user, permissions: permissionsFor(user.role) };
+    const user = requireUser(req, { allowMustChange: true, allowLocked: true });
+    return { ...user, permissions: permissionsFor(user.role), screenLockMinutes: cfg.screenLockMinutes };
+  });
+
+  // Screen lock: the session stays signed in, but nothing can be read or changed until the password is entered again.
+  app.post('/api/auth/lock', async (req) => {
+    const user = requireUser(req, { allowMustChange: true, allowLocked: true });
+    const { reason } = parse(lockSchema, req.body ?? {});
+    if (!user.locked) {
+      lockSession(db, req.sessionToken);
+      audit(db, { actorId: user.id, action: 'auth.lock', entity: 'user', entityId: user.id, detail: { reason } });
+    }
+    return { ok: true };
+  });
+
+  app.post('/api/auth/unlock', async (req) => {
+    const user = requireUser(req, { allowMustChange: true, allowLocked: true });
+    const { password } = parse(unlockSchema, req.body);
+    if (!user.locked) return { ok: true };
+    const wait = throttle.lockedFor(user.username);
+    if (wait > 0) throw new HttpError(429, 'locked', `Too many failed attempts. Try again in ${Math.ceil(wait / 60)} minute(s).`);
+    const row = db.prepare('SELECT password_hash FROM users WHERE id = ?').get(user.id) as { password_hash: string };
+    if (!(await verifyPassword(password, row.password_hash))) {
+      throttle.fail(user.username);
+      audit(db, { actorId: user.id, action: 'auth.unlock_failed', entity: 'user', entityId: user.id });
+      throw unauthorized('Incorrect password');
+    }
+    throttle.succeed(user.username);
+    unlockSession(db, req.sessionToken);
+    audit(db, { actorId: user.id, action: 'auth.unlock', entity: 'user', entityId: user.id });
+    return { ok: true };
   });
 
   app.post('/api/auth/change-password', async (req) => {

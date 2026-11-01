@@ -18,6 +18,9 @@ import { DischargePrint, PrescriptionPrint } from './pages/ClinicalPrints';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditPage } from './pages/AuditPage';
 import { StationPage } from './pages/StationPage';
+import { PriceListPage } from './pages/PriceListPage';
+import { CollectionReportPage } from './pages/CollectionReport';
+import { ScreenLock } from './components/ScreenLock';
 
 export function App() {
   const { state } = useAuth();
@@ -60,7 +63,7 @@ function SystemWarning() {
 
 function Shell() {
   const me = useMe();
-  const { logout, can } = useAuth();
+  const { logout, can, locked, lock } = useAuth();
   const links = [
     { to: '/', label: 'Today', icon: '📅', end: true },
     ...(can('station:read') ? [{ to: '/station', label: 'Nurse station', icon: '🩺', end: false }] : []),
@@ -73,7 +76,9 @@ function Shell() {
     { to: '/account', label: 'Account', icon: '⚙️', end: false },
   ];
   return (
-    <div className="shell">
+    <>
+    <ScreenLock />
+    <div className="shell" inert={locked} aria-hidden={locked}>
       <nav className="nav" aria-label="Main">
         <div className="brand">Clinic</div>
         {links.map((l) => (
@@ -85,6 +90,9 @@ function Shell() {
         <div className="nav-user">
           <div>{me.fullName}</div>
           <div className="muted small">{me.role}</div>
+          <button className="btn small" onClick={() => void lock('manual')}>
+            Lock screen
+          </button>
           <button className="btn small" onClick={() => void logout()}>
             Log out
           </button>
@@ -104,6 +112,8 @@ function Shell() {
           <Route path="/admissions/new" element={can('admission:create') ? <AdmitPage /> : <Navigate to="/wards" replace />} />
           <Route path="/admissions/:id" element={<AdmissionPage />} />
           <Route path="/billing" element={can('billing:read') ? <BillingPage /> : <Navigate to="/" replace />} />
+          <Route path="/billing/prices" element={can('pricelist:manage') ? <PriceListPage /> : <Navigate to="/billing" replace />} />
+          <Route path="/billing/report" element={can('billing:read') ? <CollectionReportPage /> : <Navigate to="/" replace />} />
           <Route path="/invoices/:id" element={can('billing:read') ? <InvoicePage /> : <Navigate to="/" replace />} />
           <Route path="/invoices/:id/print" element={can('billing:read') ? <InvoicePrint /> : <Navigate to="/" replace />} />
           <Route path="/invoices/:id/receipts/:pid" element={can('billing:read') ? <ReceiptPrint /> : <Navigate to="/" replace />} />
@@ -116,5 +126,6 @@ function Shell() {
         </Routes>
       </main>
     </div>
+    </>
   );
 }
