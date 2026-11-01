@@ -1,4 +1,4 @@
-import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
+import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { api, type BackupStatus, type SecurityStatus } from './api';
 import { useAuth, useMe } from './auth';
@@ -64,6 +64,14 @@ function SystemWarning() {
 function Shell() {
   const me = useMe();
   const { logout, can, locked, lock } = useAuth();
+  const nav = useNavigate();
+  const here = useLocation().pathname;
+  // Nurses start their shift on the nurse station board. Only on arrival (login or opening the app at the home page);
+  // the "Today" link still works afterwards.
+  useEffect(() => {
+    if (me.role === 'nurse' && here === '/') nav('/station', { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const links = [
     { to: '/', label: 'Today', icon: '📅', end: true },
     ...(can('station:read') ? [{ to: '/station', label: 'Nurse station', icon: '🩺', end: false }] : []),
