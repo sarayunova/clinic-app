@@ -118,7 +118,7 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
   Files are stored inside the database (so every backup and restore includes them) and can only be opened through the app by
   signed-in doctor/nurse; each upload, open, download and removal is audited. Documents are never edited or erased: the doctor
   can "remove" one with a reason, which hides it (it stays in the database and backups).
-- Nurse station ("Nurse station" in the menu, doctor and nurse): one board with (1) outpatients checked in today and whether their
+- Nurse station ("Nurse station" in the menu, doctor and nurse; nurses land on it after logging in, and "Today" is still in the menu): one board with (1) outpatients checked in today and whether their
   vitals have been taken, with a "Take vitals" button; (2) every inpatient in bed order with allergies, the latest observation and
   how long ago it was taken (corrected values replace the originals), and the active medicines with the last time each was given,
   withheld or refused. A medicine is marked "May be due" only when its frequency is clearly worded ("every 8 hours", OD, BD, TDS,
