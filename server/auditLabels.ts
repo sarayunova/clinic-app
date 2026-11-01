@@ -53,6 +53,7 @@ export const ACTION_LABELS: Record<string, string> = {
   'invoice.cancel': 'Cancelled an invoice',
   'payment.record': 'Recorded a payment',
   'refund.record': 'Recorded a refund',
+  'checklist.update': 'Ticked or unticked a setup checklist item',
   'price.create': 'Added a price list item',
   'price.update': 'Changed a price list item',
   'billing.report': 'Looked at the collection report',

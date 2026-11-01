@@ -6,7 +6,7 @@ import { openDb } from './db.js';
 import { buildApp } from './app.js';
 import { startBackupScheduler } from './backup.js';
 import { pidFile, serverIsRunning } from './restore.js';
-import { TlsError, checkListenSafety, loadTls } from './tls.js';
+import { TlsError, checkListenSafety, loadTls, startHttpRedirect } from './tls.js';
 
 const cfg = loadConfig();
 let tls;
@@ -34,10 +34,22 @@ const scheme = tls ? 'https' : 'http';
 console.log(`Clinic app listening on ${scheme}://${cfg.host}:${cfg.port}${tls ? ` (certificate valid ${tls.info.daysLeft} more days)` : ''}`);
 console.log(`Data directory: ${cfg.dataDir}`);
 
+let redirect: Awaited<ReturnType<typeof startHttpRedirect>> | null = null;
+if (tls && cfg.httpRedirectPort > 0) {
+  try {
+    redirect = await startHttpRedirect(cfg.host, cfg.httpRedirectPort, tls.info.names, cfg.port);
+    console.log(`Plain HTTP on port ${cfg.httpRedirectPort} redirects to https (port ${cfg.port})`);
+  } catch (e) {
+    // The app itself is fine without the redirect, so do not stop it.
+    console.warn(`Could not start the http-to-https redirect on port ${cfg.httpRedirectPort}: ${(e as Error).message}`);
+  }
+}
+
 const stopBackups = startBackupScheduler(db, cfg);
 
 const shutdown = async () => {
   stopBackups();
+  redirect?.close();
   fs.rmSync(pidFile(cfg), { force: true });
   await app.close();
   db.close();

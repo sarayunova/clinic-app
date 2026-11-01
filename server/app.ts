@@ -21,6 +21,7 @@ import { registerExportRoutes } from './routes/export.js';
 import { registerAttachmentRoutes } from './routes/attachments.js';
 import { registerStationRoutes } from './routes/station.js';
 import { registerPricingRoutes } from './routes/pricing.js';
+import { registerChecklistRoutes } from './routes/checklist.js';
 import { registerBackupRoutes } from './routes/backups.js';
 import { registerSecurityRoutes } from './routes/security.js';
 import type { LoadedTls } from './tls.js';
@@ -146,6 +147,7 @@ export async function buildApp(ctx: Omit<Ctx, 'throttle'> & { throttle?: LoginTh
   registerAttachmentRoutes(app, full);
   registerStationRoutes(app, full);
   registerPricingRoutes(app, full);
+  registerChecklistRoutes(app, full);
   registerBackupRoutes(app, full);
   registerSecurityRoutes(app, full);
   registerAuditRoutes(app, full);

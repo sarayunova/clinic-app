@@ -73,4 +73,4 @@ If you change the computer name or address, run it with the new `--name/--ip` an
 - The session cookie is marked *Secure* and the browser is told to keep using HTTPS for this address.
 - It does not protect a stolen or unlocked device, or the data on the clinic computer's disk (use BitLocker),
   and it does not make it safe to expose the app to the internet.
-- There is no automatic redirect from `http://` to `https://`. To start the app by itself when Windows starts, see `AUTO-START.md`.
+- Optional redirect: set `CLINIC_HTTP_REDIRECT_PORT=80` and anyone who types `http://clinic-pc` is sent to the `https://` address. It only redirects to a name on the certificate, and serves nothing else over HTTP. If port 80 is taken or not allowed the app still starts and prints a warning. To start the app by itself when Windows starts, see `AUTO-START.md`.
