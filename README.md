@@ -12,7 +12,7 @@ Requires Node.js 24.
 ```
 npm install
 npm run build       # builds the web UI into dist/web (needed before npm start)
-npm test            # 164 API tests
+npm test            # 170 API tests
 npm run typecheck   # server + web
 npm run dev         # API with sample data in ./.devdata, auto-restart
 npm run dev:web     # UI dev server on :5173 (proxies /api to :3080)
@@ -83,6 +83,7 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
   Billing has a **collection report** (payments, refunds and net by method, staff member and day, invoices issued, every
   transaction; clinic-local days, up to a year; printable; each view is audited). A finalised consultation shows its invoices and a
   button to start one for that visit.
+- **Setup checklist** (doctor, Clinic > Setup checklist): the one-time jobs before real patients (passphrase, off-site copy, practice restore, HTTPS on devices, auto-start, printer test, BitLocker, UPS, owner, permissions and privacy review, price list). The app cannot check these; it records who ticked each one, when, and a note.
 - **Backups**: automatic encrypted backups (AES-256-GCM, passphrase-derived key) while the app runs, each re-opened and
   integrity-checked right after writing, old ones pruned, history kept in the database. The doctor sees status and "Back up now"
   under Clinic, and a warning bar everywhere if backups are off, failing or stale, or stored on the same disk as the data.
@@ -136,7 +137,7 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
 - IPD: The nurse station shows medicines that may be due, but there is no timed round list, no overdue alarms and no clinical alert thresholds (the doctor must decide those).
 - Billing: the price list starts empty; the doctor needs to enter the clinic's standard charges.
 - Printing: paper layout (A4 margins, page breaks, letterhead logo) not yet tried on the clinic's printer.
-- HTTPS: do the one-time setup on the clinic computer and install the certificate on each device; there is no http-to-https redirect. Install the automatic start (`docs/AUTO-START.md`) and check it survives a restart.
+- HTTPS: do the one-time setup on the clinic computer and install the certificate on each device; an http-to-https redirect is available (`CLINIC_HTTP_REDIRECT_PORT=80`, off by default). Install the automatic start (`docs/AUTO-START.md`) and check it survives a restart.
 - Backups: copy the backup folder off the computer (USB / second machine); do a practice restore before real data.
 - Confirm privacy, retention and clinical-document rules for the clinic's location.
 - BitLocker on the server PC; UPS; named owner for backups and updates.

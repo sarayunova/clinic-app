@@ -23,6 +23,8 @@ export interface Config {
   backupIntervalHours: number;
   /** Folder holding ca.crt, server.crt and server.key (HTTPS). */
   tlsDir: string;
+  /** With HTTPS on: also listen on this plain-HTTP port and redirect to HTTPS (80 is the usual one). 0 = off. */
+  httpRedirectPort: number;
   /** Escape hatch for a trusted test network only; never for real patient data. */
   allowInsecureLan: boolean;
 }
@@ -55,6 +57,7 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     backupKeep: Number(process.env.CLINIC_BACKUP_KEEP ?? 30),
     backupIntervalHours: Number(process.env.CLINIC_BACKUP_INTERVAL_HOURS ?? 24),
     tlsDir: process.env.CLINIC_TLS_DIR ?? path.join(dataDir, 'tls'),
+    httpRedirectPort: Number(process.env.CLINIC_HTTP_REDIRECT_PORT ?? 0),
     allowInsecureLan: process.env.CLINIC_ALLOW_INSECURE_LAN === '1',
   };
   return { ...base, ...overrides };

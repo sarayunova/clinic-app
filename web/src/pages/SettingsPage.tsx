@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { api, type ClinicSettings } from '../api';
 import { BackupPanel } from '../components/BackupPanel';
 import { SecurityPanel } from '../components/SecurityPanel';
@@ -33,6 +34,7 @@ export function SettingsPage() {
     <div className="page narrow">
       <h1>Clinic details</h1>
       <p className="muted">These are printed at the top of invoices and receipts.</p>
+      <p><Link className="btn" to="/settings/checklist">Setup checklist: ready for real patients</Link></p>
       <ErrorBanner error={error} />
       {saved && <div className="banner ok" role="status">Saved.</div>}
       <form onSubmit={save} className="card stack">

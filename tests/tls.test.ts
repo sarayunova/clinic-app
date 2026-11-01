@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import http from 'node:http';
 import https from 'node:https';
 import os from 'node:os';
 import path from 'node:path';
@@ -8,7 +9,7 @@ import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../server/app.js';
 import { loadConfig, type Config } from '../server/config.js';
 import { openDb } from '../server/db.js';
-import { TlsError, checkListenSafety, loadTls, setupTls, tlsFiles, tlsStatus } from '../server/tls.js';
+import { TlsError, checkListenSafety, loadTls, setupTls, startHttpRedirect, tlsFiles, tlsStatus } from '../server/tls.js';
 
 const CA_PASS = 'a long clinic CA passphrase';
 const PW = 'correct-horse-battery';
@@ -182,5 +183,57 @@ describe('serving over HTTPS', () => {
     const st = JSON.parse((await app.inject({ method: 'GET', url: '/api/security', headers: { cookie } })).body);
     expect(st).toMatchObject({ https: true, caAvailable: true });
     expect(st.cert.names).toContain('clinic-pc');
+  });
+});
+
+describe('http to https redirect', () => {
+  async function get(port: number, host: string | undefined, url = '/') {
+    return new Promise<{ status: number; location?: string; body: string }>((resolve, reject) => {
+      const req = http.request({ host: '127.0.0.1', port, path: url, method: 'GET', headers: host === undefined ? {} : { host }, setHost: false }, (res) => {
+        let body = '';
+        res.on('data', (d) => (body += d));
+        res.on('end', () => resolve({ status: res.statusCode!, location: res.headers.location, body }));
+      });
+      req.on('error', reject);
+      req.end();
+    });
+  }
+
+  it('redirects to the same address over https, keeping the path and the https port', async () => {
+    const server = await startHttpRedirect('127.0.0.1', 0, ['clinic-pc', '192.168.1.20'], 3080);
+    const port = (server.address() as { port: number }).port;
+    try {
+      const a = await get(port, 'clinic-pc', '/patients/3?x=1');
+      expect(a.status).toBe(308);
+      expect(a.location).toBe('https://clinic-pc:3080/patients/3?x=1');
+      expect((await get(port, 'CLINIC-PC:80')).location).toBe('https://clinic-pc:3080/');
+      expect((await get(port, '192.168.1.20')).location).toBe('https://192.168.1.20:3080/');
+    } finally {
+      server.close();
+    }
+  });
+
+  it('omits the port when https is on 443', async () => {
+    const server = await startHttpRedirect('127.0.0.1', 0, ['clinic-pc'], 443);
+    try {
+      expect((await get((server.address() as { port: number }).port, 'clinic-pc')).location).toBe('https://clinic-pc/');
+    } finally {
+      server.close();
+    }
+  });
+
+  it('refuses a Host that the certificate is not valid for, so it cannot be used to bounce people elsewhere', async () => {
+    const server = await startHttpRedirect('127.0.0.1', 0, ['clinic-pc'], 3080);
+    const port = (server.address() as { port: number }).port;
+    try {
+      for (const h of ['evil.example.com', 'clinic-pc.evil.com', 'evil.com/clinic-pc', 'clinic-pc@evil.com', '']) {
+        const r = await get(port, h);
+        expect(r.status, h).toBe(400);
+        expect(r.location).toBeUndefined();
+      }
+      expect((await get(port, undefined)).status).toBe(400);
+    } finally {
+      server.close();
+    }
   });
 });

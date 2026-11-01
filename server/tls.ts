@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import forge from 'node-forge';
@@ -187,4 +188,39 @@ export function tlsStatus(loaded: LoadedTls | null, host: string): SecurityStatu
   if (loaded && loaded.info.daysLeft < 30) warnings.push(`The HTTPS certificate expires in ${loaded.info.daysLeft} days. Run "npm run cert" to renew it before then.`);
   if (!loaded && reachable) warnings.push('The app is reachable from the network without HTTPS.');
   return { https: !!loaded, reachableFromNetwork: reachable, cert: loaded?.info ?? null, warnings };
+}
+
+// ---------- Plain-HTTP to HTTPS redirect ----------
+
+/** The host name in a Host header, lower-cased, without port or IPv6 brackets. */
+function hostnameOf(header: string | undefined): string | null {
+  if (!header) return null;
+  const m = /^(\[[0-9a-f:.]+\]|[^:/\s]+)(?::\d+)?$/i.exec(header.trim());
+  return m ? m[1]!.replace(/^\[|\]$/g, '').toLowerCase() : null;
+}
+
+/**
+ * Answers every plain-HTTP request with a redirect to the same address over HTTPS. It only redirects to a name the
+ * certificate is valid for, so a forged Host header cannot send someone to another site. Nothing else is served over HTTP.
+ */
+export function redirectHandler(certNames: string[], httpsPort: number): http.RequestListener {
+  const allowed = new Set(certNames.map((n) => n.toLowerCase()));
+  return (req, res) => {
+    const host = hostnameOf(req.headers.host);
+    if (!host || !allowed.has(host)) {
+      res.writeHead(400, { 'content-type': 'text/plain' }).end('Use the clinic computer\'s https:// address.');
+      return;
+    }
+    const target = `https://${host.includes(':') ? `[${host}]` : host}${httpsPort === 443 ? '' : `:${httpsPort}`}${req.url ?? '/'}`;
+    // 308 keeps the request method; the location is built from validated parts only.
+    res.writeHead(308, { location: target, 'content-type': 'text/plain' }).end(`Moved to ${target}`);
+  };
+}
+
+export function startHttpRedirect(host: string, port: number, certNames: string[], httpsPort: number): Promise<http.Server> {
+  return new Promise((resolve, reject) => {
+    const server = http.createServer(redirectHandler(certNames, httpsPort));
+    server.once('error', reject);
+    server.listen(port, host, () => resolve(server));
+  });
 }
