@@ -18,6 +18,7 @@ export const CHECKLIST = [
   { key: 'bitlocker', title: 'Disk encryption (BitLocker) on the clinic computer', detail: 'Protects the records if the computer is stolen.' },
   { key: 'ups', title: 'UPS (battery backup) fitted', detail: 'A power cut should not corrupt the database.' },
   { key: 'owner_named', title: 'Someone is named to look after backups and updates', detail: 'Write the name in the note.' },
+  { key: 'second_doctor_account', title: 'A second doctor-level account exists for emergencies', detail: 'Only a doctor can reset passwords. If the one doctor account is locked out, nobody in the app can fix it. Create a second account with the doctor role (Staff), set a long password, and keep it sealed somewhere safe. Write where it is kept in the note, not the password.' },
   { key: 'permissions_reviewed', title: 'Doctor has reviewed what nurses and reception can do', detail: 'The permission table in the README matches how the clinic works.' },
   { key: 'privacy_rules', title: 'Privacy, retention and clinical-document rules for this location confirmed', detail: 'How long records are kept, who may see them, what consent is needed.' },
   { key: 'price_list', title: 'Price list entered', detail: 'Billing > Price list.' },

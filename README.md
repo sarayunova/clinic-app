@@ -83,7 +83,7 @@ Role boundaries for nurse and attender are my assumptions - confirm with the doc
   Billing has a **collection report** (payments, refunds and net by method, staff member and day, invoices issued, every
   transaction; clinic-local days, up to a year; printable; each view is audited). A finalised consultation shows its invoices and a
   button to start one for that visit.
-- **Setup checklist** (doctor, Clinic > Setup checklist): the one-time jobs before real patients (passphrase, off-site copy, practice restore, HTTPS on devices, auto-start, printer test, BitLocker, UPS, owner, permissions and privacy review, price list). The app cannot check these; it records who ticked each one, when, and a note.
+- **Setup checklist** (doctor, Clinic > Setup checklist): the one-time jobs before real patients (passphrase, off-site copy, practice restore, HTTPS on devices, auto-start, printer test, BitLocker, UPS, owner, a second doctor account for emergencies, permissions and privacy review, price list). The app cannot check these; it records who ticked each one, when, and a note.
 - **Backups**: automatic encrypted backups (AES-256-GCM, passphrase-derived key) while the app runs, each re-opened and
   integrity-checked right after writing, old ones pruned, history kept in the database. The doctor sees status and "Back up now"
   under Clinic, and a warning bar everywhere if backups are off, failing or stale, or stored on the same disk as the data.
