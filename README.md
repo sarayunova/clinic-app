@@ -23,6 +23,12 @@ Open http://127.0.0.1:3080. On first run the app shows a setup screen to create 
 The server listens on this computer only. `HOST`, `PORT` and `CLINIC_TZ` (default `Asia/Kolkata`) are configurable, and so is `CLINIC_SCREEN_LOCK_MINUTES` (default 5; 0 turns the automatic screen lock off).
 The app only listens on this computer until HTTPS is set up (see `docs/HTTPS-SETUP.md`); it refuses to start on the network without it.
 
+**Clinic server PC:** `scripts\setup-clinic-pc.ps1` does the one-time setup in order (checks, build and tests, backup passphrase file,
+HTTPS certificate, firewall rule, automatic start) and lists what is left to do by hand. Run it from an administrator PowerShell,
+with `-DryRun` first:
+`powershell -ExecutionPolicy Bypass -File scripts\setup-clinic-pc.ps1 -DryRun -BackupDir D:\ClinicBackups -ServerIp 192.168.1.20`.
+Add `-LocalOnly` to keep the app on that computer only (no certificate or firewall rule).
+
 ## Roles
 
 | | Doctor | Nurse | Attender |
