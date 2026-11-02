@@ -6,5 +6,9 @@ export default defineConfig({
   root: 'web',
   plugins: [react()],
   build: { outDir: '../dist/web', emptyOutDir: true },
-  server: { port: 5173, proxy: { '/api': 'http://127.0.0.1:3080' } },
+  server: {
+    port: 5173,
+    // Keep the browser's Host header: the API rejects writes whose Origin host differs from Host.
+    proxy: { '/api': { target: 'http://127.0.0.1:3080', changeOrigin: false } },
+  },
 });
