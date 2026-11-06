@@ -270,6 +270,11 @@ export function PatientPage() {
               <PregnancyChip lmp={patient!.lastMenstrualPeriod as string | null} showLmp />
             </div>
           </div>
+          {can('patient:read_clinical') && (
+            <Link className="btn small" to={`/patients/${patient!.id}/summary/print`}>
+              🖨️ Summary & Referral Card
+            </Link>
+          )}
           {can('audit:read') && (
             <Link className="btn small" to={`/audit?patientId=${patient!.id}&patient=${encodeURIComponent(`${patient!.fullName} (${patient!.patientNumber})`)}`}>
               Who has accessed this record

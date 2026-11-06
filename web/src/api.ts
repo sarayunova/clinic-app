@@ -660,3 +660,129 @@ export interface PediatricResponse {
   growth: PediatricGrowth;
   summary: PediatricSummary;
 }
+
+// ---------- Clinical Summary & Referral Card ----------
+
+export interface ClinicalSummaryPatient {
+  id: number;
+  patientNumber: string;
+  fullName: string;
+  dateOfBirth: string | null;
+  ageYears: number | null;
+  ageIsEstimated: boolean;
+  phone: string | null;
+  address: string | null;
+  emergencyContactName: string | null;
+  emergencyContactPhone: string | null;
+  allergyStatus: 'unknown' | 'none' | 'known';
+  allergyDetails: string | null;
+  bloodGroup: string | null;
+  medicalHistory: string | null;
+  surgicalHistory: string | null;
+  familyHistory: string | null;
+  menstrualHistory: string | null;
+  lastMenstrualPeriod: string | null;
+  menopauseStatus: string | null;
+  obstetricHistory: string | null;
+  gravida: number | null;
+  para: number | null;
+  abortions: number | null;
+  living: number | null;
+  ongoingMedicines: string | null;
+  clinicalNotes: string | null;
+}
+
+export interface ClinicalSummaryPregnancy {
+  isMaternity: boolean;
+  lmp: string | null;
+  edd: string | null;
+  gestationalAgeFormatted: string | null;
+  gestationalWeeks: number | null;
+  gestationalDays: number | null;
+  trimester: 'First (1–12w)' | 'Second (13–27w)' | 'Third (28–40w+)' | null;
+  gpalFormatted: string | null;
+  highRiskFlags: string[];
+}
+
+export interface ClinicalSummaryVitals {
+  recordedAt: string;
+  systolic: number | null;
+  diastolic: number | null;
+  heartRate: number | null;
+  temperatureC: number | null;
+  respiratoryRate: number | null;
+  spo2: number | null;
+  weightKg: number | null;
+  urineProtein: string | null;
+  urineGlucose: string | null;
+  source: string;
+  meowsScore: number;
+  meowsLevel: 'normal' | 'yellow' | 'red';
+  meowsTriggers: string[];
+}
+
+export interface ClinicalSummaryAntenatalTest {
+  testKey: string;
+  testName: string;
+  category: string;
+  recommendedWeeks: string;
+  isMandatory: boolean;
+  status: string;
+  completedDate: string | null;
+  resultValue: string | null;
+  notes: string | null;
+  attachmentTitle: string | null;
+}
+
+export interface ClinicalSummaryAntenatalTests {
+  total: number;
+  done: number;
+  pending: number;
+  items: ClinicalSummaryAntenatalTest[];
+}
+
+export interface ClinicalSummaryVisit {
+  id: number;
+  visitDate: string;
+  status: string;
+  assessment: string | null;
+  complaints: string | null;
+  examination: string | null;
+  advice: string | null;
+  followUpDate: string | null;
+  antenatalNotes: string | null;
+  doctorName: string | null;
+}
+
+export interface ClinicalSummaryMedicine {
+  medicine: string;
+  strength: string | null;
+  dose: string | null;
+  route: string | null;
+  frequency: string | null;
+  duration: string | null;
+  instructions: string | null;
+  prescribedDate: string;
+}
+
+export interface ClinicalSummaryAdmission {
+  id: number;
+  admissionNumber: string;
+  admittedDate: string;
+  dischargedDate: string | null;
+  status: string;
+  reason: string | null;
+  finalDiagnosis: string | null;
+  conditionAtDischarge: string | null;
+  dischargeMedicines: string | null;
+}
+
+export interface ClinicalSummaryResponse {
+  patient: ClinicalSummaryPatient;
+  pregnancy: ClinicalSummaryPregnancy;
+  latestVitals: ClinicalSummaryVitals | null;
+  antenatalTests: ClinicalSummaryAntenatalTests | null;
+  recentVisits: ClinicalSummaryVisit[];
+  activeMedicines: ClinicalSummaryMedicine[];
+  latestAdmission: ClinicalSummaryAdmission | null;
+}

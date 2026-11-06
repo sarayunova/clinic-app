@@ -126,6 +126,13 @@ export function AntenatalFlowsheet({ patient, visits, onOpenChecklist }: Props) 
           >
             🖨️ Print Flowsheet
           </button>
+          <Link
+            className="btn small"
+            to={`/patients/${patient.id}/summary/print?mode=antenatal_card`}
+            title="Generate & print Antenatal Discharge & Referral Card"
+          >
+            📄 Antenatal / Referral Card
+          </Link>
         </div>
       </div>
 
