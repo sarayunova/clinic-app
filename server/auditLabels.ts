@@ -63,6 +63,9 @@ export const ACTION_LABELS: Record<string, string> = {
   'backup.run': 'Backup taken',
   'backup.download': 'Downloaded encrypted backup',
   'antenatal.checklist_update': 'Updated antenatal test checklist',
+  'pediatric.profile_update': 'Updated child birth profile',
+  'vaccination.record': 'Recorded vaccination',
+  'vaccination.update': 'Updated vaccination record',
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

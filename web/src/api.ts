@@ -569,3 +569,94 @@ export interface AntenatalChecklistResponse {
   tests: AntenatalTestItem[];
   summary: AntenatalChecklistSummary;
 }
+
+export type VaccineMilestone =
+  | 'birth'
+  | '6_weeks'
+  | '10_weeks'
+  | '14_weeks'
+  | '9_12_months'
+  | '16_24_months'
+  | '5_6_years'
+  | '10_16_years';
+
+export type VaccineStatus = 'pending' | 'given' | 'scheduled' | 'exempt' | 'delayed';
+
+export interface PediatricProfile {
+  birthWeightKg: number | null;
+  birthLengthCm: number | null;
+  birthHeadCircumferenceCm: number | null;
+  gestationalAgeWeeks: number | null;
+  deliveryType: 'normal_vaginal' | 'cesarean' | 'assisted' | 'other' | null;
+  birthHospital: string | null;
+  apgar1min: number | null;
+  apgar5min: number | null;
+  bloodGroup: string | null;
+  birthNotes: string | null;
+  updatedAt: string | null;
+}
+
+export interface VaccineItem {
+  id: number | null;
+  vaccineKey: string;
+  milestone: VaccineMilestone;
+  milestoneLabel: string;
+  vaccineName: string;
+  targetDisease: string;
+  recommendedAge: string;
+  standardRoute: string;
+  standardDose: string;
+  isMandatory: boolean;
+  dueDate: string | null;
+  isOverdue: boolean;
+  isDueNow: boolean;
+  status: VaccineStatus;
+  givenDate: string | null;
+  batchNumber: string | null;
+  routeSite: string | null;
+  administeredBy: string | null;
+  notes: string | null;
+  attachmentId: number | null;
+  attachmentTitle: string | null;
+  attachmentOriginalName: string | null;
+  updatedByName: string | null;
+  updatedAt: string | null;
+}
+
+export interface GrowthHistoryEntry {
+  date: string;
+  weightKg: number | null;
+  heightCm: number | null;
+}
+
+export interface PediatricGrowth {
+  birthWeightKg: number | null;
+  latestWeightKg: number | null;
+  totalWeightGainKg: number | null;
+  birthLengthCm: number | null;
+  latestLengthCm: number | null;
+  birthHeadCircumferenceCm: number | null;
+  doubledBirthWeight: boolean;
+  tripledBirthWeight: boolean;
+  history: GrowthHistoryEntry[];
+}
+
+export interface PediatricSummary {
+  totalVaccines: number;
+  givenCount: number;
+  pendingCount: number;
+  overdueCount: number;
+  exemptCount: number;
+  completionPercentage: number;
+}
+
+export interface PediatricResponse {
+  patientId: number;
+  patientName: string;
+  dateOfBirth: string | null;
+  ageFormatted: string;
+  profile: PediatricProfile | null;
+  vaccinations: VaccineItem[];
+  growth: PediatricGrowth;
+  summary: PediatricSummary;
+}

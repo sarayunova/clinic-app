@@ -27,6 +27,7 @@ import { registerSecurityRoutes } from './routes/security.js';
 import { registerTemplateRoutes } from './routes/templates.js';
 import { registerTvRoutes } from './routes/tv.js';
 import { registerAntenatalChecklistRoutes } from './routes/antenatalChecklist.js';
+import { registerPediatricRoutes } from './routes/pediatric.js';
 import type { LoadedTls } from './tls.js';
 
 declare module 'fastify' {
@@ -157,6 +158,7 @@ export async function buildApp(ctx: Omit<Ctx, 'throttle'> & { throttle?: LoginTh
   registerTemplateRoutes(app, full);
   registerTvRoutes(app, full);
   registerAntenatalChecklistRoutes(app, full);
+  registerPediatricRoutes(app, full);
 
   app.get('/api/health', async () => ({ ok: true }));
   return app;

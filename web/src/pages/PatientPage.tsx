@@ -10,6 +10,7 @@ import { AllergyBadge, ErrorBanner, Field, fieldErrorsOf, formatAge } from '../c
 import { calculateEdd, calculateGestationalAge, formatGpal, PregnancyChip, ObstetricChip } from '../pregnancy';
 import { AntenatalFlowsheet } from '../components/AntenatalFlowsheet';
 import { AntenatalChecklist } from '../components/AntenatalChecklist';
+import { PediatricTracker } from '../components/PediatricTracker';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -119,7 +120,7 @@ export function PatientPage() {
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
-  const [viewMode, setViewMode] = useState<'flowsheet' | 'checklist' | 'list'>('flowsheet');
+  const [viewMode, setViewMode] = useState<'flowsheet' | 'checklist' | 'pediatric' | 'list'>('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
   const [invoices, setInvoices] = useState<Invoice[] | null>(null);
@@ -163,6 +164,29 @@ export function PatientPage() {
     setForm(DEFAULT_FORM);
     void load();
   }, [load]);
+
+  const isMaternity = Boolean(patient?.lastMenstrualPeriod || patient?.gravida != null || visits?.some((v) => v.antenatalNotes));
+  const isPediatric = Boolean(
+    patient && (
+      (patient.ageYears != null && patient.ageYears <= 18) ||
+      (patient.dateOfBirth && (new Date().getFullYear() - parseInt(String(patient.dateOfBirth).slice(0, 4), 10)) <= 18)
+    )
+  );
+
+  useEffect(() => {
+    if (!patient) return;
+    const isMat = Boolean(patient.lastMenstrualPeriod || patient.gravida != null);
+    const isPed =
+      (patient.ageYears != null && patient.ageYears <= 18) ||
+      (patient.dateOfBirth ? new Date().getFullYear() - parseInt(String(patient.dateOfBirth).slice(0, 4), 10) <= 18 : false);
+    if (isPed && !isMat) {
+      setViewMode('pediatric');
+    } else if (isMat) {
+      setViewMode('flowsheet');
+    } else {
+      setViewMode('list');
+    }
+  }, [patient?.id]);
 
   const baseline = useMemo(() => (patient ? toForm(patient) : DEFAULT_FORM), [patient]);
   const changedKeys = ALL_FIELDS.filter((f) => form[f.key] !== baseline[f.key]).map((f) => f.key);
@@ -346,22 +370,35 @@ export function PatientPage() {
         <section className="card stack">
           <div className="page-head" style={{ marginBottom: 0 }}>
             <h2 style={{ margin: 0 }}>Consultations ({visits.length})</h2>
-            {Boolean(patient?.lastMenstrualPeriod || patient?.gravida != null || visits.some((v) => v.antenatalNotes)) && (
+            {(isMaternity || isPediatric) && (
               <div className="row wrap no-print" style={{ gap: '0.4rem' }}>
-                <button
-                  type="button"
-                  className={`btn small ${viewMode === 'flowsheet' ? 'primary' : ''}`}
-                  onClick={() => setViewMode('flowsheet')}
-                >
-                  🤰 Maternity Flowsheet
-                </button>
-                <button
-                  type="button"
-                  className={`btn small ${viewMode === 'checklist' ? 'primary' : ''}`}
-                  onClick={() => setViewMode('checklist')}
-                >
-                  🧪 Lab & Scan Checklist
-                </button>
+                {isMaternity && (
+                  <>
+                    <button
+                      type="button"
+                      className={`btn small ${viewMode === 'flowsheet' ? 'primary' : ''}`}
+                      onClick={() => setViewMode('flowsheet')}
+                    >
+                      🤰 Maternity Flowsheet
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn small ${viewMode === 'checklist' ? 'primary' : ''}`}
+                      onClick={() => setViewMode('checklist')}
+                    >
+                      🧪 Lab & Scan Checklist
+                    </button>
+                  </>
+                )}
+                {isPediatric && (
+                  <button
+                    type="button"
+                    className={`btn small ${viewMode === 'pediatric' ? 'primary' : ''}`}
+                    onClick={() => setViewMode('pediatric')}
+                  >
+                    👶 Child Health & Vaccines
+                  </button>
+                )}
                 <button
                   type="button"
                   className={`btn small ${viewMode === 'list' ? 'primary' : ''}`}
@@ -373,16 +410,21 @@ export function PatientPage() {
             )}
           </div>
 
-          {Boolean(patient?.lastMenstrualPeriod || patient?.gravida != null || visits.some((v) => v.antenatalNotes)) && viewMode === 'flowsheet' ? (
+          {isMaternity && viewMode === 'flowsheet' ? (
             <AntenatalFlowsheet
               patient={patient!}
               visits={visits}
               onOpenChecklist={() => setViewMode('checklist')}
             />
-          ) : Boolean(patient?.lastMenstrualPeriod || patient?.gravida != null || visits.some((v) => v.antenatalNotes)) && viewMode === 'checklist' ? (
+          ) : isMaternity && viewMode === 'checklist' ? (
             <AntenatalChecklist
               patientId={patient!.id}
               lastMenstrualPeriod={patient!.lastMenstrualPeriod}
+            />
+          ) : isPediatric && viewMode === 'pediatric' ? (
+            <PediatricTracker
+              patientId={patient!.id}
+              dateOfBirth={patient!.dateOfBirth as string | null | undefined}
             />
           ) : (
             <>
