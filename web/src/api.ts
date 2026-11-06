@@ -529,3 +529,43 @@ export interface SecurityStatus {
   warnings: string[];
   caAvailable: boolean;
 }
+
+export type AntenatalCategory = 'first_trimester' | 'second_trimester' | 'third_trimester';
+export type AntenatalTestStatus = 'pending' | 'ordered' | 'completed' | 'not_required';
+
+export interface AntenatalTestItem {
+  id: number | null;
+  testKey: string;
+  category: AntenatalCategory;
+  testName: string;
+  recommendedWeeks: string;
+  description: string;
+  isMandatory: boolean;
+  flagForRhNegative: boolean;
+  status: AntenatalTestStatus;
+  resultValue: string | null;
+  notes: string | null;
+  performedDate: string | null;
+  attachmentId: number | null;
+  attachmentTitle: string | null;
+  attachmentOriginalName: string | null;
+  attachmentMime: string | null;
+  updatedByName: string | null;
+  updatedAt: string | null;
+}
+
+export interface AntenatalChecklistSummary {
+  total: number;
+  completed: number;
+  ordered: number;
+  pending: number;
+  notRequired: number;
+  completionPercentage: number;
+}
+
+export interface AntenatalChecklistResponse {
+  patientId: number;
+  patientName: string;
+  tests: AntenatalTestItem[];
+  summary: AntenatalChecklistSummary;
+}

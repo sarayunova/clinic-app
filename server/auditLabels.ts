@@ -62,6 +62,7 @@ export const ACTION_LABELS: Record<string, string> = {
   'settings.update': 'Changed clinic details',
   'backup.run': 'Backup taken',
   'backup.download': 'Downloaded encrypted backup',
+  'antenatal.checklist_update': 'Updated antenatal test checklist',
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

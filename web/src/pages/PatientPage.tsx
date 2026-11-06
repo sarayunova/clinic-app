@@ -9,6 +9,7 @@ import { PAYMENT_STATE_LABEL, formatMoney, startInvoice } from '../money';
 import { AllergyBadge, ErrorBanner, Field, fieldErrorsOf, formatAge } from '../components/ui';
 import { calculateEdd, calculateGestationalAge, formatGpal, PregnancyChip, ObstetricChip } from '../pregnancy';
 import { AntenatalFlowsheet } from '../components/AntenatalFlowsheet';
+import { AntenatalChecklist } from '../components/AntenatalChecklist';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -118,7 +119,7 @@ export function PatientPage() {
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
-  const [viewMode, setViewMode] = useState<'flowsheet' | 'list'>('flowsheet');
+  const [viewMode, setViewMode] = useState<'flowsheet' | 'checklist' | 'list'>('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
   const [invoices, setInvoices] = useState<Invoice[] | null>(null);
@@ -352,7 +353,14 @@ export function PatientPage() {
                   className={`btn small ${viewMode === 'flowsheet' ? 'primary' : ''}`}
                   onClick={() => setViewMode('flowsheet')}
                 >
-                  🤰 Antenatal Flowsheet
+                  🤰 Maternity Flowsheet
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'checklist' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('checklist')}
+                >
+                  🧪 Lab & Scan Checklist
                 </button>
                 <button
                   type="button"
@@ -366,7 +374,16 @@ export function PatientPage() {
           </div>
 
           {Boolean(patient?.lastMenstrualPeriod || patient?.gravida != null || visits.some((v) => v.antenatalNotes)) && viewMode === 'flowsheet' ? (
-            <AntenatalFlowsheet patient={patient!} visits={visits} />
+            <AntenatalFlowsheet
+              patient={patient!}
+              visits={visits}
+              onOpenChecklist={() => setViewMode('checklist')}
+            />
+          ) : Boolean(patient?.lastMenstrualPeriod || patient?.gravida != null || visits.some((v) => v.antenatalNotes)) && viewMode === 'checklist' ? (
+            <AntenatalChecklist
+              patientId={patient!.id}
+              lastMenstrualPeriod={patient!.lastMenstrualPeriod}
+            />
           ) : (
             <>
               {visits.length === 0 && <p className="muted">No consultations recorded yet.</p>}

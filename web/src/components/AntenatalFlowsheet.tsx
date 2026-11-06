@@ -8,9 +8,10 @@ import { evaluateVitalsAlerts } from '../vitalsAlerts';
 interface Props {
   patient: Patient;
   visits: VisitSummary[];
+  onOpenChecklist?: () => void;
 }
 
-export function AntenatalFlowsheet({ patient, visits }: Props) {
+export function AntenatalFlowsheet({ patient, visits, onOpenChecklist }: Props) {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const lmp = typeof patient.lastMenstrualPeriod === 'string' ? patient.lastMenstrualPeriod : null;
@@ -56,6 +57,16 @@ export function AntenatalFlowsheet({ patient, visits }: Props) {
             <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span>🤰 Antenatal Maternity Summary</span>
               {gpalText && <span className="badge">{gpalText}</span>}
+              {onOpenChecklist && (
+                <button
+                  type="button"
+                  className="chip-btn pill-add"
+                  onClick={onOpenChecklist}
+                  style={{ fontSize: '0.78rem' }}
+                >
+                  🧪 Lab & Scan Checklist
+                </button>
+              )}
             </h3>
             <div className="muted small" style={{ marginTop: '0.35rem' }}>
               {lmp ? (
