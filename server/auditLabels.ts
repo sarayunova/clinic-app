@@ -67,6 +67,10 @@ export const ACTION_LABELS: Record<string, string> = {
   'vaccination.record': 'Recorded vaccination',
   'vaccination.update': 'Updated vaccination record',
   'communication.send': 'Sent patient message (WhatsApp/SMS)',
+  'ultrasound.create': 'Created ultrasound report',
+  'ultrasound.update': 'Updated ultrasound report',
+  'ultrasound.delete': 'Deleted ultrasound report',
+  'ultrasound.print': 'Printed ultrasound report',
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

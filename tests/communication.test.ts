@@ -141,21 +141,25 @@ describe('communication log route', () => {
       .all() as { action: string; entity: string; entity_id: string; detail: string }[];
 
     expect(auditRows.length).toBe(3);
-    expect(auditRows[0].action).toBe('communication.send');
-    expect(auditRows[0].entity).toBe('patient');
-    expect(auditRows[0].entity_id).toBe(String(patientId));
+    const row0 = auditRows[0]!;
+    const row1 = auditRows[1]!;
+    const row2 = auditRows[2]!;
 
-    const d1 = JSON.parse(auditRows[0].detail);
+    expect(row0.action).toBe('communication.send');
+    expect(row0.entity).toBe('patient');
+    expect(row0.entity_id).toBe(String(patientId));
+
+    const d1 = JSON.parse(row0.detail);
     expect(d1.channel).toBe('whatsapp');
     expect(d1.messageType).toBe('appointment_reminder');
     expect(d1.recipientPhone).toBe('919876543210');
     expect(d1.summary).toBe('Appointment reminder for tomorrow');
 
-    const d2 = JSON.parse(auditRows[1].detail);
+    const d2 = JSON.parse(row1.detail);
     expect(d2.channel).toBe('sms');
     expect(d2.messageType).toBe('vaccination');
 
-    const d3 = JSON.parse(auditRows[2].detail);
+    const d3 = JSON.parse(row2.detail);
     expect(d3.channel).toBe('clipboard');
     expect(d3.messageType).toBe('prescription');
   });

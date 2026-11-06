@@ -90,7 +90,7 @@ export function ClinicalSummaryPrint() {
     return <p className="muted" style={{ padding: '2rem' }}>Loading clinical summary…</p>;
   }
 
-  const { patient, pregnancy, latestVitals, antenatalTests, recentVisits, activeMedicines, latestAdmission } = data;
+  const { patient, pregnancy, latestVitals, antenatalTests, recentVisits, activeMedicines, latestAdmission, latestUltrasound } = data;
 
   const handlePrint = () => {
     const kind = mode === 'referral_letter' ? 'referral_card' : 'antenatal_summary';
@@ -335,6 +335,39 @@ export function ClinicalSummaryPrint() {
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {latestUltrasound && (
+            <div
+              style={{
+                marginTop: '0.5rem',
+                padding: '0.45rem 0.65rem',
+                background: '#f8fafc',
+                border: '1px solid #cbd5e1',
+                borderRadius: '4px',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                <strong style={{ fontSize: '0.85rem' }}>
+                  📡 Latest Ultrasound ({latestUltrasound.scanDate} · {latestUltrasound.scanType.replace('_', ' ')})
+                </strong>
+                {latestUltrasound.gestationalAgeWeeks != null && (
+                  <span className="badge small">
+                    GA: {latestUltrasound.gestationalAgeWeeks}w {latestUltrasound.gestationalAgeDays ?? 0}d
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: '0.85rem', lineHeight: 1.4 }}>
+                {latestUltrasound.efwGrams && <span><strong>EFW:</strong> {latestUltrasound.efwGrams}g ({latestUltrasound.efwPercentile || 'AGA'}) · </span>}
+                {latestUltrasound.presentation && <span><strong>Presentation:</strong> {latestUltrasound.presentation} · </span>}
+                {latestUltrasound.placentaLocation && <span><strong>Placenta:</strong> {latestUltrasound.placentaLocation} (Grade {latestUltrasound.placentaGrade ?? '—'}) · </span>}
+                {latestUltrasound.amnioticFluidCm != null && <span><strong>AFI/Fluid:</strong> {latestUltrasound.amnioticFluidCm}cm ({latestUltrasound.amnioticFluidAssessment || 'normal'}) · </span>}
+                {latestUltrasound.fhrBpm && <span><strong>FHR:</strong> {latestUltrasound.fhrBpm} bpm · </span>}
+                <div style={{ marginTop: '0.2rem' }}>
+                  <strong>Impression:</strong> {latestUltrasound.impression}
+                </div>
+              </div>
             </div>
           )}
         </Section>

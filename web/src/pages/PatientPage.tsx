@@ -11,6 +11,7 @@ import { calculateEdd, calculateGestationalAge, formatGpal, PregnancyChip, Obste
 import { AntenatalFlowsheet } from '../components/AntenatalFlowsheet';
 import { AntenatalChecklist } from '../components/AntenatalChecklist';
 import { PediatricTracker } from '../components/PediatricTracker';
+import { UltrasoundTracker } from '../components/UltrasoundTracker';
 import { CommunicationModal } from '../components/CommunicationModal';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
@@ -121,7 +122,7 @@ export function PatientPage() {
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
-  const [viewMode, setViewMode] = useState<'flowsheet' | 'checklist' | 'pediatric' | 'list'>('flowsheet');
+  const [viewMode, setViewMode] = useState<'flowsheet' | 'checklist' | 'pediatric' | 'ultrasound' | 'list'>('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
   const [invoices, setInvoices] = useState<Invoice[] | null>(null);
@@ -431,6 +432,13 @@ export function PatientPage() {
                 )}
                 <button
                   type="button"
+                  className={`btn small ${viewMode === 'ultrasound' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('ultrasound')}
+                >
+                  📡 Ultrasound Scans
+                </button>
+                <button
+                  type="button"
                   className={`btn small ${viewMode === 'list' ? 'primary' : ''}`}
                   onClick={() => setViewMode('list')}
                 >
@@ -455,6 +463,12 @@ export function PatientPage() {
             <PediatricTracker
               patientId={patient!.id}
               dateOfBirth={patient!.dateOfBirth as string | null | undefined}
+            />
+          ) : viewMode === 'ultrasound' ? (
+            <UltrasoundTracker
+              patientId={patient!.id}
+              clinicalLmp={patient!.lastMenstrualPeriod as string | null}
+              onChanged={load}
             />
           ) : (
             <>

@@ -803,4 +803,73 @@ export interface ClinicalSummaryResponse {
   recentVisits: ClinicalSummaryVisit[];
   activeMedicines: ClinicalSummaryMedicine[];
   latestAdmission: ClinicalSummaryAdmission | null;
+  latestUltrasound?: UltrasoundReport | null;
+}
+
+// ---------- Ultrasound / Sonography Reports ----------
+
+export type UltrasoundScanType =
+  | 'early_pregnancy'
+  | 'nt_first_trimester'
+  | 'anomaly_scan'
+  | 'growth_wellbeing'
+  | 'pelvic_gyn'
+  | 'other';
+
+export interface UltrasoundReport {
+  id: number;
+  patientId: number;
+  visitId?: number | null;
+  scanDate: string;
+  scanType: UltrasoundScanType;
+  indication?: string | null;
+  clinicalLmp?: string | null;
+  eddByLmp?: string | null;
+  eddByScan?: string | null;
+  gestationalAgeWeeks?: number | null;
+  gestationalAgeDays?: number | null;
+  fetalNumber: 'single' | 'twins' | 'triplets' | 'none';
+  cardiacActivity: 'present' | 'absent' | 'not_applicable';
+  fhrBpm?: number | null;
+  presentation?: 'cephalic' | 'breech' | 'transverse' | 'oblique' | 'variable' | 'not_applicable' | null;
+  placentaLocation?: 'anterior' | 'posterior' | 'fundal' | 'low_lying' | 'previa' | 'not_applicable' | null;
+  placentaGrade?: '0' | '1' | '2' | '3' | 'not_applicable' | null;
+  amnioticFluidType?: 'afi' | 'sdp' | 'adequate' | 'reduced' | 'increased' | 'not_applicable' | null;
+  amnioticFluidCm?: number | null;
+  amnioticFluidAssessment?: 'normal' | 'borderline' | 'oligohydramnios' | 'polyhydramnios' | 'not_applicable' | null;
+  gsdMm?: number | null;
+  crlMm?: number | null;
+  ntMm?: number | null;
+  nasalBone?: 'present' | 'absent' | 'hypoplastic' | 'not_visualized' | null;
+  bpdMm?: number | null;
+  hcMm?: number | null;
+  acMm?: number | null;
+  flMm?: number | null;
+  efwGrams?: number | null;
+  efwPercentile?: string | null;
+  anatomySurvey?: string | null;
+  uterusFindings?: string | null;
+  endometrialThicknessMm?: number | null;
+  rightOvaryFindings?: string | null;
+  leftOvaryFindings?: string | null;
+  freeFluid?: 'none' | 'minimal' | 'moderate' | 'gross' | null;
+  impression: string;
+  recommendations?: string | null;
+  sonographerName?: string | null;
+  attachmentId?: number | null;
+  attachmentTitle?: string | null;
+  attachmentOriginalName?: string | null;
+  createdByName?: string | null;
+  updatedByName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  patientNumber?: string;
+  patientName?: string;
+  dateOfBirth?: string | null;
+  patientPhone?: string | null;
+}
+
+export interface UltrasoundListResponse {
+  patientId: number;
+  reports: UltrasoundReport[];
 }

@@ -459,6 +459,17 @@ export function registerClinicalSummaryRoutes(app: FastifyInstance, { db, cfg }:
         }
       | undefined;
 
+    const latestUsgRow = db
+      .prepare(
+        `SELECT u.*, cu.full_name AS created_by_name
+         FROM patient_ultrasound_reports u
+         LEFT JOIN users cu ON cu.id = u.created_by
+         WHERE u.patient_id = ?
+         ORDER BY u.scan_date DESC, u.id DESC
+         LIMIT 1`
+      )
+      .get(patientId) as any | undefined;
+
     return {
       patient: {
         id: patient.id,
@@ -558,6 +569,34 @@ export function registerClinicalSummaryRoutes(app: FastifyInstance, { db, cfg }:
             finalDiagnosis: latestAdmission.final_diagnosis,
             conditionAtDischarge: latestAdmission.condition_at_discharge,
             dischargeMedicines: latestAdmission.discharge_medicines,
+          }
+        : null,
+      latestUltrasound: latestUsgRow
+        ? {
+            id: latestUsgRow.id,
+            patientId: latestUsgRow.patient_id,
+            scanDate: latestUsgRow.scan_date,
+            scanType: latestUsgRow.scan_type,
+            indication: latestUsgRow.indication,
+            gestationalAgeWeeks: latestUsgRow.gestational_age_weeks,
+            gestationalAgeDays: latestUsgRow.gestational_age_days,
+            fetalNumber: latestUsgRow.fetal_number,
+            cardiacActivity: latestUsgRow.cardiac_activity,
+            fhrBpm: latestUsgRow.fhr_bpm,
+            presentation: latestUsgRow.presentation,
+            placentaLocation: latestUsgRow.placenta_location,
+            placentaGrade: latestUsgRow.placenta_grade,
+            amnioticFluidCm: latestUsgRow.amniotic_fluid_cm,
+            amnioticFluidAssessment: latestUsgRow.amniotic_fluid_assessment,
+            bpdMm: latestUsgRow.bpd_mm,
+            flMm: latestUsgRow.fl_mm,
+            acMm: latestUsgRow.ac_mm,
+            efwGrams: latestUsgRow.efw_grams,
+            efwPercentile: latestUsgRow.efw_percentile,
+            impression: latestUsgRow.impression,
+            recommendations: latestUsgRow.recommendations,
+            sonographerName: latestUsgRow.sonographer_name,
+            createdByName: latestUsgRow.created_by_name ?? null,
           }
         : null,
     };
