@@ -1792,3 +1792,92 @@ export interface NeonatalResuscitationsResponse {
   count: number;
   events: NeonatalResuscitationEvent[];
 }
+
+export interface MaternalMeowsObservation {
+  id: number;
+  meowsEpisodeId: number;
+  patientId: number;
+  recordedAt: string;
+
+  respiratoryRate?: number | null;
+  rrTrigger: 'green' | 'yellow' | 'red';
+  spo2Percent?: number | null;
+  spo2Trigger: 'green' | 'yellow' | 'red';
+  supplementalO2: boolean;
+  o2FlowRateLpm?: number | null;
+  temperatureC?: number | null;
+  tempTrigger: 'green' | 'yellow' | 'red';
+  bpSystolic?: number | null;
+  bpDiastolic?: number | null;
+  bpTrigger: 'green' | 'yellow' | 'red';
+  heartRate?: number | null;
+  hrTrigger: 'green' | 'yellow' | 'red';
+  avpuConsciousness: 'alert' | 'voice' | 'pain' | 'unresponsive' | 'confused_agitated';
+  neuroTrigger: 'green' | 'yellow' | 'red';
+
+  painScore: number;
+  lochiaStatus: 'normal' | 'scant' | 'heavy_foul_smelling' | 'excessive_clots_hemorrhage';
+  lochiaTrigger: 'green' | 'yellow' | 'red';
+  urineOutputMlHr?: number | null;
+  urineTrigger: 'green' | 'yellow' | 'red';
+  proteinuria: 'nil' | 'trace' | '1+' | '2+' | '3+' | '4+';
+  proteinuriaTrigger: 'green' | 'yellow' | 'red';
+
+  yellowTriggersCount: number;
+  redTriggersCount: number;
+  overallAlertLevel: 'normal_green' | 'single_yellow' | 'urgent_two_yellow_one_red' | 'critical_multiple_red';
+  actionRequired?: string | null;
+  actionTaken?: string | null;
+  escalatedToDoctor: boolean;
+  escalatedToName?: string | null;
+
+  suspectedInfectionSite?: string | null;
+  sosScore: number;
+  sosRiskLevel: 'low' | 'intermediate' | 'high_septic_shock';
+  serumLactateMmolL?: number | null;
+  whiteCellCountK?: number | null;
+
+  bundleBloodCulturesTaken: boolean;
+  bundleLactateDrawn: boolean;
+  bundleIvAntibioticsGiven: boolean;
+  bundleIvFluidsBolusGiven: boolean;
+  bundleOxygenApplied: boolean;
+  bundleFoleyUrineHourly: boolean;
+  bundleNotes?: string | null;
+
+  recordedBy: number;
+  recordedByName?: string | null;
+  createdAt: string;
+}
+
+export interface MaternalMeowsEpisode {
+  id: number;
+  patientId: number;
+  maternityAdmissionId?: number | null;
+  episodeType: 'antenatal' | 'intrapartum' | 'postpartum' | 'post_op_lscs';
+  startedAt: string;
+  clinicalIndication?: string | null;
+  primaryDiagnosis?: string | null;
+  highRiskFlags?: string | null;
+  isActive: boolean;
+  status: 'active_monitoring' | 'stepped_down_stable' | 'transferred_to_hdu_icu' | 'discharged' | 'resolved';
+
+  createdBy: number;
+  createdByName?: string | null;
+  updatedBy: number;
+  updatedByName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+
+  patientName?: string;
+  patientNumber?: string;
+  dateOfBirth?: string | null;
+  patientPhone?: string | null;
+  observations?: MaternalMeowsObservation[];
+}
+
+export interface MaternalMeowsEpisodesResponse {
+  patientId: number;
+  count: number;
+  episodes: MaternalMeowsEpisode[];
+}

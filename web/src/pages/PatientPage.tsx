@@ -23,6 +23,7 @@ import { AntenatalLabTracker } from '../components/AntenatalLabTracker';
 import { MedicationSafetyChecker } from '../components/MedicationSafetyChecker';
 import { PphQblManager } from '../components/PphQblManager';
 import { NeonatalResuscitationManager } from '../components/NeonatalResuscitationManager';
+import { MaternalMeowsManager } from '../components/MaternalMeowsManager';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -133,7 +134,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'neonatal_resus' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -480,6 +481,13 @@ export function PatientPage() {
                     </button>
                     <button
                       type="button"
+                      className={`btn small ${viewMode === 'meows' ? 'primary' : ''}`}
+                      onClick={() => setViewMode('meows')}
+                    >
+                      🌡️ MEOWS &amp; Sepsis
+                    </button>
+                    <button
+                      type="button"
                       className={`btn small ${viewMode === 'risk' ? 'primary' : ''}`}
                       onClick={() => setViewMode('risk')}
                     >
@@ -584,6 +592,8 @@ export function PatientPage() {
             <MedicationSafetyChecker patient={patient!} visits={visits} />
           ) : isMaternity && viewMode === 'pph_qbl' ? (
             <PphQblManager patient={patient!} />
+          ) : isMaternity && viewMode === 'meows' ? (
+            <MaternalMeowsManager patient={patient!} />
           ) : isMaternity && viewMode === 'risk' ? (
             <AntenatalRiskEngine
               patientId={patient!.id}
