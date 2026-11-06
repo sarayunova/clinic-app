@@ -8,6 +8,8 @@ import { Discharge } from '../components/Discharge';
 import { startInvoice } from '../money';
 import { AllergyBadge, ErrorBanner, Field, fieldErrorsOf, formatAge, todayLocal } from '../components/ui';
 import { ObstetricChip, PregnancyChip } from '../pregnancy';
+import { VitalsAlertBadges, LiveVitalsAlertBanner } from '../components/VitalsBadges';
+import { evaluateVitalsAlerts } from '../vitalsAlerts';
 
 const TYPE_LABEL: Record<EntryType, string> = {
   doctor_round: 'Doctor round',
@@ -243,6 +245,7 @@ function AddEntry({ adm, onAdded }: { adm: Admission; onAdded: (a: Admission) =>
           ))}
         </div>
       )}
+      {type === 'observation' && <LiveVitalsAlertBanner vitals={v} />}
       <Field label={type === 'observation' ? 'Note (optional)' : 'Entry'} error={fe.content}>
         <textarea rows={type === 'observation' ? 2 : 4} value={v.content} onChange={(e) => setV({ ...v, content: e.target.value })} />
       </Field>
@@ -302,6 +305,7 @@ function Timeline({ adm, onChanged }: { adm: Admission; onChanged: (a: Admission
 }
 
 function EntryView({ e, superseded = false, bare = false }: { e: CareEntry; superseded?: boolean; bare?: boolean }) {
+  const alerts = e.entryType === 'observation' ? evaluateVitalsAlerts(e) : [];
   return (
     <div className={superseded ? 'superseded' : ''}>
       {!bare && (
@@ -313,9 +317,15 @@ function EntryView({ e, superseded = false, bare = false }: { e: CareEntry; supe
             <span className="muted small">recorded {e.createdDate} {e.createdTime}</span>
           )}
           {superseded && <span className="badge warn">Corrected below</span>}
+          {alerts.length > 0 && <VitalsAlertBadges alerts={alerts} />}
         </div>
       )}
       {fmtObs(e) && <div>{fmtObs(e)}</div>}
+      {bare && alerts.length > 0 && (
+        <div style={{ marginTop: '0.25rem' }}>
+          <VitalsAlertBadges alerts={alerts} />
+        </div>
+      )}
       {e.content && <div className="pre">{e.content}</div>}
     </div>
   );
@@ -359,6 +369,7 @@ function CorrectForm({ adm, entry, onDone, onCancel }: { adm: Admission; entry: 
           ))}
         </div>
       )}
+      {entry.entryType === 'observation' && <LiveVitalsAlertBanner vitals={v} />}
       <Field label={entry.entryType === 'observation' ? 'Note' : 'Corrected entry'} error={fe.content}>
         <textarea rows={3} value={v.content} onChange={(e) => setV({ ...v, content: e.target.value })} />
       </Field>

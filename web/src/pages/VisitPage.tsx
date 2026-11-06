@@ -7,6 +7,8 @@ import { BookAppointment } from '../components/BookAppointment';
 import { AllergyBadge, ErrorBanner, Field, fieldErrorsOf, formatAge } from '../components/ui';
 import { ObstetricChip, PregnancyChip } from '../pregnancy';
 import { TemplatePicker } from '../components/TemplatePicker';
+import { VitalsAlertBadges, LiveVitalsAlertBanner, BmiBadge } from '../components/VitalsBadges';
+import { evaluateVitalsAlerts, calculateBmi } from '../vitalsAlerts';
 
 const TEXT_FIELDS = [
   { key: 'complaints', label: 'Presenting complaints' },
@@ -468,15 +470,22 @@ function VitalsCard({ visit, canAdd, onAdded }: { visit: Visit; canAdd: boolean;
       </div>
       {visit.vitals.length === 0 && !open && <p className="muted">No vitals recorded yet.</p>}
       <ul className="cards">
-        {visit.vitals.map((v) => (
-          <li key={v.id}>
-            <div>{fmtVitals(v)}</div>
-            <div className="muted small">
-              {v.recordedTime} · {v.recordedByName}
-              {v.note ? ` · ${v.note}` : ''}
-            </div>
-          </li>
-        ))}
+        {visit.vitals.map((v) => {
+          const alerts = evaluateVitalsAlerts(v);
+          return (
+            <li key={v.id}>
+              <div className="row wrap" style={{ alignItems: 'center', gap: '0.4rem' }}>
+                <span>{fmtVitals(v)}</span>
+                <BmiBadge weightKg={v.weightKg} heightCm={v.heightCm} />
+                <VitalsAlertBadges alerts={alerts} />
+              </div>
+              <div className="muted small">
+                {v.recordedTime} · {v.recordedByName}
+                {v.note ? ` · ${v.note}` : ''}
+              </div>
+            </li>
+          );
+        })}
       </ul>
       {open && (
         <form onSubmit={submit} className="stack">
@@ -489,6 +498,12 @@ function VitalsCard({ visit, canAdd, onAdded }: { visit: Visit; canAdd: boolean;
             {num('weightKg', 'Weight (kg)', '0.1')}
             {num('heightCm', 'Height (cm)', '0.1')}
           </div>
+          <LiveVitalsAlertBanner vitals={f} />
+          {calculateBmi(f.weightKg, f.heightCm) && (
+            <div>
+              <BmiBadge weightKg={f.weightKg} heightCm={f.heightCm} />
+            </div>
+          )}
           <Field label="Note (optional)" error={fe.note}>
             <input value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} maxLength={500} />
           </Field>

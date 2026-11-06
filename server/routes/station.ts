@@ -52,6 +52,18 @@ export function registerStationRoutes(app: FastifyInstance, { db, cfg }: Ctx): v
     const nowStamp = nowIso();
     const today = localDate(now, tz);
 
+    const lastVisitVitals = db.prepare(
+      `SELECT systolic_mmhg, diastolic_mmhg, pulse_bpm, temperature_c, weight_kg, height_cm
+         FROM visit_vitals
+        WHERE visit_id = ?
+        ORDER BY recorded_at DESC, id DESC LIMIT 1`,
+    );
+    const getLatestVitals = (visitId: unknown) => {
+      if (!visitId) return null;
+      const row = lastVisitVitals.get(visitId as number) as Row | undefined;
+      return row ? camelize(row) : null;
+    };
+
     // Outpatients here today who are checked in or being seen, and whether anyone has recorded their vitals yet.
     const opd = (
       db
@@ -70,6 +82,7 @@ export function registerStationRoutes(app: FastifyInstance, { db, cfg }: Ctx): v
       scheduledTime: localTime(r.scheduled_at as string, tz),
       hasVitals: (r.vitals_count as number) > 0,
       vitalsAt: when(r.vitals_at as string | null),
+      latestVitals: getLatestVitals(r.visit_id),
     }));
 
     // Inpatients, in bed order (the order a nurse walks the ward).

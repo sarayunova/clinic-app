@@ -4,6 +4,8 @@ import { api } from '../api';
 import { useAuth } from '../auth';
 import { AllergyBadge, ErrorBanner } from '../components/ui';
 import { ObstetricChip, PregnancyChip } from '../pregnancy';
+import { VitalsAlertBadges, VitalsSummaryBadge } from '../components/VitalsBadges';
+import { evaluateVitalsAlerts, type VitalsInput } from '../vitalsAlerts';
 
 type Allergy = 'unknown' | 'none' | 'known';
 interface Stamp { at: string; date: string; time: string }
@@ -26,6 +28,7 @@ interface OpdRow {
   visitStatus: 'draft' | 'final' | null;
   hasVitals: boolean;
   vitalsAt: Stamp | null;
+  latestVitals?: VitalsInput | null;
 }
 interface Medicine {
   orderId: number;
@@ -79,10 +82,18 @@ function Observation({ o, now }: { o: WardRow['lastObservation']; now: string })
     o.spo2Pct != null ? `SpO₂ ${o.spo2Pct}%` : null,
     o.respRate != null ? `Resp ${o.respRate}` : null,
   ].filter(Boolean);
+  const alerts = evaluateVitalsAlerts(o);
   return (
     <div className="small">
-      <strong>Last observation:</strong> {parts.join(' · ') || 'recorded'}{' '}
-      <span className="muted">at {o.time} ({ago(now, o.at)})</span>
+      <div>
+        <strong>Last observation:</strong> {parts.join(' · ') || 'recorded'}{' '}
+        <span className="muted">at {o.time} ({ago(now, o.at)})</span>
+      </div>
+      {alerts.length > 0 && (
+        <div style={{ marginTop: '0.25rem' }}>
+          <VitalsAlertBadges alerts={alerts} />
+        </div>
+      )}
     </div>
   );
 }
@@ -181,6 +192,7 @@ export function StationPage() {
                         ) : (
                           <span className="badge warn">Vitals not taken</span>
                         )}
+                        {r.latestVitals && <VitalsAlertBadges alerts={evaluateVitalsAlerts(r.latestVitals)} />}
                         <AllergyBadge status={r.allergyStatus} details={r.allergyDetails} />
                         <ObstetricChip gravida={r.gravida} para={r.para} abortions={r.abortions} living={r.living} />
                         <PregnancyChip lmp={r.lastMenstrualPeriod as string | null} />
@@ -213,6 +225,7 @@ export function StationPage() {
                       <div className="chips" style={{ marginTop: '0.2rem' }}>
                         <ObstetricChip gravida={w.gravida} para={w.para} abortions={w.abortions} living={w.living} />
                         <PregnancyChip lmp={w.lastMenstrualPeriod as string | null} />
+                        <VitalsSummaryBadge vitals={w.lastObservation} />
                       </div>
                     </div>
                     <AllergyBadge status={w.allergyStatus} details={w.allergyDetails} />

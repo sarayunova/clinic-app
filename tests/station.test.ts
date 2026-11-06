@@ -123,6 +123,7 @@ describe('nurse station: outpatients', () => {
     await call('POST', `/api/visits/${visit.id}/vitals`, nurse, { systolicMmhg: 120, diastolicMmhg: 80, pulseBpm: 76 });
     opd = (await station()).body.opd;
     expect(opd[0]).toMatchObject({ patientName: 'Asha Verma', visitId: visit.id, hasVitals: true });
+    expect(opd[0].latestVitals).toMatchObject({ systolicMmhg: 120, diastolicMmhg: 80, pulseBpm: 76 });
     expect(opd[0].vitalsAt.time).toMatch(/^\d{2}:\d{2}$/);
     expect(opd[1]).toMatchObject({ patientName: 'Meera Iyer', hasVitals: false });
   });
