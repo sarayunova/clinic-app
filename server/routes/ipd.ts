@@ -11,6 +11,7 @@ import { measure, round1 } from '../validation.js';
 import { ageYears } from './patients.js';
 import { medicinesOf } from './medicines.js';
 import { dischargeOf } from './discharge.js';
+import { intervalHoursOf, doseState } from './station.js';
 
 const date = z.string().refine(isRealDate, 'Must be a valid date (YYYY-MM-DD)');
 const clock = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use 24-hour HH:MM');
@@ -29,6 +30,7 @@ const admitSchema = z
     diagnosis: text(1000).optional(),
     initialAssessment: text(4000).optional(),
     treatmentPlan: text(4000).optional(),
+    expectedDischargeDate: date.nullable().optional(),
     admittedDate: date.optional(),
     admittedTime: clock.optional(),
   })
@@ -40,6 +42,13 @@ const admissionPatch = z
     diagnosis: text(1000).optional(),
     initialAssessment: text(4000).optional(),
     treatmentPlan: text(4000).optional(),
+    expectedDischargeDate: date.nullable().optional(),
+  })
+  .strict();
+const dischargePlanSchema = z
+  .object({
+    expectedDischargeDate: date.nullable().optional(),
+    version: z.number().int().min(1).optional(),
   })
   .strict();
 const transferSchema = z
@@ -113,23 +122,125 @@ export function registerIpdRoutes(app: FastifyInstance, { db, cfg }: Ctx): void 
   // ---------- Beds and ward board ----------
 
   app.get('/api/beds', async (req) => {
-    requirePerm(req, 'ipd:read_basic');
+    const user = requirePerm(req, 'ipd:read_basic');
+    const canClinical = can(user.role, 'ipd:read');
+
     const rows = db
       .prepare(
         `SELECT b.id, b.room, b.label, b.active,
                 a.id AS admission_id, a.admission_number, a.admitted_at,
-                p.id AS patient_id, p.full_name AS patient_name, p.patient_number, p.allergy_status, p.allergy_details
+                a.version AS admission_version, a.reason AS admission_reason, a.diagnosis AS admission_diagnosis, a.expected_discharge_date,
+                p.id AS patient_id, p.full_name AS patient_name, p.patient_number, p.allergy_status, p.allergy_details,
+                p.date_of_birth, p.estimated_age_years
            FROM beds b
            LEFT JOIN admissions a ON a.bed_id = b.id AND a.status = 'admitted'
            LEFT JOIN patients p ON p.id = a.patient_id
           ORDER BY b.room COLLATE NOCASE, b.label COLLATE NOCASE`,
       )
       .all() as Row[];
+
+    const now = new Date();
+    const nowStamp = nowIso();
+
+    const lastObsStmt = canClinical
+      ? db.prepare(
+          `SELECT c.clinical_at, c.systolic_mmhg, c.diastolic_mmhg, c.pulse_bpm, c.temperature_c, c.spo2_pct, c.resp_rate
+             FROM care_entries c
+            WHERE c.admission_id = ? AND c.entry_type = 'observation'
+              AND NOT EXISTS (SELECT 1 FROM care_entries x WHERE x.corrects_id = c.id)
+            ORDER BY c.clinical_at DESC, c.id DESC LIMIT 1`,
+        )
+      : null;
+
+    const activePartographStmt = canClinical
+      ? db.prepare(
+          `SELECT id, partograph_number, status, start_time
+             FROM partographs
+            WHERE admission_id = ? AND status = 'active'
+            ORDER BY start_time DESC, id DESC LIMIT 1`,
+        )
+      : null;
+
+    const activeOrdersStmt = canClinical
+      ? db.prepare(
+          `SELECT id, frequency, start_at FROM medicine_orders
+            WHERE admission_id = ? AND (stopped_at IS NULL OR stopped_at > ?)`,
+        )
+      : null;
+
+    const lastMedRecordStmt = canClinical
+      ? db.prepare(
+          `SELECT given_at FROM medication_records r
+            WHERE r.order_id = ? AND NOT EXISTS (SELECT 1 FROM medication_records x WHERE x.corrects_id = r.id)
+            ORDER BY r.given_at DESC, r.id DESC LIMIT 1`,
+        )
+      : null;
+
     return rows.map((r) => {
-      const o = camelize(r);
-      o.active = r.active === 1;
-      o.occupied = r.admission_id != null;
-      if (r.admitted_at) o.dayNumber = dayNumber(r.admitted_at as string);
+      const o: Record<string, unknown> = {
+        id: r.id,
+        room: r.room,
+        label: r.label,
+        active: r.active === 1,
+        occupied: r.admission_id != null,
+        admissionId: r.admission_id ?? null,
+        admissionNumber: r.admission_number ?? null,
+        patientId: r.patient_id ?? null,
+        patientName: r.patient_name ?? null,
+        patientNumber: r.patient_number ?? null,
+        allergyStatus: r.allergy_status ?? null,
+        allergyDetails: r.allergy_details ?? null,
+      };
+
+      if (r.admission_id != null) {
+        o.admissionId = r.admission_id;
+        o.admissionNumber = r.admission_number;
+        o.admittedAt = r.admitted_at;
+        o.patientId = r.patient_id;
+        o.patientName = r.patient_name;
+        o.patientNumber = r.patient_number;
+        o.allergyStatus = r.allergy_status;
+        o.allergyDetails = r.allergy_details;
+        if (r.admitted_at) {
+          o.dayNumber = dayNumber(r.admitted_at as string);
+          o.admittedDate = localDate(new Date(r.admitted_at as string), tz);
+          o.admittedTime = localTime(r.admitted_at as string, tz);
+        }
+
+        const dob = r.date_of_birth as string | null;
+        o.patientAgeYears = dob ? ageYears(dob, localDate(new Date(), tz)) : (r.estimated_age_years as number | null);
+        o.expectedDischargeDate = r.expected_discharge_date ?? null;
+
+        if (canClinical) {
+          o.admissionVersion = r.admission_version;
+          o.admissionReason = r.admission_reason;
+          o.admissionDiagnosis = r.admission_diagnosis;
+
+          const obs = lastObsStmt?.get(r.admission_id as number) as Row | undefined;
+          o.lastObservation = obs
+            ? {
+                ...camelize(obs),
+                date: localDate(new Date(obs.clinical_at as string), tz),
+                time: localTime(obs.clinical_at as string, tz),
+              }
+            : null;
+
+          const partograph = activePartographStmt?.get(r.admission_id as number) as Row | undefined;
+          o.activeLaborPartograph = partograph ? camelize(partograph) : null;
+
+          if (activeOrdersStmt && lastMedRecordStmt) {
+            const orders = activeOrdersStmt.all(r.admission_id as number, nowStamp) as Row[];
+            let dueCount = 0;
+            for (const ord of orders) {
+              const rec = lastMedRecordStmt.get(ord.id as number) as { given_at: string } | undefined;
+              const intervalHours = intervalHoursOf(ord.frequency as string);
+              const st = doseState({ intervalHours, startAt: ord.start_at as string, lastAt: rec?.given_at ?? null, now });
+              if (st === 'may_be_due') dueCount++;
+            }
+            o.mayBeDueCount = dueCount;
+          }
+        }
+      }
       return o;
     });
   });
@@ -175,6 +286,7 @@ export function registerIpdRoutes(app: FastifyInstance, { db, cfg }: Ctx): void 
   const BASIC_KEYS = new Set([
     'id', 'admissionNumber', 'patientId', 'patientNumber', 'patientName', 'ageYears', 'ageIsEstimated', 'allergyStatus', 'allergyDetails',
     'bedId', 'bedRoom', 'bedLabel', 'admittedAt', 'admittedDate', 'admittedTime', 'dayNumber', 'status', 'dischargedAt', 'version',
+    'expectedDischargeDate',
   ]);
 
   function presentRow(row: Row, role: Role) {
@@ -272,10 +384,23 @@ export function registerIpdRoutes(app: FastifyInstance, { db, cfg }: Ctx): void 
       const now = nowIso();
       const r = db
         .prepare(
-          `INSERT INTO admissions(admission_number, patient_id, bed_id, admitted_at, reason, diagnosis, initial_assessment, treatment_plan, created_by, created_at, updated_at)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+          `INSERT INTO admissions(admission_number, patient_id, bed_id, admitted_at, reason, diagnosis, initial_assessment, treatment_plan, expected_discharge_date, created_by, created_at, updated_at)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
         )
-        .run(number, body.patientId, body.bedId, admittedAt, body.reason, body.diagnosis ?? null, body.initialAssessment ?? null, body.treatmentPlan ?? null, user.id, now, now);
+        .run(
+          number,
+          body.patientId,
+          body.bedId,
+          admittedAt,
+          body.reason,
+          body.diagnosis ?? null,
+          body.initialAssessment ?? null,
+          body.treatmentPlan ?? null,
+          body.expectedDischargeDate ?? null,
+          user.id,
+          now,
+          now,
+        );
       const aid = Number(r.lastInsertRowid);
       audit(db, { actorId: user.id, action: 'admission.create', entity: 'admission', entityId: aid, detail: { number, patientId: body.patientId, bedId: body.bedId } });
       return aid;
@@ -326,6 +451,39 @@ export function registerIpdRoutes(app: FastifyInstance, { db, cfg }: Ctx): void 
         ...keys.map((k) => changes[k] as string | null), nowIso(), id,
       );
       audit(db, { actorId: user.id, action: 'admission.update', entity: 'admission', entityId: id, detail });
+    });
+    return present(id, user);
+  });
+
+  app.patch('/api/admissions/:id/discharge-plan', async (req) => {
+    const user = requireUser(req);
+    if (!can(user.role, 'admission:write') && !can(user.role, 'care:write_nursing') && !can(user.role, 'discharge:write')) {
+      throw forbidden('Only clinical staff can update the expected discharge plan');
+    }
+    const id = idOf((req.params as { id: string }).id, 'Admission');
+    const body = parse(dischargePlanSchema, req.body);
+    tx(db, () => {
+      const cur = db.prepare('SELECT id, status, version, expected_discharge_date FROM admissions WHERE id = ?').get(id) as
+        | { id: number; status: string; version: number; expected_discharge_date: string | null }
+        | undefined;
+      if (!cur) throw notFound('Admission');
+      if (cur.status !== 'admitted') throw badRequest('This admission has ended');
+      if (body.version != null && cur.version !== body.version) {
+        throw conflict('This admission was changed by someone else. Reload it and try again.', { currentVersion: cur.version });
+      }
+      const nextVal = body.expectedDischargeDate ?? null;
+      if (nextVal !== cur.expected_discharge_date) {
+        const detail = diff(
+          { expectedDischargeDate: cur.expected_discharge_date },
+          { expectedDischargeDate: nextVal },
+        );
+        db.prepare('UPDATE admissions SET expected_discharge_date = ?, version = version + 1, updated_at = ? WHERE id = ?').run(
+          nextVal,
+          nowIso(),
+          id,
+        );
+        audit(db, { actorId: user.id, action: 'admission.update', entity: 'admission', entityId: id, detail });
+      }
     });
     return present(id, user);
   });

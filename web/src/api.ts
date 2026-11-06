@@ -261,6 +261,25 @@ export interface VisitSummary {
 
 // ---------- Inpatient care ----------
 
+export interface BedObservation {
+  systolicMmhg?: number | null;
+  diastolicMmhg?: number | null;
+  pulseBpm?: number | null;
+  temperatureC?: number | null;
+  spo2Pct?: number | null;
+  respRate?: number | null;
+  clinicalAt?: string | null;
+  date?: string | null;
+  time?: string | null;
+}
+
+export interface BedActiveLaborPartograph {
+  id: number;
+  partographNumber: string;
+  status: 'active' | 'completed' | 'discontinued';
+  startTime: string;
+}
+
 export interface Bed {
   id: number;
   room: string;
@@ -269,12 +288,23 @@ export interface Bed {
   occupied: boolean;
   admissionId?: number | null;
   admissionNumber?: string | null;
+  admissionVersion?: number | null;
+  admissionReason?: string | null;
+  admissionDiagnosis?: string | null;
+  expectedDischargeDate?: string | null;
   patientId?: number | null;
   patientName?: string | null;
   patientNumber?: string | null;
+  patientAgeYears?: number | null;
   allergyStatus?: 'unknown' | 'none' | 'known' | null;
   allergyDetails?: string | null;
   dayNumber?: number | null;
+  admittedAt?: string | null;
+  admittedDate?: string | null;
+  admittedTime?: string | null;
+  lastObservation?: BedObservation | null;
+  activeLaborPartograph?: BedActiveLaborPartograph | null;
+  mayBeDueCount?: number;
 }
 
 export type EntryType = 'doctor_round' | 'nursing_note' | 'observation' | 'procedure' | 'investigation';
@@ -341,6 +371,7 @@ export interface Admission {
   diagnosis?: string | null;
   initialAssessment?: string | null;
   treatmentPlan?: string | null;
+  expectedDischargeDate?: string | null;
   entries?: CareEntry[];
   /** Every move between beds, oldest first (clinical view only). */
   transfers?: BedTransfer[];

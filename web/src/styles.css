@@ -219,6 +219,9 @@ a.list-item { text-decoration: none; }
 .bed.occupied { border-top-color: var(--primary); }
 .bed.free { border-top-color: #3d9a5b; }
 .bed-label { font-weight: 700; }
+.bed-bay { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.bed-bay:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.hover-underline:hover { text-decoration: underline !important; }
 .pre { white-space: pre-wrap; }
 .superseded .pre, .superseded > div:not(:first-child) { text-decoration: line-through; text-decoration-color: var(--muted); opacity: 0.75; }
 .correction { margin-top: 0.6rem; padding: 0.6rem 0.75rem; border-left: 4px solid #d98e04; background: var(--bg); border-radius: 0 var(--radius) var(--radius) 0; display: grid; gap: 0.2rem; }
