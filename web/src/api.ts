@@ -861,6 +861,36 @@ export type UltrasoundScanType =
   | 'pelvic_gyn'
   | 'other';
 
+export type BiometricTag =
+  | 'bpd'
+  | 'hc'
+  | 'ac'
+  | 'fl'
+  | 'crl'
+  | 'nt'
+  | 'cardiac'
+  | 'doppler'
+  | 'placenta'
+  | '3d_face'
+  | 'general';
+
+export interface UltrasoundImage {
+  id: number;
+  reportId: number;
+  patientId: number;
+  attachmentId: number;
+  imageLabel: string | null;
+  biometricTag: BiometricTag;
+  measurementValue: string | null;
+  includeInPrint: boolean;
+  displayOrder: number;
+  originalName: string;
+  mime: string;
+  sizeBytes: number;
+  attachmentTitle: string | null;
+  createdAt: string;
+}
+
 export interface UltrasoundReport {
   id: number;
   patientId: number;
@@ -912,11 +942,54 @@ export interface UltrasoundReport {
   patientName?: string;
   dateOfBirth?: string | null;
   patientPhone?: string | null;
+  images?: UltrasoundImage[];
 }
 
 export interface UltrasoundListResponse {
   patientId: number;
   reports: UltrasoundReport[];
+}
+
+export interface UltrasoundBiometryScan {
+  id: number;
+  scanDate: string;
+  scanType: UltrasoundScanType;
+  gestationalAgeWeeks: number | null;
+  gestationalAgeDays: number | null;
+  clinicalLmp: string | null;
+  eddByLmp: string | null;
+  eddByScan: string | null;
+  lmpGaDays: number | null;
+  lmpGaFormatted: string | null;
+  scanGaDays: number | null;
+  scanGaFormatted: string | null;
+  deltaDays: number | null;
+  growthStatus: string;
+  bpdMm: number | null;
+  hcMm: number | null;
+  acMm: number | null;
+  flMm: number | null;
+  crlMm: number | null;
+  ntMm: number | null;
+  efwGrams: number | null;
+  efwPercentile: string | null;
+  amnioticFluidCm: number | null;
+  amnioticFluidAssessment: string | null;
+  fhrBpm: number | null;
+  imagesCount: number;
+}
+
+export interface UltrasoundBiometryResponse {
+  patientId: number;
+  scans: UltrasoundBiometryScan[];
+  summary: {
+    totalScans: number;
+    hasGrowthRestrictionAlert: boolean;
+    hasMacrosomiaAlert: boolean;
+    latestEfwGrams: number | null;
+    latestAfiCm: number | null;
+    latestDiscrepancyDays: number | null;
+  };
 }
 
 // ---------- Laboratory Investigation Orders & Results ----------

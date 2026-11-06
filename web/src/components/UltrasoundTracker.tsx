@@ -8,6 +8,8 @@ import {
 } from '../api';
 import { useAuth } from '../auth';
 import { ErrorBanner, Field, todayLocal } from './ui';
+import { UltrasoundGallery } from './UltrasoundGallery';
+import { UltrasoundGrowthChart } from './UltrasoundGrowthChart';
 import {
   calculateEfwHadlock,
   evaluateEfwPercentile,
@@ -934,6 +936,9 @@ export function UltrasoundTracker({ patientId, clinicalLmp, onChanged }: Props) 
         </form>
       )}
 
+      {/* Longitudinal Fetal Growth Trajectory & GA Comparison */}
+      <UltrasoundGrowthChart patientId={patientId} refreshTrigger={reports?.length} />
+
       {/* Reports Listing */}
       {loading && !reports && <p className="muted">Loading ultrasound records…</p>}
 
@@ -1076,6 +1081,13 @@ export function UltrasoundTracker({ patientId, clinicalLmp, onChanged }: Props) 
                   </div>
                 )}
               </div>
+
+              {/* Scan Gallery */}
+              <UltrasoundGallery
+                report={r}
+                canEdit={canEdit}
+                onImagesUpdated={load}
+              />
 
               <div className="muted small" style={{ fontSize: '0.75rem', marginTop: '0.1rem' }}>
                 Recorded by {r.sonographerName || r.createdByName || 'Staff'} · Report #{r.id}

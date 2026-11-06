@@ -4,6 +4,7 @@ import { api, type UltrasoundReport } from '../api';
 import { Sheet, useClinic } from '../components/Sheet';
 import { SignatureBlock } from '../components/SignatureBlock';
 import { ErrorBanner } from '../components/ui';
+import { BIOMETRIC_TAG_CONFIG } from '../components/UltrasoundGallery';
 import { ANATOMICAL_SURVEY_ITEMS } from '../ultrasoundBiometry';
 
 export function UltrasoundPrint() {
@@ -421,6 +422,125 @@ export function UltrasoundPrint() {
           </div>
         )}
       </section>
+
+      {/* Attached Sonographic Image Documentation Plate */}
+      {(() => {
+        const printImages = (report.images ?? []).filter(
+          (img) => img.includeInPrint && img.mime !== 'application/pdf'
+        );
+        if (printImages.length === 0) return null;
+
+        return (
+          <section
+            className="sheet-block"
+            style={{
+              marginTop: '1.2rem',
+              pageBreakInside: 'avoid',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '0.88rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                borderBottom: '1px solid #0f172a',
+                paddingBottom: '0.2rem',
+                marginBottom: '0.6rem',
+                color: '#0f172a',
+              }}
+            >
+              Sonographic Image Documentation ({printImages.length} {printImages.length === 1 ? 'Plate' : 'Plates'})
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: printImages.length === 1 ? 'minmax(280px, 420px)' : 'repeat(2, 1fr)',
+                gap: '0.8rem',
+                justifyContent: 'center',
+              }}
+            >
+              {printImages.map((img) => {
+                const conf = BIOMETRIC_TAG_CONFIG[img.biometricTag] || BIOMETRIC_TAG_CONFIG.general;
+                return (
+                  <div
+                    key={img.id}
+                    style={{
+                      border: '1px solid #94a3b8',
+                      borderRadius: '4px',
+                      overflow: 'hidden',
+                      background: '#000000',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      pageBreakInside: 'avoid',
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: '180px',
+                        background: '#050811',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <img
+                        src={`/api/attachments/${img.attachmentId}/file`}
+                        alt={img.imageLabel || 'Ultrasound plate'}
+                        style={{
+                          maxWidth: '100%',
+                          maxHeight: '100%',
+                          objectFit: 'contain',
+                        }}
+                      />
+                    </div>
+
+                    <div
+                      style={{
+                        padding: '0.35rem 0.5rem',
+                        background: '#f8fafc',
+                        borderTop: '1px solid #cbd5e1',
+                        fontSize: '0.78rem',
+                        lineHeight: 1.3,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        color: '#0f172a',
+                      }}
+                    >
+                      <div>
+                        <strong style={{ fontSize: '0.8rem' }}>
+                          {img.imageLabel || 'Sonogram'}
+                        </strong>
+                        {img.measurementValue && (
+                          <div style={{ color: '#0369a1', fontWeight: 600, fontSize: '0.75rem' }}>
+                            {img.measurementValue}
+                          </div>
+                        )}
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          padding: '1px 5px',
+                          borderRadius: '3px',
+                          border: '1px solid #cbd5e1',
+                          backgroundColor: '#ffffff',
+                          color: conf.color,
+                        }}
+                      >
+                        {conf.label}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* Signature & Disclaimer Block */}
       <div
