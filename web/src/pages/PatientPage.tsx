@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ApiError, api, type Admission, type Invoice, type Patient, type VisitSummary } from '../api';
+import { ApiError, api, type Admission, type Invoice, type Patient, type VisitSummary, type PatientRiskSummary } from '../api';
 import { useAuth } from '../auth';
 import { BookAppointment } from '../components/BookAppointment';
 import { Documents } from '../components/Documents';
@@ -16,6 +16,7 @@ import { LabTracker } from '../components/LabTracker';
 import { PartographTracker } from '../components/PartographTracker';
 import { OperativeNotesList } from '../components/OperativeNotesList';
 import { CommunicationModal } from '../components/CommunicationModal';
+import { AntenatalRiskEngine } from '../components/AntenatalRiskEngine';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -125,10 +126,13 @@ export function PatientPage() {
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
-  const [viewMode, setViewMode] = useState<'flowsheet' | 'checklist' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'list'>('flowsheet');
+  const [viewMode, setViewMode] = useState<
+    'flowsheet' | 'checklist' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'list'
+  >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
   const [invoices, setInvoices] = useState<Invoice[] | null>(null);
+  const [riskSummary, setRiskSummary] = useState<PatientRiskSummary | null>(null);
   const [dupes, setDupes] = useState<{ id: number; patientNumber: string; fullName: string; phone: string | null }[] | null>(null);
   const [showCommModal, setShowCommModal] = useState(false);
 
@@ -160,6 +164,12 @@ export function PatientPage() {
     setInvoices(null);
     if (isNew || !can('billing:read')) return;
     api<Invoice[]>('GET', `/api/patients/${id}/invoices`).then(setInvoices, () => setInvoices([]));
+  }, [id, isNew, can]);
+
+  useEffect(() => {
+    setRiskSummary(null);
+    if (isNew || !can('patient:read_clinical')) return;
+    api<PatientRiskSummary>('GET', `/api/patients/${id}/risk-summary`).then(setRiskSummary, () => setRiskSummary(null));
   }, [id, isNew, can]);
 
   useEffect(() => {
@@ -287,6 +297,25 @@ export function PatientPage() {
             <div className="chips" style={{ marginTop: '0.35rem' }}>
               <ObstetricChip gravida={patient!.gravida} para={patient!.para} abortions={patient!.abortions} living={patient!.living} />
               <PregnancyChip lmp={patient!.lastMenstrualPeriod as string | null} showLmp />
+              {riskSummary?.isHighRisk && (
+                <button
+                  type="button"
+                  onClick={() => setViewMode('risk')}
+                  style={{
+                    background: '#fee2e2',
+                    color: '#991b1b',
+                    border: '1px solid #f87171',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                  title="High-Risk Pregnancy: Click to view assessment & prophylaxis protocols"
+                >
+                  ⚠️ HIGH RISK
+                </button>
+              )}
             </div>
           </div>
           {can('patient:read_basic') && (
@@ -422,6 +451,13 @@ export function PatientPage() {
                     >
                       🧪 Lab & Scan Checklist
                     </button>
+                    <button
+                      type="button"
+                      className={`btn small ${viewMode === 'risk' ? 'primary' : ''}`}
+                      onClick={() => setViewMode('risk')}
+                    >
+                      ⚠️ High-Risk Scoring
+                    </button>
                   </>
                 )}
                 {isPediatric && (
@@ -484,6 +520,16 @@ export function PatientPage() {
             <AntenatalChecklist
               patientId={patient!.id}
               lastMenstrualPeriod={patient!.lastMenstrualPeriod}
+            />
+          ) : isMaternity && viewMode === 'risk' ? (
+            <AntenatalRiskEngine
+              patientId={patient!.id}
+              patientName={patient!.fullName}
+              lastMenstrualPeriod={patient!.lastMenstrualPeriod}
+              dateOfBirth={patient!.dateOfBirth as string | null | undefined}
+              gravida={patient!.gravida}
+              para={patient!.para}
+              onChanged={load}
             />
           ) : isPediatric && viewMode === 'pediatric' ? (
             <PediatricTracker

@@ -1170,3 +1170,70 @@ export interface OperativeNote {
   createdAt: string;
   updatedAt: string;
 }
+
+// ---------- Antenatal High-Risk Assessment & Scoring Engine ----------
+
+export interface AntenatalRiskAssessment {
+  id: number;
+  patientId: number;
+  assessmentDate: string;
+  gestationalAgeWeeks?: number | null;
+  gestationalAgeDays?: number | null;
+  assessedBy: number;
+  assessedByName?: string | null;
+  peFactors: string[];
+  peRiskLevel: 'low' | 'moderate' | 'high';
+  peAspirinIndicated: boolean;
+  peAspirinPrescribed: boolean;
+  peAspirinDosage?: string | null;
+  peCalciumIndicated: boolean;
+  peCalciumPrescribed: boolean;
+  vteFactors: string[];
+  vteScore: number;
+  vteRiskLevel: 'low' | 'low_moderate' | 'intermediate' | 'high';
+  vteProphylaxisRecommended?: string | null;
+  vteLmwhPrescribed: boolean;
+  vteLmwhDosage?: string | null;
+  gdmFactors: string[];
+  gdmRiskLevel: 'standard' | 'high';
+  gdmScreeningTiming?: string | null;
+  gdmDiagnosisStatus: 'not_tested' | 'pending' | 'normal' | 'gdm_confirmed';
+  gdmFastingMgdl?: number | null;
+  gdm1hrMgdl?: number | null;
+  gdm2hrMgdl?: number | null;
+  gdmManagementPlan?: string | null;
+  ptbFactors: string[];
+  ptbRiskLevel: 'low' | 'high';
+  ptbProgesteroneIndicated: boolean;
+  ptbProgesteronePrescribed: boolean;
+  ptbCerclageAdvised: boolean;
+  overallRiskLevel: 'low_risk' | 'moderate_risk' | 'high_risk';
+  highRiskReasons?: string | null;
+  clinicalActionPlan?: string | null;
+  consultantNotes?: string | null;
+  nextReviewDate?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  patientNumber?: string;
+  patientName?: string;
+  dateOfBirth?: string | null;
+  patientPhone?: string | null;
+  lastMenstrualPeriod?: string | null;
+  gravida?: number | null;
+  para?: number | null;
+}
+
+export interface RiskAssessmentListResponse {
+  patientId: number;
+  assessments: AntenatalRiskAssessment[];
+}
+
+export interface PatientRiskSummary {
+  patientId: number;
+  hasAssessment: boolean;
+  isHighRisk: boolean;
+  overallRiskLevel: 'not_assessed' | 'low_risk' | 'moderate_risk' | 'high_risk';
+  activeAlerts: string[];
+  prophylaxisPrescribed: string[];
+  latestAssessment?: AntenatalRiskAssessment | null;
+}
