@@ -1468,3 +1468,75 @@ export interface DeliveryWardBoardResponse {
   count: number;
   admissions: MaternityAdmission[];
 }
+
+// ---------- Antenatal Longitudinal Lab Trends & Serology Matrix ----------
+
+export interface AntenatalLabTrend {
+  id: number;
+  patientId: number;
+  testDate: string;
+  gestationalAgeWeeks?: number | null;
+  gestationalAgeDays?: number | null;
+  trimester: 't1' | 't2' | 't3';
+  parameterKey: string;
+  parameterName: string;
+  numericValue: number;
+  unit: string;
+  referenceRange?: string | null;
+  abnormalFlag: 'normal' | 'low' | 'high' | 'critical';
+  clinicalAction?: string | null;
+  labResultId?: number | null;
+  attachmentId?: number | null;
+  createdBy: number;
+  createdByName?: string | null;
+  createdAt: string;
+}
+
+export interface AntenatalLabTrendsResponse {
+  patientId: number;
+  totalCount: number;
+  trendsByParam: Record<string, AntenatalLabTrend[]>;
+  allTrends: AntenatalLabTrend[];
+}
+
+export interface AntenatalSerologyMatrix {
+  id?: number;
+  patientId: number;
+  bloodGroupAbo?: string | null;
+  rhFactor?: 'positive' | 'negative' | null;
+  indirectCoombsTestBooking: 'negative' | 'positive' | 'not_done';
+  indirectCoombsTest28w: 'negative' | 'positive' | 'not_done';
+  antiDGiven: boolean;
+  antiDGivenDate?: string | null;
+  antiDBatchDose?: string | null;
+  hivStatus: 'non_reactive' | 'reactive' | 'pending' | 'not_tested';
+  hivTestedDate?: string | null;
+  hbsagStatus: 'non_reactive' | 'reactive' | 'pending' | 'not_tested';
+  hbsagTestedDate?: string | null;
+  hcvStatus: 'non_reactive' | 'reactive' | 'pending' | 'not_tested';
+  hcvTestedDate?: string | null;
+  vdrlRprStatus: 'non_reactive' | 'reactive' | 'pending' | 'not_tested';
+  vdrlRprTiter?: string | null;
+  vdrlTestedDate?: string | null;
+  rubellaIggStatus: 'immune' | 'non_immune' | 'equivocal' | 'not_tested';
+  rubellaIggValue?: number | null;
+  rubellaTestedDate?: string | null;
+  gbsCultureStatus: 'negative' | 'positive' | 'pending' | 'not_tested';
+  gbsTestedDate?: string | null;
+  urineCultureStatus: 'no_growth' | 'significant_growth' | 'mixed_growth' | 'not_tested';
+  urineCultureOrganism?: string | null;
+  urineCultureDate?: string | null;
+  hemoglobinopathyHplc: 'normal_a1_a2' | 'beta_thalassemia_trait' | 'sickle_cell_trait' | 'hb_e_trait' | 'other_variant' | 'not_tested';
+  hplcHba2Pct?: number | null;
+  hplcTestedDate?: string | null;
+  consultantReviewNotes?: string | null;
+  updatedBy?: number;
+  updatedByName?: string | null;
+  updatedAt?: string;
+}
+
+export interface AntenatalSerologyResponse {
+  patientId: number;
+  exists: boolean;
+  serology: AntenatalSerologyMatrix | null;
+}

@@ -37,6 +37,7 @@ import { registerOperativeNoteRoutes } from './routes/operativeNotes.js';
 import { registerRiskAssessmentRoutes } from './routes/riskAssessments.js';
 import { registerObstetricDischargeRoutes } from './routes/obstetricDischarges.js';
 import { registerMaternityAdmissionRoutes } from './routes/maternityAdmissions.js';
+import { registerAntenatalLabTrendsRoutes } from './routes/antenatalLabTrends.js';
 import type { LoadedTls } from './tls.js';
 
 declare module 'fastify' {
@@ -177,6 +178,7 @@ export async function buildApp(ctx: Omit<Ctx, 'throttle'> & { throttle?: LoginTh
   registerRiskAssessmentRoutes(app, full);
   registerObstetricDischargeRoutes(app, full);
   registerMaternityAdmissionRoutes(app, full);
+  registerAntenatalLabTrendsRoutes(app, full);
 
   app.get('/api/health', async () => ({ ok: true }));
   return app;
