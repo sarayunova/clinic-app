@@ -4,6 +4,7 @@ import { api, type Appointment, type AppointmentStatus } from '../api';
 import { useAuth } from '../auth';
 import { BookAppointment } from '../components/BookAppointment';
 import { Reschedule } from '../components/Reschedule';
+import { FollowUpsView } from '../components/FollowUpsView';
 import { AllergyBadge, ErrorBanner, STATUS_LABEL, todayLocal } from '../components/ui';
 
 interface Action {
@@ -45,6 +46,7 @@ export function Dashboard() {
   const { can } = useAuth();
   const nav = useNavigate();
   const [date, setDate] = useState(todayLocal());
+  const [tab, setTab] = useState<'schedule' | 'followups'>('schedule');
   const [items, setItems] = useState<Appointment[] | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [booking, setBooking] = useState(false);
@@ -100,17 +102,38 @@ export function Dashboard() {
 
   return (
     <div className="page">
-      <header className="page-head">
-        <h1>{isToday ? 'Today' : 'Appointments'}</h1>
-        <div className="row">
-          <input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label="Date" />
-          {!isToday && (
-            <button className="btn" onClick={() => setDate(todayLocal())}>
-              Today
-            </button>
-          )}
-        </div>
-      </header>
+      <div className="row wrap" style={{ gap: '0.5rem', marginBottom: '1rem' }}>
+        <button
+          type="button"
+          className={`btn ${tab === 'schedule' ? 'primary' : ''}`}
+          onClick={() => setTab('schedule')}
+        >
+          📅 Daily schedule
+        </button>
+        <button
+          type="button"
+          className={`btn ${tab === 'followups' ? 'primary' : ''}`}
+          onClick={() => setTab('followups')}
+        >
+          🔔 Upcoming follow-ups (Recall)
+        </button>
+      </div>
+
+      {tab === 'followups' ? (
+        <FollowUpsView />
+      ) : (
+        <>
+          <header className="page-head">
+            <h1>{isToday ? 'Today' : 'Appointments'}</h1>
+            <div className="row">
+              <input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label="Date" />
+              {!isToday && (
+                <button className="btn" onClick={() => setDate(todayLocal())}>
+                  Today
+                </button>
+              )}
+            </div>
+          </header>
 
       <div className="stats">
         <div className="stat"><b>{count(['waiting'])}</b><span>Waiting</span></div>
@@ -227,6 +250,8 @@ export function Dashboard() {
             </section>
           );
         })}
+        </>
+      )}
     </div>
   );
 }

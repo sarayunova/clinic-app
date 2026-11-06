@@ -14,18 +14,20 @@ function nextHalfHour(): string {
 export function BookAppointment({
   patient,
   defaultDate,
+  defaultReason,
   onBooked,
   onCancel,
 }: {
   patient?: { id: number; name: string };
   defaultDate?: string;
+  defaultReason?: string;
   onBooked: () => void;
   onCancel: () => void;
 }) {
   const [picked, setPicked] = useState<PatientSummary | null>(null);
   const [date, setDate] = useState(defaultDate && defaultDate >= todayLocal() ? defaultDate : todayLocal());
   const [time, setTime] = useState(nextHalfHour());
-  const [reason, setReason] = useState('');
+  const [reason, setReason] = useState(defaultReason ?? '');
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const fe = fieldErrorsOf(error);

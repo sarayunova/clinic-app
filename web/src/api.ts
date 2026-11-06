@@ -81,6 +81,24 @@ export interface Appointment {
   visitStatus?: 'draft' | 'final' | null;
 }
 
+export interface FollowUpItem {
+  visitId: number;
+  patientId: number;
+  patientNumber: string;
+  patientName: string;
+  patientPhone: string | null;
+  allergyStatus: 'unknown' | 'none' | 'known';
+  allergyDetails: string | null;
+  visitDate: string;
+  followUpDate: string;
+  assessment?: string | null;
+  appointmentId: number | null;
+  appointmentDate: string | null;
+  appointmentTime: string | null;
+  appointmentStatus: AppointmentStatus | null;
+  isOverdue: boolean;
+}
+
 export interface PatientSummary {
   id: number;
   patientNumber: string;
@@ -185,6 +203,12 @@ export interface Visit {
   investigations: string | null;
   advice: string | null;
   followUpDate: string | null;
+  followUpAppointment?: {
+    id: number;
+    scheduledDate: string;
+    scheduledTime: string;
+    status: AppointmentStatus;
+  } | null;
   finalisedByName: string | null;
   prescriptionItems: PrescriptionItem[];
   vitals: VitalsEntry[];

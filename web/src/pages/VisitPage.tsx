@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ApiError, api, type PrescriptionItem, type Visit, type VitalsEntry } from '../api';
 import { useAuth } from '../auth';
 import { VisitInvoice } from '../components/VisitInvoice';
+import { BookAppointment } from '../components/BookAppointment';
 import { AllergyBadge, ErrorBanner, Field, fieldErrorsOf, formatAge } from '../components/ui';
 import { ObstetricChip, PregnancyChip } from '../pregnancy';
 import { TemplatePicker } from '../components/TemplatePicker';
@@ -71,6 +72,7 @@ export function VisitPage() {
   const [busy, setBusy] = useState(false);
   const [confirmFinalise, setConfirmFinalise] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [bookingFollowUp, setBookingFollowUp] = useState(false);
   const [viewing, setViewing] = useState<{ no: number; snapshot: Record<string, unknown> & { prescriptionItems: PrescriptionItem[] } } | null>(null);
 
   const adopt = useCallback((v: Visit) => {
@@ -216,6 +218,46 @@ export function VisitPage() {
         </button>
       )}
       {notice && <div className="banner ok" role="status">{notice}</div>}
+
+      {!isDraft && visit.followUpDate && (
+        <section className="card stack">
+          <div className="row wrap" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <strong>Follow-up advised: {visit.followUpDate}</strong>
+              {visit.followUpAppointment ? (
+                <div style={{ marginTop: '0.25rem' }}>
+                  <span className="badge ok">✓ Booked for {visit.followUpAppointment.scheduledDate} {visit.followUpAppointment.scheduledTime}</span>
+                </div>
+              ) : (
+                <div className="muted small" style={{ marginTop: '0.25rem' }}>
+                  No appointment booked yet for this follow-up.
+                </div>
+              )}
+            </div>
+            {can('appointment:create') && !visit.followUpAppointment && (
+              <button
+                type="button"
+                className="btn primary small"
+                onClick={() => setBookingFollowUp((b) => !b)}
+              >
+                + Book follow-up appointment
+              </button>
+            )}
+          </div>
+          {bookingFollowUp && (
+            <BookAppointment
+              patient={{ id: visit.patientId, name: visit.patientName }}
+              defaultDate={visit.followUpDate}
+              defaultReason="Follow-up consultation"
+              onCancel={() => setBookingFollowUp(false)}
+              onBooked={() => {
+                setBookingFollowUp(false);
+                void load();
+              }}
+            />
+          )}
+        </section>
+      )}
 
       {!isDraft && <VisitInvoice patientId={visit.patientId} visitId={visit.id} />}
       <VitalsCard visit={visit} canAdd={isDraft && can('vitals:write')} onAdded={adopt} />

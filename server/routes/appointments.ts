@@ -5,7 +5,7 @@ import { tx } from '../db.js';
 import { audit } from '../audit.js';
 import { badRequest, conflict, forbidden, notFound, parse } from '../errors.js';
 import { can, type Role } from '../permissions.js';
-import { isRealDate, localDate, localTime, localToUtcIso, nowIso } from '../time.js';
+import { addDays, isRealDate, localDate, localTime, localToUtcIso, nowIso } from '../time.js';
 import { camelize } from '../util.js';
 
 export const STATUSES = ['scheduled', 'waiting', 'in_consultation', 'completed', 'cancelled', 'absent'] as const;
@@ -40,6 +40,11 @@ const rescheduleSchema = z
   })
   .strict();
 const listSchema = z.object({ date: date.optional() });
+const followUpsSchema = z.object({
+  from: date.optional(),
+  to: date.optional(),
+  status: z.enum(['all', 'pending', 'booked']).default('pending'),
+});
 const statusSchema = z.object({ status: z.enum(STATUSES), version: z.number().int().min(1) }).strict();
 
 const SELECT = `
@@ -60,6 +65,77 @@ export function registerAppointmentRoutes(app: FastifyInstance, { db, cfg }: Ctx
     }
     return { ...o, scheduledTime: localTime(o.scheduledAt as string, cfg.timezone) };
   };
+
+  app.get('/api/appointments/follow-ups', async (req) => {
+    const user = requirePerm(req, 'appointment:read');
+    const q = parse(followUpsSchema, req.query);
+    const today = localDate(new Date(), cfg.timezone);
+    const fromDate = q.from ?? addDays(today, -7);
+    const toDate = q.to ?? addDays(today, 30);
+
+    const rows = db
+      .prepare(
+        `SELECT v.id AS visit_id, v.patient_id, v.follow_up_date, v.visit_at, v.assessment,
+                p.patient_number, p.full_name AS patient_name, p.phone AS patient_phone,
+                p.allergy_status, p.allergy_details,
+                (SELECT a.id FROM appointments a
+                  WHERE a.patient_id = v.patient_id
+                    AND a.scheduled_date >= v.follow_up_date
+                    AND a.status IN ('scheduled', 'waiting', 'in_consultation', 'completed')
+                  ORDER BY a.scheduled_date, a.id LIMIT 1) AS appointment_id,
+                (SELECT a.scheduled_date FROM appointments a
+                  WHERE a.patient_id = v.patient_id
+                    AND a.scheduled_date >= v.follow_up_date
+                    AND a.status IN ('scheduled', 'waiting', 'in_consultation', 'completed')
+                  ORDER BY a.scheduled_date, a.id LIMIT 1) AS appointment_date,
+                (SELECT a.scheduled_at FROM appointments a
+                  WHERE a.patient_id = v.patient_id
+                    AND a.scheduled_date >= v.follow_up_date
+                    AND a.status IN ('scheduled', 'waiting', 'in_consultation', 'completed')
+                  ORDER BY a.scheduled_date, a.id LIMIT 1) AS appointment_at,
+                (SELECT a.status FROM appointments a
+                  WHERE a.patient_id = v.patient_id
+                    AND a.scheduled_date >= v.follow_up_date
+                    AND a.status IN ('scheduled', 'waiting', 'in_consultation', 'completed')
+                  ORDER BY a.scheduled_date, a.id LIMIT 1) AS appointment_status
+           FROM visits v
+           JOIN patients p ON p.id = v.patient_id
+          WHERE v.status = 'final'
+            AND v.follow_up_date IS NOT NULL
+            AND v.follow_up_date >= ?
+            AND v.follow_up_date <= ?
+            AND v.id = (
+              SELECT v2.id FROM visits v2
+               WHERE v2.patient_id = v.patient_id
+                 AND v2.status = 'final'
+                 AND v2.follow_up_date IS NOT NULL
+               ORDER BY v2.follow_up_date DESC, v2.id DESC LIMIT 1
+            )
+          ORDER BY v.follow_up_date ASC, v.id ASC`,
+      )
+      .all(fromDate, toDate) as Record<string, unknown>[];
+
+    const result = rows
+      .map((r) => {
+        const o = camelize(r);
+        o.visitDate = localDate(new Date(r.visit_at as string), cfg.timezone);
+        o.appointmentTime = r.appointment_at ? localTime(r.appointment_at as string, cfg.timezone) : null;
+        o.isOverdue = (r.follow_up_date as string) < today && !r.appointment_id;
+        delete o.visitAt;
+        delete o.appointmentAt;
+        if (!can(user.role, 'visit:read')) {
+          delete o.assessment;
+        }
+        return o;
+      })
+      .filter((o) => {
+        if (q.status === 'pending') return !o.appointmentId;
+        if (q.status === 'booked') return Boolean(o.appointmentId);
+        return true;
+      });
+
+    return result;
+  });
 
   app.get('/api/appointments', async (req) => {
     const user = requirePerm(req, 'appointment:read');

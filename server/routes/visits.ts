@@ -148,6 +148,25 @@ export function registerVisitRoutes(app: FastifyInstance, { db, cfg }: Ctx): voi
     out.visitDate = localDate(new Date(out.visitAt as string), cfg.timezone);
     out.visitTime = localTime(out.visitAt as string, cfg.timezone);
     out.prescriptionItems = itemsOf(id);
+    if (out.followUpDate) {
+      const appt = db
+        .prepare(
+          `SELECT id, scheduled_date, scheduled_at, status FROM appointments
+            WHERE patient_id = ? AND scheduled_date >= ? AND status IN ('scheduled','waiting','in_consultation','completed')
+            ORDER BY scheduled_date, id LIMIT 1`,
+        )
+        .get(out.patientId as number, out.followUpDate as string) as { id: number; scheduled_date: string; scheduled_at: string; status: string } | undefined;
+      out.followUpAppointment = appt
+        ? {
+            id: appt.id,
+            scheduledDate: appt.scheduled_date,
+            scheduledTime: localTime(appt.scheduled_at, cfg.timezone),
+            status: appt.status,
+          }
+        : null;
+    } else {
+      out.followUpAppointment = null;
+    }
     out.vitals = (
       db
         .prepare(
