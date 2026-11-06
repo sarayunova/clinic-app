@@ -5,6 +5,7 @@ import { useAuth } from '../auth';
 import { BedMove } from '../components/BedMove';
 import { Medicines } from '../components/Medicines';
 import { Discharge } from '../components/Discharge';
+import { PartographTracker } from '../components/PartographTracker';
 import { startInvoice } from '../money';
 import { AllergyBadge, ErrorBanner, Field, fieldErrorsOf, formatAge, todayLocal } from '../components/ui';
 import { ObstetricChip, PregnancyChip } from '../pregnancy';
@@ -122,6 +123,9 @@ export function AdmissionPage() {
         <>
           <BedMove adm={adm} onMoved={(a) => { setAdm(a); setNotice('Patient moved.'); }} />
           <Details adm={adm} canEdit={can('admission:write') && active} onSaved={(a) => { setAdm(a); setNotice('Saved.'); }} onError={setError} />
+          <div style={{ margin: '1.25rem 0' }}>
+            <PartographTracker patientId={adm.patientId} admissionId={adm.id} onChanged={load} />
+          </div>
           {active && <AddEntry adm={adm} onAdded={(a) => { setAdm(a); setNotice('Entry added.'); }} />}
           <Medicines adm={adm} onChanged={load} onNotice={setNotice} />
           <Discharge adm={adm} onChanged={load} onNotice={setNotice} />

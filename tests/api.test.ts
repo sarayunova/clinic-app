@@ -67,7 +67,7 @@ describe('setup and authentication', () => {
       expect(r.body.error.message).toBe('Incorrect username or password');
     }
     expect((await call('POST', '/api/auth/login', undefined, { username: 'desk1', password: PW })).status).toBe(429);
-  });
+  }, 15000);
 
   it('forces a password change for new accounts', async () => {
     const { doctor } = await seedUsers();

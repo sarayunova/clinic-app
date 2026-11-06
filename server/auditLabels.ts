@@ -76,6 +76,11 @@ export const ACTION_LABELS: Record<string, string> = {
   'lab.result': 'Recorded lab test result',
   'lab.cancel': 'Cancelled lab order',
   'lab.print': 'Printed lab requisition slip',
+  'partograph.create': 'Started labor partograph',
+  'partograph.entry': 'Recorded labor progress observation',
+  'partograph.outcome': 'Recorded labor delivery outcome',
+  'partograph.update': 'Updated labor partograph details',
+  'partograph.print': 'Printed WHO partograph sheet',
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

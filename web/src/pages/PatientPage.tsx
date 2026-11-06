@@ -13,6 +13,7 @@ import { AntenatalChecklist } from '../components/AntenatalChecklist';
 import { PediatricTracker } from '../components/PediatricTracker';
 import { UltrasoundTracker } from '../components/UltrasoundTracker';
 import { LabTracker } from '../components/LabTracker';
+import { PartographTracker } from '../components/PartographTracker';
 import { CommunicationModal } from '../components/CommunicationModal';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
@@ -123,7 +124,7 @@ export function PatientPage() {
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
-  const [viewMode, setViewMode] = useState<'flowsheet' | 'checklist' | 'pediatric' | 'ultrasound' | 'lab' | 'list'>('flowsheet');
+  const [viewMode, setViewMode] = useState<'flowsheet' | 'checklist' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'list'>('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
   const [invoices, setInvoices] = useState<Invoice[] | null>(null);
@@ -445,6 +446,15 @@ export function PatientPage() {
                 >
                   🧪 Lab Tests
                 </button>
+                {isMaternity && (
+                  <button
+                    type="button"
+                    className={`btn small ${viewMode === 'partograph' ? 'primary' : ''}`}
+                    onClick={() => setViewMode('partograph')}
+                  >
+                    📈 Labor Partograph
+                  </button>
+                )}
                 <button
                   type="button"
                   className={`btn small ${viewMode === 'list' ? 'primary' : ''}`}
@@ -480,6 +490,11 @@ export function PatientPage() {
             />
           ) : viewMode === 'lab' ? (
             <LabTracker
+              patientId={patient!.id}
+              onChanged={load}
+            />
+          ) : viewMode === 'partograph' ? (
+            <PartographTracker
               patientId={patient!.id}
               onChanged={load}
             />

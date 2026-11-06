@@ -958,3 +958,26 @@ export interface LabOrderListResponse {
   patientId: number;
   orders: LabOrder[];
 }
+
+// ---------- WHO Partograph / Labor Progress Monitor ----------
+
+export type {
+  LiquorState,
+  MoldingDegree,
+  StationDescent,
+  ContractionIntensity,
+  LaborOutcome,
+  PartographStatus,
+  PartographEntry,
+  Partograph,
+} from './partographLogic';
+
+export interface PartographListResponse {
+  patientId?: number;
+  admissionId?: number;
+  partographs: (import('./partographLogic').Partograph & {
+    entryCount?: number;
+    latestDilatation?: number | null;
+    latestRecordedAt?: string | null;
+  })[];
+}
