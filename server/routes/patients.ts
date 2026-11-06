@@ -7,6 +7,7 @@ import { badRequest, conflict, forbidden, notFound, parse } from '../errors.js';
 import { can, type Permission, type Role } from '../permissions.js';
 import { isRealDate, localDate, nowIso } from '../time.js';
 import { camelize, escapeLike, toSnake } from '../util.js';
+import { formatDetailedPediatricAge } from '../pediatricCatalog.js';
 
 // ---------- Field definitions ----------
 
@@ -95,7 +96,54 @@ const base = z.object(FIELDS).partial();
 const createSchema = base.extend({ fullName: FIELDS.fullName }).strict();
 const patchSchema = base.extend({ version: z.number().int().min(1) }).strict();
 const dupSchema = z.object({ fullName: z.string().max(120).optional(), dateOfBirth: date.nullable().optional(), phone: phone.optional(), excludeId: z.number().int().optional() }).strict();
-const searchSchema = z.object({ q: z.string().trim().min(2, 'Type at least 2 characters').max(100) });
+const searchSchema = z
+  .object({
+    q: z.string().trim().max(100).optional(),
+    category: z.enum(['all', 'antenatal', 'pediatric', 'inpatient', 'high_risk', 'allergies']).optional(),
+    tag: z.string().trim().max(50).optional(),
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+  })
+  .refine(
+    (data) => {
+      const hasFilter = Boolean(data.category && data.category !== 'all') || Boolean(data.tag);
+      if (hasFilter) return true;
+      return typeof data.q === 'string' && data.q.length >= 2;
+    },
+    { message: 'Type at least 2 characters', path: ['q'] }
+  );
+
+function calculateEdd(lmp: string | null | undefined): string | null {
+  if (!lmp || !/^\d{4}-\d{2}-\d{2}$/.test(lmp)) return null;
+  const [y, m, d] = lmp.split('-').map(Number);
+  if (!y || !m || !d) return null;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  if (isNaN(dt.getTime())) return null;
+  dt.setUTCDate(dt.getUTCDate() + 280);
+  return dt.toISOString().slice(0, 10);
+}
+
+function calculateGestationalAge(lmp: string | null | undefined, asOf: string) {
+  if (!lmp || !/^\d{4}-\d{2}-\d{2}$/.test(lmp)) return null;
+  const [ly, lm, ld] = lmp.split('-').map(Number);
+  const [ty, tm, td] = asOf.split('-').map(Number);
+  if (!ly || !lm || !ld || !ty || !tm || !td) return null;
+  const lmpUtc = Date.UTC(ly, lm - 1, ld);
+  const asOfUtc = Date.UTC(ty, tm - 1, td);
+  const diffDays = Math.floor((asOfUtc - lmpUtc) / (24 * 3600 * 1000));
+  if (diffDays < 0 || diffDays > 310) return null;
+  const weeks = Math.floor(diffDays / 7);
+  const days = diffDays % 7;
+  return { weeks, days, formatted: `${weeks}w ${days}d` };
+}
+
+function formatGpal(p: { gravida?: number | null; para?: number | null; abortions?: number | null; living?: number | null }): string | null {
+  const parts: string[] = [];
+  if (p.gravida != null) parts.push(`G${p.gravida}`);
+  if (p.para != null) parts.push(`P${p.para}`);
+  if (p.abortions != null) parts.push(`A${p.abortions}`);
+  if (p.living != null) parts.push(`L${p.living}`);
+  return parts.length > 0 ? parts.join(' ') : null;
+}
 
 // ---------- Helpers ----------
 
@@ -166,24 +214,225 @@ export function registerPatientRoutes(app: FastifyInstance, { db, cfg }: Ctx): v
   // ---------- Routes ----------
 
   app.get('/api/patients', async (req) => {
-    requirePerm(req, 'patient:read_basic');
-    const { q } = parse(searchSchema, req.query);
-    const like = `%${escapeLike(q)}%`;
-    const digits = q.replace(/\D/g, '');
-    const phoneExpr = "replace(replace(replace(replace(replace(phone,' ',''),'-',''),'(',''),')',''),'+','')";
-    const clauses = ["full_name LIKE ? ESCAPE '\\'", "patient_number LIKE ? ESCAPE '\\'"];
-    const args: string[] = [like, `${escapeLike(q)}%`];
-    if (digits.length >= 3) { clauses.push(`${phoneExpr} LIKE ? ESCAPE '\\'`); args.push(`%${escapeLike(digits)}%`); }
+    const user = requirePerm(req, 'patient:read_basic');
+    const { q, category, tag, limit = 50 } = parse(searchSchema, req.query);
+    const queryStr = q?.trim() || '';
+    const conditions: string[] = [];
+    const args: (string | number)[] = [];
+    const t = today();
+
+    if (queryStr.length > 0) {
+      const like = `%${escapeLike(queryStr)}%`;
+      const digits = queryStr.replace(/\D/g, '');
+      const phoneExpr = "replace(replace(replace(replace(replace(p.phone,' ',''),'-',''),'(',''),')',''),'+','')";
+      const emergencyPhoneExpr =
+        "replace(replace(replace(replace(replace(p.emergency_contact_phone,' ',''),'-',''),'(',''),')',''),'+','')";
+
+      const textClauses = [
+        "p.full_name LIKE ? ESCAPE '\\'",
+        "p.patient_number LIKE ? ESCAPE '\\'",
+        "p.emergency_contact_name LIKE ? ESCAPE '\\'",
+        "p.address LIKE ? ESCAPE '\\'",
+      ];
+      const textArgs: (string | number)[] = [like, `${escapeLike(queryStr)}%`, like, like];
+
+      if (digits.length >= 3) {
+        textClauses.push(`${phoneExpr} LIKE ? ESCAPE '\\'`);
+        textArgs.push(`%${escapeLike(digits)}%`);
+        textClauses.push(`${emergencyPhoneExpr} LIKE ? ESCAPE '\\'`);
+        textArgs.push(`%${escapeLike(digits)}%`);
+      }
+
+      conditions.push(`(${textClauses.join(' OR ')})`);
+      args.push(...textArgs);
+    }
+
+    if (category === 'antenatal') {
+      conditions.push(
+        `(p.last_menstrual_period IS NOT NULL OR p.gravida IS NOT NULL OR EXISTS (SELECT 1 FROM visits v WHERE v.patient_id = p.id AND v.antenatal_notes IS NOT NULL))`
+      );
+    } else if (category === 'pediatric') {
+      const pedsCutoffYear = String(parseInt(t.slice(0, 4), 10) - 18);
+      conditions.push(
+        `(p.estimated_age_years <= 18 OR (p.date_of_birth IS NOT NULL AND substr(p.date_of_birth, 1, 4) >= ?))`
+      );
+      args.push(pedsCutoffYear);
+    } else if (category === 'inpatient') {
+      conditions.push(`EXISTS (SELECT 1 FROM admissions a WHERE a.patient_id = p.id AND a.status = 'admitted')`);
+    } else if (category === 'allergies') {
+      conditions.push(`p.allergy_status = 'known'`);
+    } else if (category === 'high_risk') {
+      const advMaternalAgeCutoff = String(parseInt(t.slice(0, 4), 10) - 35);
+      conditions.push(
+        `(
+          (p.date_of_birth IS NOT NULL AND substr(p.date_of_birth, 1, 4) <= ?) OR
+          p.para >= 4 OR
+          p.abortions >= 2 OR
+          p.obstetric_history LIKE '%lscs%' OR p.obstetric_history LIKE '%cesarean%' OR
+          p.surgical_history LIKE '%lscs%' OR p.surgical_history LIKE '%cesarean%' OR
+          EXISTS (
+            SELECT 1 FROM patient_antenatal_tests pat
+            WHERE pat.patient_id = p.id AND pat.test_key = 'blood_group' AND (pat.result_value LIKE '%-%' OR pat.result_value LIKE '%neg%')
+          ) OR
+          EXISTS (
+            SELECT 1 FROM visit_vitals vv
+            JOIN visits v ON v.id = vv.visit_id
+            WHERE v.patient_id = p.id AND (vv.systolic_mmhg >= 140 OR vv.diastolic_mmhg >= 90)
+          )
+        )`
+      );
+      args.push(advMaternalAgeCutoff);
+    }
+
+    if (tag === 'rh_negative') {
+      conditions.push(
+        `(
+          EXISTS (
+            SELECT 1 FROM patient_antenatal_tests pat
+            WHERE pat.patient_id = p.id AND pat.test_key = 'blood_group' AND (pat.result_value LIKE '%-%' OR pat.result_value LIKE '%neg%')
+          ) OR
+          EXISTS (
+            SELECT 1 FROM patient_pediatric_profiles pp
+            WHERE pp.patient_id = p.id AND (pp.blood_group LIKE '%-%' OR pp.blood_group LIKE '%neg%')
+          )
+        )`
+      );
+    } else if (tag === 'hypertension') {
+      conditions.push(
+        `EXISTS (
+          SELECT 1 FROM visit_vitals vv
+          JOIN visits v ON v.id = vv.visit_id
+          WHERE v.patient_id = p.id AND (vv.systolic_mmhg >= 140 OR vv.diastolic_mmhg >= 90)
+        )`
+      );
+    } else if (tag === 'lscs') {
+      conditions.push(
+        `(p.obstetric_history LIKE '%lscs%' OR p.obstetric_history LIKE '%cesarean%' OR p.obstetric_history LIKE '%c-section%' OR p.surgical_history LIKE '%lscs%' OR p.surgical_history LIKE '%cesarean%')`
+      );
+    } else if (tag === 'boh') {
+      conditions.push(`p.abortions >= 2`);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
     const rows = db
       .prepare(
-        `SELECT id, patient_number, full_name, date_of_birth, estimated_age_years, phone, allergy_status
-           FROM patients WHERE ${clauses.join(' OR ')} ORDER BY full_name COLLATE NOCASE LIMIT 50`,
+        `SELECT p.id, p.patient_number, p.full_name, p.date_of_birth, p.estimated_age_years, p.phone,
+                p.emergency_contact_name, p.emergency_contact_phone, p.address,
+                p.allergy_status, p.last_menstrual_period, p.gravida, p.para, p.abortions, p.living,
+                p.obstetric_history, p.surgical_history,
+                (SELECT b.room || ' / ' || b.label
+                 FROM admissions a
+                 JOIN beds b ON b.id = a.bed_id
+                 WHERE a.patient_id = p.id AND a.status = 'admitted'
+                 LIMIT 1) AS inpatient_bed,
+                (SELECT pat.result_value
+                 FROM patient_antenatal_tests pat
+                 WHERE pat.patient_id = p.id AND pat.test_key = 'blood_group'
+                 LIMIT 1) AS antenatal_blood_group,
+                (SELECT pp.blood_group
+                 FROM patient_pediatric_profiles pp
+                 WHERE pp.patient_id = p.id
+                 LIMIT 1) AS peds_blood_group,
+                (SELECT vv.systolic_mmhg
+                 FROM visit_vitals vv
+                 JOIN visits v ON v.id = vv.visit_id
+                 WHERE v.patient_id = p.id
+                 ORDER BY vv.recorded_at DESC LIMIT 1) AS latest_systolic,
+                (SELECT vv.diastolic_mmhg
+                 FROM visit_vitals vv
+                 JOIN visits v ON v.id = vv.visit_id
+                 WHERE v.patient_id = p.id
+                 ORDER BY vv.recorded_at DESC LIMIT 1) AS latest_diastolic
+         FROM patients p
+         ${whereClause}
+         ORDER BY p.full_name COLLATE NOCASE
+         LIMIT ?`
       )
-      .all(...args);
+      .all(...args, limit) as Array<{
+        id: number;
+        patient_number: string;
+        full_name: string;
+        date_of_birth: string | null;
+        estimated_age_years: number | null;
+        phone: string | null;
+        emergency_contact_name: string | null;
+        emergency_contact_phone: string | null;
+        address: string | null;
+        allergy_status: 'unknown' | 'none' | 'known';
+        last_menstrual_period: string | null;
+        gravida: number | null;
+        para: number | null;
+        abortions: number | null;
+        living: number | null;
+        obstetric_history: string | null;
+        surgical_history: string | null;
+        inpatient_bed: string | null;
+        antenatal_blood_group: string | null;
+        peds_blood_group: string | null;
+        latest_systolic: number | null;
+        latest_diastolic: number | null;
+      }>;
+
+    const canSeeClinical = can(user.role, 'patient:read_clinical');
+
     return rows.map((r) => {
-      const o = camelize(r);
-      const dob = o.dateOfBirth as string | null;
-      return { ...o, ageYears: dob ? ageYears(dob, today()) : o.estimatedAgeYears, ageIsEstimated: !dob && o.estimatedAgeYears != null };
+      const dob = r.date_of_birth;
+      const age = dob ? ageYears(dob, t) : r.estimated_age_years;
+      const isEstimated = !dob && r.estimated_age_years != null;
+      const isAntenatal = Boolean(r.last_menstrual_period || r.gravida != null || r.para != null);
+      const edd = isAntenatal ? calculateEdd(r.last_menstrual_period) : null;
+      const ga = isAntenatal && r.last_menstrual_period ? calculateGestationalAge(r.last_menstrual_period, t) : null;
+      const isPed = age != null && age <= 18;
+      const detailedAge = isPed && dob ? formatDetailedPediatricAge(dob, t) : null;
+
+      const bloodGroup = r.antenatal_blood_group || r.peds_blood_group || null;
+      const highRiskFlags: string[] = [];
+
+      if (canSeeClinical) {
+        if (bloodGroup && (bloodGroup.includes('-') || /neg/i.test(bloodGroup))) {
+          highRiskFlags.push('Rh-Negative');
+        }
+        if ((r.latest_systolic != null && r.latest_systolic >= 140) || (r.latest_diastolic != null && r.latest_diastolic >= 90)) {
+          highRiskFlags.push('High BP');
+        }
+        if (isAntenatal && age != null && age >= 35) {
+          highRiskFlags.push('Age ≥ 35');
+        }
+        if (r.abortions != null && r.abortions >= 2) {
+          highRiskFlags.push('BOH');
+        }
+        if (r.para != null && r.para >= 4) {
+          highRiskFlags.push('Grand Multi');
+        }
+        if ((r.obstetric_history && /lscs|cesarean/i.test(r.obstetric_history)) || (r.surgical_history && /lscs|cesarean/i.test(r.surgical_history))) {
+          highRiskFlags.push('Prior LSCS');
+        }
+      }
+
+      return {
+        id: r.id,
+        patientNumber: r.patient_number,
+        fullName: r.full_name,
+        dateOfBirth: r.date_of_birth,
+        phone: r.phone,
+        emergencyContactName: r.emergency_contact_name,
+        emergencyContactPhone: r.emergency_contact_phone,
+        address: r.address,
+        allergyStatus: r.allergy_status,
+        ageYears: age,
+        ageIsEstimated: isEstimated,
+        isAntenatal,
+        gestationalAgeFormatted: ga ? ga.formatted : null,
+        edd,
+        gpal: isAntenatal ? formatGpal(r) : null,
+        isPediatric: isPed,
+        detailedAge,
+        isInpatient: Boolean(r.inpatient_bed),
+        inpatientBed: r.inpatient_bed ?? null,
+        isHighRisk: highRiskFlags.length > 0,
+        highRiskFlags: canSeeClinical ? highRiskFlags : undefined,
+      };
     });
   });
 

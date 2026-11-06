@@ -107,6 +107,20 @@ export interface PatientSummary {
   ageYears: number | null;
   ageIsEstimated: boolean;
   allergyStatus: 'unknown' | 'none' | 'known';
+  dateOfBirth?: string | null;
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+  address?: string | null;
+  isAntenatal?: boolean;
+  gestationalAgeFormatted?: string | null;
+  edd?: string | null;
+  gpal?: string | null;
+  isPediatric?: boolean;
+  detailedAge?: string | null;
+  isInpatient?: boolean;
+  inpatientBed?: string | null;
+  isHighRisk?: boolean;
+  highRiskFlags?: string[];
 }
 
 export type Patient = Record<string, unknown> & {
