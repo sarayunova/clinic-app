@@ -71,6 +71,11 @@ export const ACTION_LABELS: Record<string, string> = {
   'ultrasound.update': 'Updated ultrasound report',
   'ultrasound.delete': 'Deleted ultrasound report',
   'ultrasound.print': 'Printed ultrasound report',
+  'lab.order': 'Ordered lab investigations',
+  'lab.status': 'Updated lab order status',
+  'lab.result': 'Recorded lab test result',
+  'lab.cancel': 'Cancelled lab order',
+  'lab.print': 'Printed lab requisition slip',
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

@@ -804,6 +804,7 @@ export interface ClinicalSummaryResponse {
   activeMedicines: ClinicalSummaryMedicine[];
   latestAdmission: ClinicalSummaryAdmission | null;
   latestUltrasound?: UltrasoundReport | null;
+  recentLabResults?: LabResultItem[];
 }
 
 // ---------- Ultrasound / Sonography Reports ----------
@@ -872,4 +873,75 @@ export interface UltrasoundReport {
 export interface UltrasoundListResponse {
   patientId: number;
   reports: UltrasoundReport[];
+}
+
+// ---------- Laboratory Investigation Orders & Results ----------
+
+export type LabCategory =
+  | 'hematology'
+  | 'biochemistry'
+  | 'serology'
+  | 'urine'
+  | 'microbiology'
+  | 'hormones'
+  | 'general';
+
+export type LabPriority = 'routine' | 'urgent' | 'stat';
+
+export type LabOrderStatus =
+  | 'ordered'
+  | 'sample_collected'
+  | 'sent_to_lab'
+  | 'completed'
+  | 'cancelled';
+
+export type LabResultFlag = 'normal' | 'low' | 'high' | 'critical' | 'abnormal' | 'pending';
+
+export interface LabResultItem {
+  id: number;
+  orderId: number;
+  patientId: number;
+  testName: string;
+  category: LabCategory;
+  resultValue?: string | null;
+  numericValue?: number | null;
+  unit?: string | null;
+  referenceRange?: string | null;
+  flag: LabResultFlag;
+  status: 'pending' | 'completed' | 'cancelled';
+  notes?: string | null;
+  reportedDate?: string | null;
+  attachmentId?: number | null;
+  attachmentTitle?: string | null;
+  attachmentOriginalName?: string | null;
+  reviewedByName?: string | null;
+  reviewedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LabOrder {
+  id: number;
+  patientId: number;
+  visitId?: number | null;
+  orderNumber: string;
+  orderDate: string;
+  priority: LabPriority;
+  status: LabOrderStatus;
+  clinicalNotes?: string | null;
+  panelName?: string | null;
+  orderedByName?: string | null;
+  cancellationReason?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  patientNumber?: string;
+  patientName?: string;
+  dateOfBirth?: string | null;
+  patientPhone?: string | null;
+  items: LabResultItem[];
+}
+
+export interface LabOrderListResponse {
+  patientId: number;
+  orders: LabOrder[];
 }

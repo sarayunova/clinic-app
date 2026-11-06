@@ -470,6 +470,17 @@ export function registerClinicalSummaryRoutes(app: FastifyInstance, { db, cfg }:
       )
       .get(patientId) as any | undefined;
 
+    const recentLabRows = db
+      .prepare(
+        `SELECT r.*, u.full_name AS reviewed_by_name
+         FROM patient_lab_results r
+         LEFT JOIN users u ON u.id = r.reviewed_by
+         WHERE r.patient_id = ? AND r.status = 'completed'
+         ORDER BY COALESCE(r.reported_date, r.created_at) DESC, r.id DESC
+         LIMIT 10`
+      )
+      .all(patientId) as any[];
+
     return {
       patient: {
         id: patient.id,
@@ -599,6 +610,26 @@ export function registerClinicalSummaryRoutes(app: FastifyInstance, { db, cfg }:
             createdByName: latestUsgRow.created_by_name ?? null,
           }
         : null,
+      recentLabResults: recentLabRows.map((r) => ({
+        id: r.id,
+        orderId: r.order_id,
+        patientId: r.patient_id,
+        testName: r.test_name,
+        category: r.category,
+        resultValue: r.result_value,
+        numericValue: r.numeric_value,
+        unit: r.unit,
+        referenceRange: r.reference_range,
+        flag: r.flag,
+        status: r.status,
+        notes: r.notes,
+        reportedDate: r.reported_date,
+        attachmentId: r.attachment_id,
+        reviewedByName: r.reviewed_by_name ?? null,
+        reviewedAt: r.reviewed_at,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+      })),
     };
   });
 }

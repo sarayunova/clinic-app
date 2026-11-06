@@ -17,6 +17,7 @@ import { InvoicePrint, ReceiptPrint } from './pages/PrintPages';
 import { DischargePrint, PrescriptionPrint } from './pages/ClinicalPrints';
 import { ClinicalSummaryPrint } from './pages/ClinicalSummaryPrint';
 import { UltrasoundPrint } from './pages/UltrasoundPrint';
+import { LabOrderPrint } from './pages/LabOrderPrint';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditPage } from './pages/AuditPage';
 import { StationPage } from './pages/StationPage';
@@ -123,6 +124,7 @@ function Shell() {
           <Route path="/patients/:id" element={<PatientPage />} />
           <Route path="/patients/:id/summary/print" element={can('patient:read_clinical') ? <ClinicalSummaryPrint /> : <Navigate to="/patients" replace />} />
           <Route path="/ultrasounds/:id/print" element={can('patient:read_clinical') ? <UltrasoundPrint /> : <Navigate to="/patients" replace />} />
+          <Route path="/lab-orders/:id/print" element={can('patient:read_clinical') ? <LabOrderPrint /> : <Navigate to="/patients" replace />} />
           <Route path="/visits/:id" element={can('visit:read') ? <VisitPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id/print" element={can('visit:read') ? <PrescriptionPrint /> : <Navigate to="/" replace />} />
           <Route path="/admissions/:id/print" element={can('ipd:read') ? <DischargePrint /> : <Navigate to="/wards" replace />} />

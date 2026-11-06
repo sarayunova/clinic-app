@@ -31,6 +31,7 @@ import { registerPediatricRoutes } from './routes/pediatric.js';
 import { registerClinicalSummaryRoutes } from './routes/clinicalSummary.js';
 import { registerCommunicationRoutes } from './routes/communication.js';
 import { registerUltrasoundRoutes } from './routes/ultrasounds.js';
+import { registerLabRoutes } from './routes/lab.js';
 import type { LoadedTls } from './tls.js';
 
 declare module 'fastify' {
@@ -165,6 +166,7 @@ export async function buildApp(ctx: Omit<Ctx, 'throttle'> & { throttle?: LoginTh
   registerClinicalSummaryRoutes(app, full);
   registerCommunicationRoutes(app, full);
   registerUltrasoundRoutes(app, full);
+  registerLabRoutes(app, full);
 
   app.get('/api/health', async () => ({ ok: true }));
   return app;

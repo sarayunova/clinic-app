@@ -12,6 +12,7 @@ import { AntenatalFlowsheet } from '../components/AntenatalFlowsheet';
 import { AntenatalChecklist } from '../components/AntenatalChecklist';
 import { PediatricTracker } from '../components/PediatricTracker';
 import { UltrasoundTracker } from '../components/UltrasoundTracker';
+import { LabTracker } from '../components/LabTracker';
 import { CommunicationModal } from '../components/CommunicationModal';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
@@ -122,7 +123,7 @@ export function PatientPage() {
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
-  const [viewMode, setViewMode] = useState<'flowsheet' | 'checklist' | 'pediatric' | 'ultrasound' | 'list'>('flowsheet');
+  const [viewMode, setViewMode] = useState<'flowsheet' | 'checklist' | 'pediatric' | 'ultrasound' | 'lab' | 'list'>('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
   const [invoices, setInvoices] = useState<Invoice[] | null>(null);
@@ -439,6 +440,13 @@ export function PatientPage() {
                 </button>
                 <button
                   type="button"
+                  className={`btn small ${viewMode === 'lab' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('lab')}
+                >
+                  🧪 Lab Tests
+                </button>
+                <button
+                  type="button"
                   className={`btn small ${viewMode === 'list' ? 'primary' : ''}`}
                   onClick={() => setViewMode('list')}
                 >
@@ -468,6 +476,11 @@ export function PatientPage() {
             <UltrasoundTracker
               patientId={patient!.id}
               clinicalLmp={patient!.lastMenstrualPeriod as string | null}
+              onChanged={load}
+            />
+          ) : viewMode === 'lab' ? (
+            <LabTracker
+              patientId={patient!.id}
               onChanged={load}
             />
           ) : (

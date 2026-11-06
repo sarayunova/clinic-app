@@ -90,7 +90,7 @@ export function ClinicalSummaryPrint() {
     return <p className="muted" style={{ padding: '2rem' }}>Loading clinical summary…</p>;
   }
 
-  const { patient, pregnancy, latestVitals, antenatalTests, recentVisits, activeMedicines, latestAdmission, latestUltrasound } = data;
+  const { patient, pregnancy, latestVitals, antenatalTests, recentVisits, activeMedicines, latestAdmission, latestUltrasound, recentLabResults } = data;
 
   const handlePrint = () => {
     const kind = mode === 'referral_letter' ? 'referral_card' : 'antenatal_summary';
@@ -502,6 +502,65 @@ export function ClinicalSummaryPrint() {
                   </tr>
                 );
               })}
+            </tbody>
+          </table>
+        </Section>
+      )}
+
+      {/* Recent Laboratory Investigations & Abnormal Values */}
+      {recentLabResults && recentLabResults.length > 0 && (
+        <Section title="Recent Diagnostic Laboratory Investigations">
+          <table className="sheet-table" style={{ width: '100%', fontSize: '0.84rem', borderCollapse: 'collapse', marginTop: '0.3rem' }}>
+            <thead>
+              <tr style={{ background: '#f8fafc', borderBottom: '1px solid #cbd5e1', textAlign: 'left' }}>
+                <th style={{ padding: '0.35rem' }}>Test Name</th>
+                <th style={{ padding: '0.35rem' }}>Result Value</th>
+                <th style={{ padding: '0.35rem' }}>Units</th>
+                <th style={{ padding: '0.35rem' }}>Reference Range</th>
+                <th style={{ padding: '0.35rem' }}>Flag</th>
+                <th style={{ padding: '0.35rem' }}>Date Reported</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentLabResults.map((r) => (
+                <tr key={r.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '0.35rem' }}>
+                    <strong>{r.testName}</strong>
+                    <span className="muted small" style={{ display: 'block', textTransform: 'capitalize' }}>
+                      {r.category}
+                    </span>
+                  </td>
+                  <td style={{ padding: '0.35rem' }}>
+                    <strong>{r.resultValue}</strong>
+                  </td>
+                  <td style={{ padding: '0.35rem' }}>{r.unit || '—'}</td>
+                  <td style={{ padding: '0.35rem' }} className="muted small">{r.referenceRange || 'Standard'}</td>
+                  <td style={{ padding: '0.35rem' }}>
+                    <span
+                      style={{
+                        fontWeight: 600,
+                        color:
+                          r.flag === 'critical'
+                            ? '#dc2626'
+                            : r.flag === 'high' || r.flag === 'low' || r.flag === 'abnormal'
+                            ? '#d97706'
+                            : '#16a34a',
+                      }}
+                    >
+                      {r.flag === 'critical'
+                        ? '🚨 Critical'
+                        : r.flag === 'high'
+                        ? '🔺 High'
+                        : r.flag === 'low'
+                        ? '🔻 Low'
+                        : r.flag === 'abnormal'
+                        ? '⚠️ Abnormal'
+                        : 'Normal'}
+                    </span>
+                  </td>
+                  <td style={{ padding: '0.35rem' }} className="muted small">{r.reportedDate || r.createdAt.slice(0, 10)}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </Section>
