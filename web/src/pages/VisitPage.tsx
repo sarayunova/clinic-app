@@ -19,6 +19,7 @@ import {
 } from '../medicationCatalog';
 import { DictationToolbar, VoiceFieldMic } from '../components/VoiceDictation';
 import { appendDictatedText } from '../voiceDictationUtils';
+import { CommunicationModal } from '../components/CommunicationModal';
 
 const TEXT_FIELDS = [
   { key: 'complaints', label: 'Presenting complaints' },
@@ -108,6 +109,7 @@ export function VisitPage() {
   const [confirmFinalise, setConfirmFinalise] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [bookingFollowUp, setBookingFollowUp] = useState(false);
+  const [showCommModal, setShowCommModal] = useState(false);
   const [activeDictationField, setActiveDictationField] = useState<TextKey>('complaints');
   const [viewing, setViewing] = useState<{ no: number; snapshot: Record<string, unknown> & { prescriptionItems: PrescriptionItem[] } } | null>(null);
 
@@ -249,7 +251,21 @@ export function VisitPage() {
         </div>
         <span className={`badge ${isDraft ? 'warn' : 'ok'}`}>{isDraft ? 'Draft' : `Finalised${visit.finalisedByName ? ` by ${visit.finalisedByName}` : ''}`}</span>
       </header>
-      {!isDraft && <p><Link className="btn small" to={`/visits/${visit.id}/print`}>Print prescription</Link></p>}
+      {!isDraft && (
+        <p className="row wrap" style={{ gap: '0.5rem' }}>
+          <Link className="btn small" to={`/visits/${visit.id}/print`}>
+            Print prescription
+          </Link>
+          <button
+            type="button"
+            className="btn small"
+            onClick={() => setShowCommModal(true)}
+            title="Share prescription advice via WhatsApp or SMS"
+          >
+            💬 Share Rx via WhatsApp
+          </button>
+        </p>
+      )}
       <div className={`allergy-banner ${visit.allergyStatus}`}>
         <AllergyBadge status={visit.allergyStatus} details={visit.allergyDetails} />
       </div>
@@ -589,6 +605,31 @@ export function VisitPage() {
 
       {showTemplates && (
         <TemplatePicker onInsert={handleInsertTemplate} onClose={() => setShowTemplates(false)} />
+      )}
+
+      {showCommModal && (
+        <CommunicationModal
+          open={true}
+          onClose={() => setShowCommModal(false)}
+          patientId={visit.patientId}
+          patientName={visit.patientName}
+          patientPhone={visit.patientPhone}
+          defaultType="prescription"
+          prescriptionData={{
+            doctorName: visit.finalisedByName ?? undefined,
+            visitDate: visit.visitDate,
+            items: (visit.prescriptionItems ?? []).map((it) => ({
+              name: it.medicine + (it.strength ? ` ${it.strength}` : ''),
+              dose: it.dose,
+              route: it.route,
+              frequency: it.frequency,
+              duration: it.duration,
+              instructions: it.instructions,
+            })),
+            generalAdvice: visit.advice,
+            followUpDate: visit.followUpDate,
+          }}
+        />
       )}
     </div>
   );

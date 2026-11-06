@@ -11,6 +11,7 @@ import { calculateEdd, calculateGestationalAge, formatGpal, PregnancyChip, Obste
 import { AntenatalFlowsheet } from '../components/AntenatalFlowsheet';
 import { AntenatalChecklist } from '../components/AntenatalChecklist';
 import { PediatricTracker } from '../components/PediatricTracker';
+import { CommunicationModal } from '../components/CommunicationModal';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -125,6 +126,7 @@ export function PatientPage() {
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
   const [invoices, setInvoices] = useState<Invoice[] | null>(null);
   const [dupes, setDupes] = useState<{ id: number; patientNumber: string; fullName: string; phone: string | null }[] | null>(null);
+  const [showCommModal, setShowCommModal] = useState(false);
 
   const load = useCallback(async () => {
     if (isNew) return;
@@ -263,13 +265,36 @@ export function PatientPage() {
             <h1>{patient!.fullName}</h1>
             <div className="muted">
               {patient!.patientNumber} · {formatAge(patient!.ageYears, patient!.ageIsEstimated)}
-              {typeof patient!.phone === 'string' && patient!.phone ? ` · ${patient!.phone}` : ''}
+              {typeof patient!.phone === 'string' && patient!.phone ? (
+                <>
+                  {' · '}
+                  <button
+                    type="button"
+                    className="link"
+                    onClick={() => setShowCommModal(true)}
+                    title="Send WhatsApp or SMS to patient"
+                    style={{ fontSize: 'inherit' }}
+                  >
+                    💬 {patient!.phone}
+                  </button>
+                </>
+              ) : ''}
             </div>
             <div className="chips" style={{ marginTop: '0.35rem' }}>
               <ObstetricChip gravida={patient!.gravida} para={patient!.para} abortions={patient!.abortions} living={patient!.living} />
               <PregnancyChip lmp={patient!.lastMenstrualPeriod as string | null} showLmp />
             </div>
           </div>
+          {can('patient:read_basic') && (
+            <button
+              type="button"
+              className="btn small"
+              onClick={() => setShowCommModal(true)}
+              title="Send patient communication via WhatsApp or SMS"
+            >
+              💬 WhatsApp / SMS
+            </button>
+          )}
           {can('patient:read_clinical') && (
             <Link className="btn small" to={`/patients/${patient!.id}/summary/print`}>
               🖨️ Summary & Referral Card
@@ -525,6 +550,25 @@ export function PatientPage() {
       {!isNew && can('attachment:read') && <Documents patientId={patient!.id} visits={visits} admissions={admissions} />}
 
       {!isNew && can('record:export') && <ExportRecord patientId={patient!.id} patientNumber={patient!.patientNumber} />}
+
+      {showCommModal && patient && (
+        <CommunicationModal
+          open={true}
+          onClose={() => setShowCommModal(false)}
+          patientId={patient.id}
+          patientName={patient.fullName}
+          patientPhone={patient.phone as string | null}
+          defaultType={patient.lastMenstrualPeriod ? 'antenatal_recall' : 'custom'}
+          antenatalData={
+            patient.lastMenstrualPeriod
+              ? {
+                  gestationalAge: calculateGestationalAge(patient.lastMenstrualPeriod as string)?.formatted,
+                  edd: calculateEdd(patient.lastMenstrualPeriod as string) ?? undefined,
+                }
+              : undefined
+          }
+        />
+      )}
     </div>
   );
 }

@@ -205,6 +205,7 @@ export interface Visit {
   visitTime: string;
   patientNumber: string;
   patientName: string;
+  patientPhone?: string | null;
   ageYears: number | null;
   ageIsEstimated: boolean;
   allergyStatus: 'unknown' | 'none' | 'known';
@@ -317,6 +318,7 @@ export interface Admission {
   patientId: number;
   patientNumber: string;
   patientName: string;
+  patientPhone?: string | null;
   ageYears: number | null;
   ageIsEstimated: boolean;
   allergyStatus: 'unknown' | 'none' | 'known';
@@ -667,6 +669,8 @@ export interface PediatricSummary {
 export interface PediatricResponse {
   patientId: number;
   patientName: string;
+  phone?: string | null;
+  parentName?: string | null;
   dateOfBirth: string | null;
   ageFormatted: string;
   profile: PediatricProfile | null;

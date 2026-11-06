@@ -111,8 +111,15 @@ export function registerPediatricRoutes(app: FastifyInstance, { db, cfg }: Ctx):
     }
 
     const patient = db
-      .prepare('SELECT id, full_name, date_of_birth FROM patients WHERE id = ?')
-      .get(patientId) as { id: number; full_name: string; date_of_birth: string | null } | undefined;
+      .prepare('SELECT id, full_name, date_of_birth, phone, emergency_contact_name, emergency_contact_phone FROM patients WHERE id = ?')
+      .get(patientId) as {
+        id: number;
+        full_name: string;
+        date_of_birth: string | null;
+        phone: string | null;
+        emergency_contact_name: string | null;
+        emergency_contact_phone: string | null;
+      } | undefined;
     if (!patient) throw notFound('Patient not found');
 
     const today = localDate(new Date(), cfg.timezone);
@@ -234,6 +241,8 @@ export function registerPediatricRoutes(app: FastifyInstance, { db, cfg }: Ctx):
     return {
       patientId,
       patientName: patient.full_name,
+      phone: patient.phone || patient.emergency_contact_phone,
+      parentName: patient.emergency_contact_name,
       dateOfBirth: dob,
       ageFormatted,
       profile,

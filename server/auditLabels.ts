@@ -66,6 +66,7 @@ export const ACTION_LABELS: Record<string, string> = {
   'pediatric.profile_update': 'Updated child birth profile',
   'vaccination.record': 'Recorded vaccination',
   'vaccination.update': 'Updated vaccination record',
+  'communication.send': 'Sent patient message (WhatsApp/SMS)',
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

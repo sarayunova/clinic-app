@@ -5,6 +5,7 @@ import { useAuth } from '../auth';
 import { BookAppointment } from '../components/BookAppointment';
 import { Reschedule } from '../components/Reschedule';
 import { FollowUpsView } from '../components/FollowUpsView';
+import { CommunicationModal } from '../components/CommunicationModal';
 import { AllergyBadge, ErrorBanner, STATUS_LABEL, todayLocal } from '../components/ui';
 
 interface Action {
@@ -52,6 +53,7 @@ export function Dashboard() {
   const [booking, setBooking] = useState(false);
   const [confirming, setConfirming] = useState<string | null>(null);
   const [moving, setMoving] = useState<number | null>(null);
+  const [commTarget, setCommTarget] = useState<Appointment | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -213,7 +215,7 @@ export function Dashboard() {
                           </div>
                         </div>
                       </div>
-                      {(actions.length > 0 || showVisit(a) || canMove(a)) && (
+                      {(actions.length > 0 || showVisit(a) || canMove(a) || can('patient:read_basic')) && (
                         <div className="row wrap">
                           {showVisit(a) && (
                             <button className="btn" onClick={() => void openConsultation(a)}>
@@ -223,6 +225,16 @@ export function Dashboard() {
                           {canMove(a) && (
                             <button className="btn" onClick={() => setMoving(moving === a.id ? null : a.id)}>
                               Reschedule
+                            </button>
+                          )}
+                          {can('patient:read_basic') && (
+                            <button
+                              type="button"
+                              className="btn"
+                              onClick={() => setCommTarget(a)}
+                              title="Send WhatsApp or SMS reminder"
+                            >
+                              💬 Remind
                             </button>
                           )}
                           {actions.map((x) => {
@@ -260,6 +272,21 @@ export function Dashboard() {
           );
         })}
         </>
+      )}
+
+      {commTarget && (
+        <CommunicationModal
+          open={true}
+          onClose={() => setCommTarget(null)}
+          patientId={commTarget.patientId}
+          patientName={commTarget.patientName}
+          patientPhone={commTarget.patientPhone}
+          defaultType="appointment_reminder"
+          appointmentData={{
+            appointmentDate: commTarget.scheduledDate,
+            appointmentTime: commTarget.scheduledTime,
+          }}
+        />
       )}
     </div>
   );

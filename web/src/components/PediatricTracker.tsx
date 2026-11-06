@@ -10,6 +10,7 @@ import {
 import { useAuth } from '../auth';
 import { ErrorBanner, Field, todayLocal } from './ui';
 import type { Attachment } from './Documents';
+import { CommunicationModal } from './CommunicationModal';
 
 interface Props {
   patientId: number;
@@ -71,6 +72,7 @@ export function PediatricTracker({ patientId, onChanged }: Props) {
   const [vaxAttachmentId, setVaxAttachmentId] = useState<number | null>(null);
   const [vaxSaving, setVaxSaving] = useState(false);
   const [vaxError, setVaxError] = useState<unknown>(null);
+  const [commVaccine, setCommVaccine] = useState<VaccineItem | null>(null);
 
   const canEdit =
     can('patient:write_clinical') || can('care:write_nursing') || can('vitals:write');
@@ -588,6 +590,16 @@ export function PediatricTracker({ patientId, onChanged }: Props) {
                               ✓ Given today
                             </button>
                           )}
+                          {v.status !== 'given' && (
+                            <button
+                              type="button"
+                              className="btn small"
+                              onClick={() => setCommVaccine(v)}
+                              title="Send vaccine reminder to parent via WhatsApp or SMS"
+                            >
+                              💬 Remind Parent
+                            </button>
+                          )}
                           <button
                             type="button"
                             className="btn small"
@@ -769,6 +781,24 @@ export function PediatricTracker({ patientId, onChanged }: Props) {
           </div>
         );
       })}
+
+      {commVaccine && data && (
+        <CommunicationModal
+          open={true}
+          onClose={() => setCommVaccine(null)}
+          patientId={data.patientId}
+          patientName={data.patientName}
+          patientPhone={data.phone}
+          defaultType="vaccination"
+          vaccineData={{
+            childName: data.patientName,
+            parentName: data.parentName ?? undefined,
+            vaccineName: commVaccine.vaccineName,
+            dueAge: commVaccine.recommendedAge,
+            dueDate: commVaccine.dueDate ?? undefined,
+          }}
+        />
+      )}
     </div>
   );
 }

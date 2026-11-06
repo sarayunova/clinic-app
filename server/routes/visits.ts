@@ -133,7 +133,7 @@ export function registerVisitRoutes(app: FastifyInstance, { db, cfg }: Ctx): voi
   function present(id: number) {
     const v = db
       .prepare(
-        `SELECT v.*, p.patient_number, p.full_name AS patient_name, p.date_of_birth, p.estimated_age_years,
+        `SELECT v.*, p.patient_number, p.full_name AS patient_name, p.phone AS patient_phone, p.date_of_birth, p.estimated_age_years,
                 p.allergy_status, p.allergy_details, p.last_menstrual_period, p.gravida, p.para, p.abortions, p.living, cu.full_name AS created_by_name, fu.full_name AS finalised_by_name
            FROM visits v JOIN patients p ON p.id = v.patient_id
            LEFT JOIN users cu ON cu.id = v.created_by LEFT JOIN users fu ON fu.id = v.finalised_by

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api, type FollowUpItem } from '../api';
 import { useAuth } from '../auth';
 import { BookAppointment } from './BookAppointment';
+import { CommunicationModal } from './CommunicationModal';
 import { AllergyBadge, ErrorBanner, todayLocal } from './ui';
 
 function daysBetween(fromStr: string, toStr: string): number {
@@ -38,6 +39,7 @@ export function FollowUpsView() {
     patient: { id: number; name: string };
     defaultDate: string;
   } | null>(null);
+  const [commTarget, setCommTarget] = useState<FollowUpItem | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -187,8 +189,8 @@ export function FollowUpsView() {
                 </div>
               </div>
 
-              {can('appointment:create') && !it.appointmentId && (
-                <div className="row wrap" style={{ marginTop: '0.4rem' }}>
+              <div className="row wrap" style={{ marginTop: '0.4rem', gap: '0.4rem' }}>
+                {can('appointment:create') && !it.appointmentId && (
                   <button
                     type="button"
                     className="btn primary small"
@@ -201,11 +203,44 @@ export function FollowUpsView() {
                   >
                     + Book appointment
                   </button>
-                </div>
-              )}
+                )}
+                {can('patient:read_basic') && (
+                  <button
+                    type="button"
+                    className="btn small"
+                    onClick={() => setCommTarget(it)}
+                    title="Send WhatsApp or SMS recall reminder"
+                  >
+                    💬 Remind
+                  </button>
+                )}
+              </div>
             </li>
           ))}
         </ul>
+      )}
+
+      {commTarget && (
+        <CommunicationModal
+          open={true}
+          onClose={() => setCommTarget(null)}
+          patientId={commTarget.patientId}
+          patientName={commTarget.patientName}
+          patientPhone={commTarget.patientPhone}
+          defaultType={commTarget.appointmentId ? 'appointment_reminder' : 'antenatal_recall'}
+          appointmentData={
+            commTarget.appointmentId
+              ? {
+                  appointmentDate: commTarget.appointmentDate ?? commTarget.followUpDate,
+                  appointmentTime: commTarget.appointmentTime ?? '10:00 AM',
+                }
+              : undefined
+          }
+          antenatalData={{
+            nextVisitDate: commTarget.followUpDate,
+            customNote: commTarget.assessment ? `Previous assessment: ${commTarget.assessment}` : undefined,
+          }}
+        />
       )}
     </div>
   );
