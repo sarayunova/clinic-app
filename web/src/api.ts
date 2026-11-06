@@ -1573,3 +1573,97 @@ export interface MedicationExposuresResponse {
   count: number;
   exposures: AntenatalMedicationExposure[];
 }
+
+// ---------- Postpartum Hemorrhage (PPH) & Quantitative Blood Loss (QBL) ----------
+
+export interface PphTimelineEntry {
+  id: number;
+  pphAssessmentId: number;
+  loggedAt: string;
+  drapeIncrementMl: number;
+  spongeIncrementG: number;
+  clotsIncrementG: number;
+  cumulativeQblMl: number;
+  pulse?: number | null;
+  bpSystolic?: number | null;
+  bpDiastolic?: number | null;
+  shockIndex?: number | null;
+  actionTaken?: string | null;
+  loggedBy: number;
+  loggedByName?: string | null;
+  createdAt: string;
+}
+
+export interface PphAssessment {
+  id: number;
+  patientId: number;
+  maternityAdmissionId?: number | null;
+  deliveryMode: 'vaginal' | 'cesarean' | 'assisted_vacuum_forceps';
+  deliveryTimestamp: string;
+  assessmentTimestamp: string;
+  pphStage: 'stage_0_routine' | 'stage_1_alert' | 'stage_2_moderate' | 'stage_3_severe_mtp';
+  primaryEtiology4t: 'tone_atony' | 'trauma_laceration' | 'tissue_retained' | 'thrombin_coagulopathy' | 'mixed_unclear';
+  etiologyDetails?: string | null;
+  uterineTone: 'well_contracted_firm' | 'soft_boggy' | 'relaxing_between_massage' | 'uncontracted';
+  qblTotalMl: number;
+  qblCalibratedDrapeMl: number;
+  qblSuctionCanisterMl: number;
+  qblSpongesWetWeightG: number;
+  qblSpongesDryWeightG: number;
+  qblClotsWeighedG: number;
+  eblVisualEstimateMl?: number | null;
+  maternalPulse?: number | null;
+  maternalBpSystolic?: number | null;
+  maternalBpDiastolic?: number | null;
+  shockIndex?: number | null;
+  shockIndexSeverity: 'normal' | 'early_warning' | 'high_risk' | 'critical_collapse';
+  meanArterialPressure?: number | null;
+  spo2Pct?: number | null;
+  temperatureC?: number | null;
+  bimanualCompressionDone: boolean;
+  bladderCatheterized: boolean;
+  ivAccessTwoWideBore: boolean;
+  crystalloidsInfusedMl: number;
+  oxytocinGiven: boolean;
+  oxytocinDoseRoute?: string | null;
+  tranexamicAcidGiven: boolean;
+  txaGivenAt?: string | null;
+  methylergometrineGiven: boolean;
+  methergineContraindicated: boolean;
+  carboprostGiven: boolean;
+  carboprostDosesCount: number;
+  carboprostContraindicated: boolean;
+  misoprostolGiven: boolean;
+  misoprostolDoseMcg: number;
+  uterineTamponadeBalloonUsed: boolean;
+  balloonFillVolumeMl: number;
+  mtpActivated: boolean;
+  bloodUnitsTransfused: number;
+  ffpUnitsTransfused: number;
+  plateletUnitsTransfused: number;
+  cryoprecipitateUnitsTransfused: number;
+  surgicalIntervention: 'none' | 'compression_sutures_b_lynch' | 'uterine_artery_ligation' | 'internal_iliac_ligation' | 'peripartum_hysterectomy' | 'examination_under_anesthesia';
+  outcomeStatus: 'bleeding_controlled' | 'stable_under_observation' | 'transferred_to_ot' | 'transferred_to_icu' | 'critical_unstable';
+  attendingObstetrician?: string | null;
+  attendingAnesthetist?: string | null;
+  nurseInCharge?: string | null;
+  notes?: string | null;
+  createdBy: number;
+  createdByName?: string | null;
+  updatedBy: number;
+  updatedByName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  patientName?: string;
+  patientNumber?: string;
+  dateOfBirth?: string | null;
+  patientPhone?: string | null;
+  patientBloodGroup?: string | null;
+  timelineEntries?: PphTimelineEntry[];
+}
+
+export interface PphAssessmentsResponse {
+  patientId: number;
+  count: number;
+  assessments: PphAssessment[];
+}
