@@ -2005,3 +2005,92 @@ export interface NeonatalJaundiceListResponse {
   patientId: number;
   episodes: NeonatalJaundiceEpisode[];
 }
+
+export interface InfertilityWorkup {
+  id: number;
+  patientId: number;
+  partnerName?: string | null;
+  partnerAge?: number | null;
+  infertilityType: 'primary' | 'secondary';
+  durationYears?: number | null;
+  femaleFactors: string[];
+  baselineAmhNgMl?: number | null;
+  baselineFshMiuMl?: number | null;
+  baselineAfcTotal?: number | null;
+  hsgFindings?: string | null;
+  semenVolumeMl?: number | null;
+  semenConcentrationMilMl?: number | null;
+  semenTotalMotilityPct?: number | null;
+  semenProgressiveMotilityPct?: number | null;
+  semenNormalMorphologyPct?: number | null;
+  semenAnalysisInterpretation?: string | null;
+  clinicalNotes?: string | null;
+  createdBy: number;
+  createdByName?: string | null;
+  updatedBy: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FolliculometryScan {
+  id: number;
+  cycleId: number;
+  patientId: number;
+  scanDatetime: string;
+  cycleDay: number;
+  rightOvaryFollicles: number[];
+  leftOvaryFollicles: number[];
+  leadingFollicleSizeMm?: number | null;
+  leadingFollicleOvary?: 'right' | 'left' | 'bilateral' | 'none' | null;
+  endometrialThicknessMm?: number | null;
+  endometrialPattern?: 'trilaminar_a' | 'isogenous_b' | 'hyperechoic_c' | 'irregular' | null;
+  freeFluidPod: boolean;
+  ovulationRuptureObserved: boolean;
+  growthRateMmDay?: number | null;
+  readinessStage?: 'baseline' | 'early_follicular' | 'mid_follicular' | 'mature_ready_to_trigger' | 'ovulated_corpus_luteum' | 'hyperstimulation_risk' | null;
+  clinicalAdvice?: string | null;
+  sonographerNotes?: string | null;
+  createdBy: number;
+  createdByName?: string | null;
+  createdAt: string;
+}
+
+export interface FolliculometryCycle {
+  id: number;
+  patientId: number;
+  patientName?: string | null;
+  patientNumber?: string | null;
+  workupId?: number | null;
+  cycleNumber: number;
+  lmpDate: string;
+  protocolType: 'natural' | 'letrozole' | 'clomiphene' | 'gonadotropins' | 'letrozole_plus_gonadotropins' | 'clomiphene_plus_gonadotropins' | 'other';
+  protocolDetails?: string | null;
+  plannedProcedure: 'timed_intercourse' | 'iui' | 'ivf_referral' | 'cancelled';
+  status: 'active' | 'triggered' | 'ovulated_ruptured' | 'completed' | 'cancelled';
+  cancellationReason?: string | null;
+  triggerDrug?: string | null;
+  triggerDatetime?: string | null;
+  advisedTicIuiDatetime?: string | null;
+  lutealSupport?: string | null;
+  cycleOutcome: 'pending' | 'not_pregnant' | 'biochemical_pregnancy' | 'clinical_pregnancy' | 'ectopic' | 'cancelled';
+  outcomeNotes?: string | null;
+  createdBy: number;
+  createdByName?: string | null;
+  updatedBy: number;
+  updatedByName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  scansCount: number;
+  scans: FolliculometryScan[];
+  latestScan?: FolliculometryScan | null;
+}
+
+export interface InfertilityWorkupResponse {
+  patientId: number;
+  workup: InfertilityWorkup | null;
+}
+
+export interface FolliculometryCyclesResponse {
+  patientId: number;
+  cycles: FolliculometryCycle[];
+}

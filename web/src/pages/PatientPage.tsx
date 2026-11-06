@@ -25,6 +25,7 @@ import { PphQblManager } from '../components/PphQblManager';
 import { NeonatalResuscitationManager } from '../components/NeonatalResuscitationManager';
 import { MaternalMeowsManager } from '../components/MaternalMeowsManager';
 import { NeonatalJaundiceTracker } from '../components/NeonatalJaundiceTracker';
+import { FolliculometryTracker } from '../components/FolliculometryTracker';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -135,7 +136,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -542,6 +543,15 @@ export function PatientPage() {
                     </button>
                   </>
                 )}
+                {!isPediatric && (
+                  <button
+                    type="button"
+                    className={`btn small ${viewMode === 'folliculometry' ? 'primary' : ''}`}
+                    onClick={() => setViewMode('folliculometry')}
+                  >
+                    🔬 Infertility &amp; Folliculometry
+                  </button>
+                )}
                 <button
                   type="button"
                   className={`btn small ${viewMode === 'ultrasound' ? 'primary' : ''}`}
@@ -624,6 +634,8 @@ export function PatientPage() {
               patientDob={patient!.dateOfBirth as string | null | undefined}
               onChanged={load}
             />
+          ) : viewMode === 'folliculometry' ? (
+            <FolliculometryTracker patientId={patient!.id} />
           ) : isPediatric && viewMode === 'pediatric' ? (
             <PediatricTracker
               patientId={patient!.id}
