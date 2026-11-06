@@ -24,6 +24,7 @@ import { MedicationSafetyChecker } from '../components/MedicationSafetyChecker';
 import { PphQblManager } from '../components/PphQblManager';
 import { NeonatalResuscitationManager } from '../components/NeonatalResuscitationManager';
 import { MaternalMeowsManager } from '../components/MaternalMeowsManager';
+import { NeonatalJaundiceTracker } from '../components/NeonatalJaundiceTracker';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -134,7 +135,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -532,6 +533,13 @@ export function PatientPage() {
                     >
                       🩺 Birth Resuscitation &amp; NEW-S
                     </button>
+                    <button
+                      type="button"
+                      className={`btn small ${viewMode === 'jaundice' ? 'primary' : ''}`}
+                      onClick={() => setViewMode('jaundice')}
+                    >
+                      💡 Jaundice Nomogram
+                    </button>
                   </>
                 )}
                 <button
@@ -610,6 +618,12 @@ export function PatientPage() {
             <ObstetricDischargeManager patient={patient!} />
           ) : viewMode === 'neonatal_resus' ? (
             <NeonatalResuscitationManager patientId={patient!.id} />
+          ) : viewMode === 'jaundice' ? (
+            <NeonatalJaundiceTracker
+              patientId={patient!.id}
+              patientDob={patient!.dateOfBirth as string | null | undefined}
+              onChanged={load}
+            />
           ) : isPediatric && viewMode === 'pediatric' ? (
             <PediatricTracker
               patientId={patient!.id}

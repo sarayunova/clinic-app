@@ -1944,3 +1944,64 @@ export interface MaternalMeowsEpisodesResponse {
   count: number;
   episodes: MaternalMeowsEpisode[];
 }
+
+// ---------- Neonatal Hyperbilirubinemia (Jaundice) ----------
+
+export interface NeonatalBilirubinReading {
+  id: number;
+  episodeId: number;
+  patientId: number;
+  sampleDatetime: string;
+  ageHours: number;
+  readingType: 'tsb_serum' | 'tcb_transcutaneous';
+  bilirubinMgDl: number;
+  bilirubinUmolL?: number | null;
+  rateOfRiseMgDlHr?: number | null;
+  bhutaniRiskZone?: 'low' | 'low_intermediate' | 'high_intermediate' | 'high' | null;
+  phototherapyThresholdMgDl?: number | null;
+  exchangeThresholdMgDl?: number | null;
+  phototherapyIndicated: boolean;
+  exchangeIndicated: boolean;
+  clinicalAction?: string | null;
+  activePhototherapy: boolean;
+  phototherapyDevice?: string | null;
+  notes?: string | null;
+  createdBy: number;
+  createdByName?: string | null;
+  createdAt: string;
+}
+
+export interface NeonatalJaundiceEpisode {
+  id: number;
+  patientId: number;
+  patientName?: string | null;
+  patientNumber?: string | null;
+  gender?: string | null;
+  admissionId?: number | null;
+  deliveryRecordId?: number | null;
+  birthDatetime: string;
+  gestationalAgeWeeks: number;
+  birthWeightGrams?: number | null;
+  bloodGroup?: string | null;
+  maternalBloodGroup?: string | null;
+  directCoombsTest: 'positive' | 'negative' | 'not_tested';
+  g6pdDeficiency: 'normal' | 'deficient' | 'not_tested';
+  neurotoxicityRisk: boolean;
+  feedingType: 'exclusive_breastfeeding' | 'formula' | 'mixed';
+  status: 'monitoring' | 'under_phototherapy' | 'resolved' | 'escalated_transfusion' | 'discharged';
+  clinicalSummary?: string | null;
+  createdBy: number;
+  createdByName?: string | null;
+  updatedBy: number;
+  updatedByName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  readingsCount: number;
+  readings: NeonatalBilirubinReading[];
+  latestReading?: NeonatalBilirubinReading | null;
+}
+
+export interface NeonatalJaundiceListResponse {
+  patientId: number;
+  episodes: NeonatalJaundiceEpisode[];
+}
