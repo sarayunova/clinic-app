@@ -125,13 +125,22 @@ export function Dashboard() {
         <>
           <header className="page-head">
             <h1>{isToday ? 'Today' : 'Appointments'}</h1>
-            <div className="row">
+            <div className="row wrap">
               <input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label="Date" />
               {!isToday && (
                 <button className="btn" onClick={() => setDate(todayLocal())}>
                   Today
                 </button>
               )}
+              <Link
+                to="/tv"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn"
+                title="Open lobby TV display in a new window/tab"
+              >
+                📺 Lobby TV
+              </Link>
             </div>
           </header>
 

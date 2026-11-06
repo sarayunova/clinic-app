@@ -22,9 +22,13 @@ import { PriceListPage } from './pages/PriceListPage';
 import { ChecklistPage } from './pages/ChecklistPage';
 import { PrescriptionTemplatesPage } from './pages/PrescriptionTemplatesPage';
 import { CollectionReportPage } from './pages/CollectionReport';
+import { TvQueuePage } from './pages/TvQueuePage';
 import { ScreenLock } from './components/ScreenLock';
 
 export function App() {
+  const location = useLocation();
+  if (location.pathname === '/tv') return <TvQueuePage />;
+
   const { state } = useAuth();
   if (state.status === 'loading') return <p className="center muted">Loading…</p>;
   if (state.status !== 'ready') return <AuthScreens />;
@@ -133,6 +137,7 @@ function Shell() {
           <Route path="/users" element={can('user:manage') ? <UsersPage /> : <Navigate to="/" replace />} />
           <Route path="/station" element={can('station:read') ? <StationPage /> : <Navigate to="/" replace />} />
           <Route path="/audit" element={can('audit:read') ? <AuditPage /> : <Navigate to="/" replace />} />
+          <Route path="/tv" element={<TvQueuePage />} />
           <Route path="/account" element={<ChangePasswordPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
