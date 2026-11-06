@@ -1540,3 +1540,36 @@ export interface AntenatalSerologyResponse {
   exists: boolean;
   serology: AntenatalSerologyMatrix | null;
 }
+
+// ---------- Antenatal Medication Safety & Teratogenic Exposure Registry ----------
+
+export interface AntenatalMedicationExposure {
+  id: number;
+  patientId: number;
+  medicineName: string;
+  genericName?: string | null;
+  fdaCategory: 'A' | 'B' | 'C' | 'D' | 'X' | 'N/A';
+  riskLevel: 'safe' | 'caution' | 'high_risk' | 'contraindicated';
+  trimesterExposure: 'preconception' | 't1_organogenesis' | 't2' | 't3' | 'multiple_unknown';
+  gestationalAgeWeeks?: number | null;
+  gestationalAgeDays?: number | null;
+  exposureStartDate?: string | null;
+  exposureEndDate?: string | null;
+  exposureDose?: string | null;
+  fetalRiskSummary: string;
+  teratogenicMechanism?: string | null;
+  anomalyScanIndicated: boolean;
+  fetalEchoIndicated: boolean;
+  counselingNotes?: string | null;
+  actionPlan?: string | null;
+  counseledBy: number;
+  counseledByName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MedicationExposuresResponse {
+  patientId: number;
+  count: number;
+  exposures: AntenatalMedicationExposure[];
+}

@@ -20,6 +20,7 @@ import { AntenatalRiskEngine } from '../components/AntenatalRiskEngine';
 import { ObstetricDischargeManager } from '../components/ObstetricDischargeManager';
 import { MaternityAdmissionManager } from '../components/MaternityAdmissionManager';
 import { AntenatalLabTracker } from '../components/AntenatalLabTracker';
+import { MedicationSafetyChecker } from '../components/MedicationSafetyChecker';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -130,7 +131,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -463,6 +464,13 @@ export function PatientPage() {
                     </button>
                     <button
                       type="button"
+                      className={`btn small ${viewMode === 'med_safety' ? 'primary' : ''}`}
+                      onClick={() => setViewMode('med_safety')}
+                    >
+                      💊 Med Safety &amp; Teratogens
+                    </button>
+                    <button
+                      type="button"
                       className={`btn small ${viewMode === 'risk' ? 'primary' : ''}`}
                       onClick={() => setViewMode('risk')}
                     >
@@ -547,6 +555,8 @@ export function PatientPage() {
             />
           ) : isMaternity && viewMode === 'antenatal_labs' ? (
             <AntenatalLabTracker patient={patient!} />
+          ) : isMaternity && viewMode === 'med_safety' ? (
+            <MedicationSafetyChecker patient={patient!} visits={visits} />
           ) : isMaternity && viewMode === 'risk' ? (
             <AntenatalRiskEngine
               patientId={patient!.id}

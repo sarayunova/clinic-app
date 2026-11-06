@@ -20,6 +20,8 @@ import {
 import { DictationToolbar, VoiceFieldMic } from '../components/VoiceDictation';
 import { appendDictatedText } from '../voiceDictationUtils';
 import { CommunicationModal } from '../components/CommunicationModal';
+import { evaluatePrescriptionSafety, getRiskBadgeStyle } from '../pregnancyMedicationSafety';
+import { calculateGestationalAge } from '../pregnancyCalc';
 
 const TEXT_FIELDS = [
   { key: 'complaints', label: 'Presenting complaints' },
@@ -186,6 +188,20 @@ export function VisitPage() {
   const editable = (isDraft && can('visit:write')) || amending;
   const fe = fieldErrorsOf(error);
   const conflict = error instanceof ApiError && error.status === 409;
+
+  const isMaternity = Boolean(visit.lastMenstrualPeriod || visit.gravida != null || visit.antenatalNotes);
+  const currentGa = calculateGestationalAge(visit.lastMenstrualPeriod);
+
+  const prescriptionSafetyAlerts = useMemo(() => {
+    if (!isMaternity) return [];
+    return items
+      .map((it, idx) => ({
+        index: idx,
+        medicine: it.medicine.trim(),
+        evaluation: it.medicine.trim() ? evaluatePrescriptionSafety(it.medicine, currentGa?.weeks ?? null) : null,
+      }))
+      .filter((r) => r.evaluation && (r.evaluation.evaluatedRiskLevel === 'contraindicated' || r.evaluation.evaluatedRiskLevel === 'high_risk'));
+  }, [isMaternity, items, currentGa?.weeks]);
 
   async function run(fn: () => Promise<Visit | void>, okMsg?: string) {
     setBusy(true);
@@ -376,6 +392,72 @@ export function VisitPage() {
             />
           )}
 
+          {/* Antenatal Prescription Teratogen / Fetotoxic Alerts Banner */}
+          {prescriptionSafetyAlerts.length > 0 && (
+            <div
+              style={{
+                background: '#fef2f2',
+                border: '1.5px solid #ef4444',
+                borderRadius: '8px',
+                padding: '0.8rem 1rem',
+                margin: '0.6rem 0',
+                boxShadow: '0 2px 4px rgba(239, 68, 68, 0.1)',
+              }}
+            >
+              <div className="row wrap" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                <strong style={{ color: '#991b1b', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <span>⛔</span> TERATOGENIC / FETOTOXIC ALERT (Pregnancy Safety Warning)
+                </strong>
+                {currentGa && (
+                  <span className="badge" style={{ background: '#b91c1c', color: '#ffffff', fontWeight: 'bold' }}>
+                    GA: {currentGa.formatted}
+                  </span>
+                )}
+              </div>
+              {prescriptionSafetyAlerts.map((alert) => (
+                <div key={alert.index} style={{ marginTop: '0.4rem', fontSize: '0.85rem', color: '#7f1d1d' }}>
+                  <div>
+                    <strong>#{alert.index + 1} {alert.medicine}:</strong>{' '}
+                    <span style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>{alert.evaluation!.severityTitle}</span> (FDA Cat: {alert.evaluation!.fdaCategory})
+                  </div>
+                  <div style={{ marginTop: '0.15rem' }}>{alert.evaluation!.warningSummary}</div>
+                  {alert.evaluation!.suggestedAlternatives.length > 0 && (
+                    <div className="row wrap" style={{ alignItems: 'center', gap: '0.4rem', marginTop: '0.35rem' }}>
+                      <span style={{ fontWeight: 'bold', color: '#166534', fontSize: '0.78rem' }}>Safe Alternatives:</span>
+                      {alert.evaluation!.suggestedAlternatives.map((alt) => {
+                        const cleanAlt = alt.split('(')[0]?.trim() || alt;
+                        return (
+                          <button
+                            key={alt}
+                            type="button"
+                            className="chip-btn pill-add"
+                            style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem' }}
+                            onClick={() => {
+                              setItems((curr) =>
+                                curr.map((x, j) =>
+                                  j === alert.index
+                                    ? {
+                                        ...x,
+                                        medicine: cleanAlt || '',
+                                        strength: '',
+                                        instructions: 'Pregnancy-safe substitute',
+                                      }
+                                    : x
+                                )
+                              );
+                            }}
+                          >
+                            🔄 Switch to {cleanAlt}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           {items.length === 0 && <p className="muted">{editable ? 'No medicines added.' : 'No medicines prescribed.'}</p>}
           <div className="stack">
             {items.map((it, i) => (
@@ -427,6 +509,46 @@ export function VisitPage() {
                               >
                                 ⚡ Fill standard directions ({std.strength}, {std.frequency})
                               </button>
+                            </div>
+                          );
+                        })()}
+                        {isMaternity && f.key === 'medicine' && it.medicine && (() => {
+                          const safety = evaluatePrescriptionSafety(it.medicine, currentGa?.weeks ?? null);
+                          const badgeStyle = getRiskBadgeStyle(safety.evaluatedRiskLevel);
+                          return (
+                            <div
+                              style={{
+                                marginTop: '0.3rem',
+                                padding: '0.35rem 0.55rem',
+                                borderRadius: '5px',
+                                fontSize: '0.76rem',
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                gap: '0.3rem',
+                                ...badgeStyle,
+                              }}
+                            >
+                              <div>
+                                <strong>FDA Cat {safety.fdaCategory}:</strong> {safety.severityTitle}
+                                <span style={{ display: 'block', fontSize: '0.72rem', marginTop: '0.1rem' }}>
+                                  {safety.warningSummary}
+                                </span>
+                              </div>
+                              {editable && safety.suggestedAlternatives.length > 0 && (safety.evaluatedRiskLevel === 'contraindicated' || safety.evaluatedRiskLevel === 'high_risk') && (
+                                <button
+                                  type="button"
+                                  className="btn small"
+                                  style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem', background: '#ffffff', color: '#166534', border: '1px solid #166534' }}
+                                  onClick={() => {
+                                    const clean = safety.suggestedAlternatives[0]?.split('(')[0]?.trim() || safety.suggestedAlternatives[0] || '';
+                                    setItems((curr) => curr.map((x, j) => (j === i ? { ...x, medicine: clean } : x)));
+                                  }}
+                                >
+                                  🔄 Switch to {safety.suggestedAlternatives[0]?.split('(')[0]?.trim()}
+                                </button>
+                              )}
                             </div>
                           );
                         })()}
