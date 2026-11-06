@@ -61,6 +61,7 @@ export const ACTION_LABELS: Record<string, string> = {
   'billing.report': 'Looked at the collection report',
   'settings.update': 'Changed clinic details',
   'backup.run': 'Backup taken',
+  'backup.download': 'Downloaded encrypted backup',
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

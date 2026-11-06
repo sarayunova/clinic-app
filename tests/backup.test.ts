@@ -156,7 +156,14 @@ describe('backup API', () => {
   async function call(method: 'GET' | 'POST', url: string, cookie?: string, payload?: unknown) {
     const res = await app.inject({ method, url, payload: payload as object, headers: cookie ? { cookie } : {} });
     const sc = res.headers['set-cookie'];
-    return { status: res.statusCode, body: (res.body ? JSON.parse(res.body) : null) as Json, setCookie: Array.isArray(sc) ? sc[0] : sc };
+    const ct = String(res.headers['content-type'] ?? '');
+    return {
+      status: res.statusCode,
+      headers: res.headers,
+      rawBody: res.rawPayload,
+      body: (ct.includes('json') && res.body ? JSON.parse(res.body) : null) as Json,
+      setCookie: Array.isArray(sc) ? sc[0] : sc,
+    };
   }
   beforeEach(async () => {
     extra = openDb(cfg.dbFile.replace('clinic.sqlite', 'api.sqlite'));
@@ -196,5 +203,44 @@ describe('backup API', () => {
     expect(st.warnings[0]).toMatch(/off/);
     const run = await a2.inject({ method: 'POST', url: '/api/backups/run', headers: { cookie } });
     expect(run.statusCode).toBe(400);
+  });
+
+  it('allows the doctor to download encrypted backup snapshots, and audits downloads', async () => {
+    // Attempt download when no backup exists yet
+    expect((await call('GET', '/api/backups/download/latest', doctor)).status).toBe(404);
+
+    // Create a backup snapshot
+    const run = await call('POST', '/api/backups/run', doctor);
+    const filename = run.body.file as string;
+
+    // Permissions check
+    expect((await call('GET', `/api/backups/download/${filename}`, desk)).status).toBe(403);
+    expect((await call('GET', `/api/backups/download/${filename}`)).status).toBe(401);
+
+    // Path traversal / invalid filename rejection
+    expect((await call('GET', '/api/backups/download/..%2f..%2fpackage.json', doctor)).status).toBe(404);
+    expect((await call('GET', '/api/backups/download/bad-filename.txt', doctor)).status).toBe(404);
+
+    // Doctor downloads latest
+    const dlLatest = await call('GET', '/api/backups/download/latest', doctor);
+    expect(dlLatest.status).toBe(200);
+    expect(dlLatest.headers['content-type']).toBe('application/octet-stream');
+    expect(dlLatest.headers['content-disposition']).toBe(`attachment; filename="${filename}"`);
+    expect(dlLatest.rawBody.length).toBe(run.body.sizeBytes);
+
+    // Doctor downloads specific filename
+    const dlFile = await call('GET', `/api/backups/download/${filename}`, doctor);
+    expect(dlFile.status).toBe(200);
+    expect(dlFile.rawBody).toEqual(dlLatest.rawBody);
+
+    // Verify audit log has recorded the download
+    const auditRes = await call('GET', '/api/audit?action=backup.download', doctor);
+    expect(auditRes.status).toBe(200);
+    expect(auditRes.body).toHaveLength(2);
+    expect(auditRes.body[0]).toMatchObject({
+      action: 'backup.download',
+      label: 'Downloaded encrypted backup',
+      actor: 'Dr Rao',
+    });
   });
 });
