@@ -14,6 +14,7 @@ import { PediatricTracker } from '../components/PediatricTracker';
 import { UltrasoundTracker } from '../components/UltrasoundTracker';
 import { LabTracker } from '../components/LabTracker';
 import { PartographTracker } from '../components/PartographTracker';
+import { OperativeNotesList } from '../components/OperativeNotesList';
 import { CommunicationModal } from '../components/CommunicationModal';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
@@ -124,7 +125,7 @@ export function PatientPage() {
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
-  const [viewMode, setViewMode] = useState<'flowsheet' | 'checklist' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'list'>('flowsheet');
+  const [viewMode, setViewMode] = useState<'flowsheet' | 'checklist' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'list'>('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
   const [invoices, setInvoices] = useState<Invoice[] | null>(null);
@@ -457,6 +458,13 @@ export function PatientPage() {
                 )}
                 <button
                   type="button"
+                  className={`btn small ${viewMode === 'operative' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('operative')}
+                >
+                  🩺 Operative Notes (LSCS)
+                </button>
+                <button
+                  type="button"
                   className={`btn small ${viewMode === 'list' ? 'primary' : ''}`}
                   onClick={() => setViewMode('list')}
                 >
@@ -497,6 +505,11 @@ export function PatientPage() {
             <PartographTracker
               patientId={patient!.id}
               onChanged={load}
+            />
+          ) : viewMode === 'operative' ? (
+            <OperativeNotesList
+              patientId={patient!.id}
+              patientName={patient!.fullName}
             />
           ) : (
             <>

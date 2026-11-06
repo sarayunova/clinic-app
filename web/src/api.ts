@@ -1012,3 +1012,88 @@ export interface PartographListResponse {
     latestRecordedAt?: string | null;
   })[];
 }
+
+export interface OperativeNote {
+  id: number;
+  operativeNumber: string;
+  patientId: number;
+  patientName?: string;
+  patientNumber?: string;
+  patientPhone?: string | null;
+  dateOfBirth?: string | null;
+  allergyStatus?: 'unknown' | 'none' | 'known';
+  allergyDetails?: string | null;
+  bloodGroup?: string | null;
+  admissionId?: number | null;
+  admissionNumber?: string | null;
+  bedRoom?: string | null;
+  bedLabel?: string | null;
+  surgeonId: number;
+  surgeonName: string;
+  assistantName?: string | null;
+  anesthetistName?: string | null;
+  pediatricianName?: string | null;
+  scrubNurseName?: string | null;
+  surgeryDate: string;
+  startTime: string;
+  endTime?: string | null;
+  procedureName: string;
+  procedureCategory: 'lscs' | 'operative_vaginal' | 'laparotomy' | 'cervical_encirclage' | 'other';
+  indication: string;
+  urgency: 'elective' | 'emergency';
+  anesthesiaType: 'spinal' | 'general' | 'epidural' | 'cse' | 'local';
+
+  // WHO Safety Checklist
+  preopIdentityConsentVerified: boolean;
+  preopSiteMarked: boolean;
+  preopAnesthesiaSafetyChecked: boolean;
+  preopPulseOximeterFunctioning: boolean;
+  preopAllergiesReviewed: boolean;
+  preopDifficultAirwayAssessed: boolean;
+  preopBloodAvailabilityUnits?: string | null;
+  preopAntibioticProphylaxis?: string | null;
+
+  // Operative technique & findings
+  incisionType?: 'pfannenstiel' | 'joel_cohen' | 'subumbilical_midline' | 'other';
+  presentation?: 'cephalic' | 'breech' | 'transverse' | 'compound' | 'other';
+  liquorCharacteristics?: 'clear' | 'meconium_thin' | 'meconium_thick' | 'blood_stained' | 'oligohydramnios';
+  extractionDetails?: string | null;
+  babyDeliveryTime?: string | null;
+  placentaDelivery?: 'spontaneous_cct' | 'manual_removal';
+  placentaCompleteness?: 'complete_intact' | 'incomplete_explored' | 'morbidly_adherent';
+  uterineClosure?: string | null;
+  tubalLigationPerformed: boolean;
+  tubalLigationNotes?: string | null;
+  estimatedBloodLossMl: number;
+  findingsNotes?: string | null;
+
+  // Newborn summary
+  babyGender?: 'male' | 'female' | 'ambiguous' | null;
+  babyWeightGrams?: number | null;
+  apgar1min?: number | null;
+  apgar5min?: number | null;
+  babyResuscitationDetails?: string | null;
+
+  // Safety count
+  spongeCountVerified: boolean;
+  instrumentCountVerified: boolean;
+  needleCountVerified: boolean;
+  drainPlaced: boolean;
+  drainType?: string | null;
+  closureDetails?: string | null;
+
+  // Post-op orders
+  postopVitalsMonitoring?: string | null;
+  postopIvFluids?: string | null;
+  postopAnalgesia?: string | null;
+  postopAntibiotics?: string | null;
+  postopThromboprophylaxis?: string | null;
+  postopDiet?: string | null;
+  postopCatheterInstructions?: string | null;
+  specialInstructions?: string | null;
+
+  status: 'draft' | 'completed' | 'amended';
+  createdByName?: string;
+  createdAt: string;
+  updatedAt: string;
+}
