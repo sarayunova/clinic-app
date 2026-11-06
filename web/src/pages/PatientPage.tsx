@@ -27,6 +27,7 @@ import { MaternalMeowsManager } from '../components/MaternalMeowsManager';
 import { NeonatalJaundiceTracker } from '../components/NeonatalJaundiceTracker';
 import { FolliculometryTracker } from '../components/FolliculometryTracker';
 import { ErasReedaManager } from '../components/ErasReedaManager';
+import { GestationalDiabetesTracker } from '../components/GestationalDiabetesTracker';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -137,7 +138,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -545,13 +546,22 @@ export function PatientPage() {
                   </>
                 )}
                 {!isPediatric && (
-                  <button
-                    type="button"
-                    className={`btn small ${viewMode === 'folliculometry' ? 'primary' : ''}`}
-                    onClick={() => setViewMode('folliculometry')}
-                  >
-                    🔬 Infertility &amp; Folliculometry
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      className={`btn small ${viewMode === 'gdm' ? 'primary' : ''}`}
+                      onClick={() => setViewMode('gdm')}
+                    >
+                      🩸 GDM &amp; Glycemic
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn small ${viewMode === 'folliculometry' ? 'primary' : ''}`}
+                      onClick={() => setViewMode('folliculometry')}
+                    >
+                      🔬 Infertility &amp; Folliculometry
+                    </button>
+                  </>
                 )}
                 <button
                   type="button"
@@ -644,6 +654,8 @@ export function PatientPage() {
             />
           ) : viewMode === 'folliculometry' ? (
             <FolliculometryTracker patientId={patient!.id} />
+          ) : viewMode === 'gdm' ? (
+            <GestationalDiabetesTracker patientId={patient!.id} />
           ) : viewMode === 'eras_reeda' ? (
             <ErasReedaManager patientId={patient!.id} />
           ) : isPediatric && viewMode === 'pediatric' ? (

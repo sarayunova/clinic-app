@@ -2151,3 +2151,104 @@ export interface ErasPathwaysResponse {
   patientId: number;
   pathways: ErasPostOpPathway[];
 }
+
+// ---------- Gestational Diabetes Mellitus (GDM) & Glycemic Tracker ----------
+
+export interface GdmProfile {
+  id: number;
+  patient_id: number;
+  gestational_age_weeks?: number | null;
+  diagnostic_criteria: 'dipsi' | 'iadpsg' | 'carpenter_coustan' | 'prior_pregestational' | 'clinical_hba1c';
+  diagnostic_date: string;
+  ogtt_fasting_mg_dl?: number | null;
+  ogtt_1hr_mg_dl?: number | null;
+  ogtt_2hr_mg_dl?: number | null;
+  ogtt_3hr_mg_dl?: number | null;
+  baseline_hba1c?: number | null;
+  white_classification: 'a1_diet' | 'a2_medication' | 'class_b_pregestational' | 'class_c' | 'class_d';
+  current_management: 'medical_nutrition_therapy' | 'metformin' | 'insulin' | 'insulin_plus_metformin';
+  target_fasting_mg_dl: number;
+  target_postprandial_mg_dl: number;
+  postprandial_window: '1_hour' | '2_hour';
+  target_hba1c: number;
+  insulin_regimen_type: 'none' | 'basal_only' | 'bolus_only' | 'basal_bolus' | 'split_mixed_nph_reg';
+  basal_insulin_name?: string | null;
+  basal_units_morning?: number | null;
+  basal_units_night?: number | null;
+  bolus_insulin_name?: string | null;
+  bolus_units_breakfast?: number | null;
+  bolus_units_lunch?: number | null;
+  bolus_units_dinner?: number | null;
+  metformin_dose_mg_day?: number | null;
+  dietary_calories_prescribed?: number | null;
+  fetal_surveillance_notes?: string | null;
+  planned_delivery_weeks?: number | null;
+  status: 'active' | 'resolved_postpartum' | 'converted_type2';
+  notes?: string | null;
+  created_by?: number | null;
+  updated_by?: number | null;
+  created_at: string;
+  updated_at: string;
+  created_by_name?: string | null;
+  updated_by_name?: string | null;
+}
+
+export interface GdmGlucoseLog {
+  id: number;
+  profile_id: number;
+  patient_id: number;
+  log_date: string;
+  log_time: string;
+  meal_slot:
+    | 'fasting'
+    | 'post_breakfast'
+    | 'pre_lunch'
+    | 'post_lunch'
+    | 'pre_dinner'
+    | 'post_dinner'
+    | 'bedtime'
+    | '3_am_nocturnal'
+    | 'random';
+  blood_glucose_mg_dl: number;
+  target_status:
+    | 'severe_hypoglycemia'
+    | 'mild_hypoglycemia'
+    | 'in_target'
+    | 'mild_excursion'
+    | 'severe_excursion';
+  carbs_consumed_estimate?: string | null;
+  insulin_administered_units?: number | null;
+  physical_activity_min?: number | null;
+  symptoms?: string | null;
+  action_taken?: string | null;
+  source: 'patient_log' | 'ward_nurse_glucometer' | 'lab_venous';
+  notes?: string | null;
+  recorded_by?: number | null;
+  recorded_by_name?: string | null;
+  created_at: string;
+}
+
+export interface GdmFetalSurveillance {
+  id: number;
+  profile_id: number;
+  patient_id: number;
+  assessment_date: string;
+  gestational_age_weeks?: number | null;
+  estimated_fetal_weight_g?: number | null;
+  efw_percentile?: number | null;
+  abdominal_circumference_mm?: number | null;
+  ac_percentile?: number | null;
+  amniotic_fluid_index_cm?: number | null;
+  single_deepest_pocket_cm?: number | null;
+  macrosomia_risk_flag: 'normal' | 'borderline_ac_over_75' | 'macrosomia_suspected' | 'polyhydramnios';
+  clinical_plan?: string | null;
+  created_by?: number | null;
+  created_by_name?: string | null;
+  created_at: string;
+}
+
+export interface GdmProfileResponse {
+  profile: GdmProfile | null;
+  summary: any | null;
+  recentSurveillance: GdmFetalSurveillance | null;
+}

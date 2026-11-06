@@ -183,6 +183,69 @@ async function seed() {
     )
   `).run(meowsEpId, anitaId, nurseId, now);
 
+  // Anita Sharma GDM Profile (DIPSI 75g diagnostic, White Class A1 MNT)
+  const gdmProfRes = db.prepare(`
+    INSERT OR IGNORE INTO gdm_profiles (
+      patient_id, gestational_age_weeks, diagnostic_criteria, diagnostic_date,
+      ogtt_fasting_mg_dl, ogtt_1hr_mg_dl, ogtt_2hr_mg_dl, ogtt_3hr_mg_dl, baseline_hba1c,
+      white_classification, current_management, target_fasting_mg_dl, target_postprandial_mg_dl,
+      postprandial_window, target_hba1c, insulin_regimen_type, dietary_calories_prescribed,
+      fetal_surveillance_notes, planned_delivery_weeks, status, notes,
+      created_by, updated_by, created_at, updated_at
+    ) VALUES (
+      ?, 26, 'dipsi', '2026-09-22',
+      92, 172, 158, NULL, 5.7,
+      'a1_diet', 'medical_nutrition_therapy', 95, 120,
+      '2_hour', 6.0, 'none', 1800,
+      'Fetal AC 65th centile. Normal amniotic fluid (AFI 15.5cm). No macrosomia.', 39, 'active',
+      'Prescribed Medical Nutrition Therapy with 3 main meals and 2 low-glycemic snacks. Daily SMBG.',
+      ?, ?, ?, ?
+    )
+  `).run(anitaId, docId, docId, now, now);
+  const gdmProfileId = Number(gdmProfRes.lastInsertRowid) || 1;
+
+  // Anita's Daily Multi-Point Blood Glucose Logbook (Past 3 days)
+  const gdmLogs = [
+    { d: '2026-11-04', t: '07:30', slot: 'fasting', val: 88, status: 'in_target', insulin: null, note: 'Pre-breakfast capillary sugar' },
+    { d: '2026-11-04', t: '10:00', slot: 'post_breakfast', val: 114, status: 'in_target', insulin: null, note: 'Oats with nuts and milk' },
+    { d: '2026-11-04', t: '14:30', slot: 'post_lunch', val: 118, status: 'in_target', insulin: null, note: 'Roti with dal, bhindi and curd' },
+    { d: '2026-11-04', t: '21:30', slot: 'post_dinner', val: 132, status: 'mild_excursion', insulin: null, note: 'Had extra chapati and sweets' },
+    { d: '2026-11-05', t: '07:45', slot: 'fasting', val: 91, status: 'in_target', insulin: null, note: 'Fasting' },
+    { d: '2026-11-05', t: '10:15', slot: 'post_breakfast', val: 116, status: 'in_target', insulin: null, note: 'Besan chilla with mint chutney' },
+    { d: '2026-11-05', t: '14:15', slot: 'post_lunch', val: 110, status: 'in_target', insulin: null, note: 'Brown rice with paneer' },
+    { d: '2026-11-05', t: '21:15', slot: 'post_dinner', val: 119, status: 'in_target', insulin: null, note: 'Vegetable salad and dal soup' },
+    { d: '2026-11-06', t: '07:30', slot: 'fasting', val: 89, status: 'in_target', insulin: null, note: 'Fasting before OPD checkup' },
+    { d: '2026-11-06', t: '10:00', slot: 'post_breakfast', val: 112, status: 'in_target', insulin: null, note: 'Sprouts and boiled egg' },
+  ];
+
+  for (const l of gdmLogs) {
+    db.prepare(`
+      INSERT OR IGNORE INTO gdm_glucose_logs (
+        profile_id, patient_id, log_date, log_time, meal_slot,
+        blood_glucose_mg_dl, target_status, carbs_consumed_estimate,
+        insulin_administered_units, source, notes, recorded_by, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'patient_log', ?, ?, ?)
+    `).run(
+      gdmProfileId, anitaId, l.d, l.t, l.slot,
+      l.val, l.status, l.note, l.insulin, l.note, docId, now
+    );
+  }
+
+  // Fetal surveillance biometry check for Anita
+  db.prepare(`
+    INSERT OR IGNORE INTO gdm_fetal_surveillance (
+      profile_id, patient_id, assessment_date, gestational_age_weeks,
+      estimated_fetal_weight_g, efw_percentile, abdominal_circumference_mm,
+      ac_percentile, amniotic_fluid_index_cm, single_deepest_pocket_cm,
+      macrosomia_risk_flag, clinical_plan, created_by, created_at
+    ) VALUES (
+      ?, ?, '2026-11-04', 32,
+      1920, 52, 280, 65, 15.5, 4.8,
+      'normal', 'Adequate symmetric fetal growth (EFW 52nd centile, AC 65th centile). Normal AFI. Continue MNT.',
+      ?, ?
+    )
+  `).run(gdmProfileId, anitaId, docId, now);
+
   // --- PATIENT 2: Baby of Kavita (Neonatal Jaundice & Bhutani Phototherapy Nomogram) ---
   const babyId = ensurePatient({
     patientNumber: 'P-1002',
