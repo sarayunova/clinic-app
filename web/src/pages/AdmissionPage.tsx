@@ -7,6 +7,7 @@ import { Medicines } from '../components/Medicines';
 import { Discharge } from '../components/Discharge';
 import { startInvoice } from '../money';
 import { AllergyBadge, ErrorBanner, Field, fieldErrorsOf, formatAge, todayLocal } from '../components/ui';
+import { ObstetricChip, PregnancyChip } from '../pregnancy';
 
 const TYPE_LABEL: Record<EntryType, string> = {
   doctor_round: 'Doctor round',
@@ -92,6 +93,10 @@ export function AdmissionPage() {
           <div className="muted">
             {adm.bedRoom} / Bed {adm.bedLabel} · Admitted {adm.admittedDate} {adm.admittedTime}
             {adm.dayNumber ? ` · Day ${adm.dayNumber}` : ''}
+          </div>
+          <div className="chips" style={{ marginTop: '0.35rem' }}>
+            <ObstetricChip gravida={adm.gravida} para={adm.para} abortions={adm.abortions} living={adm.living} />
+            <PregnancyChip lmp={adm.lastMenstrualPeriod as string | null} showLmp />
           </div>
         </div>
         <span className={`badge ${active ? 'ok' : ''}`}>{active ? 'Admitted' : 'Discharged'}</span>

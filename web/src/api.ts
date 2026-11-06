@@ -160,6 +160,11 @@ export interface Visit {
   ageIsEstimated: boolean;
   allergyStatus: 'unknown' | 'none' | 'known';
   allergyDetails: string | null;
+  lastMenstrualPeriod?: string | null;
+  gravida?: number | null;
+  para?: number | null;
+  abortions?: number | null;
+  living?: number | null;
   complaints: string | null;
   history: string | null;
   examination: string | null;
@@ -246,6 +251,11 @@ export interface Admission {
   ageIsEstimated: boolean;
   allergyStatus: 'unknown' | 'none' | 'known';
   allergyDetails: string | null;
+  lastMenstrualPeriod?: string | null;
+  gravida?: number | null;
+  para?: number | null;
+  abortions?: number | null;
+  living?: number | null;
   bedId: number;
   bedRoom: string;
   bedLabel: string;

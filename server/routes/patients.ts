@@ -43,6 +43,8 @@ const FIELDS = {
   obstetricHistory: text(),
   gravida: count,
   para: count,
+  abortions: count,
+  living: count,
   ongoingMedicines: text(),
   clinicalNotes: text(),
 } as const;
@@ -68,6 +70,8 @@ const GROUP: Record<FieldKey, Permission> = {
   obstetricHistory: 'patient:write_clinical',
   gravida: 'patient:write_clinical',
   para: 'patient:write_clinical',
+  abortions: 'patient:write_clinical',
+  living: 'patient:write_clinical',
   ongoingMedicines: 'patient:write_clinical',
   clinicalNotes: 'patient:write_clinical',
 };
@@ -83,6 +87,7 @@ const DEFAULTS: Record<FieldKey, unknown> = {
   emergencyContactName: null, emergencyContactPhone: null, allergyStatus: 'unknown', allergyDetails: null,
   medicalHistory: null, surgicalHistory: null, familyHistory: null, menstrualHistory: null,
   lastMenstrualPeriod: null, menopauseStatus: 'unknown', obstetricHistory: null, gravida: null, para: null,
+  abortions: null, living: null,
   ongoingMedicines: null, clinicalNotes: null,
 };
 
@@ -121,7 +126,12 @@ export function registerPatientRoutes(app: FastifyInstance, { db, cfg }: Ctx): v
     if (rec.allergyStatus !== 'known') rec.allergyDetails = null;
     const g = rec.gravida as number | null;
     const p = rec.para as number | null;
+    const a = rec.abortions as number | null;
     if (g !== null && p !== null && p > g) throw badRequest('Para cannot exceed gravida', [{ field: 'para', message: 'Cannot exceed gravida' }]);
+    if (g !== null && a !== null && a > g) throw badRequest('Abortions cannot exceed gravida', [{ field: 'abortions', message: 'Cannot exceed gravida' }]);
+    if (g !== null && p !== null && a !== null && p + a > g) {
+      throw badRequest('Para plus abortions cannot exceed gravida', [{ field: 'abortions', message: 'Para + abortions cannot exceed gravida' }]);
+    }
   }
 
   function present(row: object, role: Role) {

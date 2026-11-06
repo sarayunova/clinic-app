@@ -57,7 +57,7 @@ export function registerStationRoutes(app: FastifyInstance, { db, cfg }: Ctx): v
       db
         .prepare(
           `SELECT a.id AS appointment_id, a.status, a.scheduled_at, a.reason, p.id AS patient_id, p.full_name AS patient_name,
-                  p.patient_number, p.allergy_status, p.allergy_details, v.id AS visit_id, v.status AS visit_status,
+                  p.patient_number, p.allergy_status, p.allergy_details, p.last_menstrual_period, p.gravida, p.para, p.abortions, p.living, v.id AS visit_id, v.status AS visit_status,
                   (SELECT COUNT(*) FROM visit_vitals t WHERE t.visit_id = v.id) AS vitals_count,
                   (SELECT MAX(t.recorded_at) FROM visit_vitals t WHERE t.visit_id = v.id) AS vitals_at
              FROM appointments a JOIN patients p ON p.id = a.patient_id LEFT JOIN visits v ON v.appointment_id = a.id
@@ -76,7 +76,7 @@ export function registerStationRoutes(app: FastifyInstance, { db, cfg }: Ctx): v
     const admissions = db
       .prepare(
         `SELECT a.id AS admission_id, a.admission_number, a.admitted_at, p.id AS patient_id, p.full_name AS patient_name,
-                p.patient_number, p.allergy_status, p.allergy_details, b.room AS bed_room, b.label AS bed_label
+                p.patient_number, p.allergy_status, p.allergy_details, p.last_menstrual_period, p.gravida, p.para, p.abortions, p.living, b.room AS bed_room, b.label AS bed_label
            FROM admissions a JOIN patients p ON p.id = a.patient_id JOIN beds b ON b.id = a.bed_id
           WHERE a.status = 'admitted' ORDER BY b.room, b.label`,
       )

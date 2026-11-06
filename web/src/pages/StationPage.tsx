@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
 import { AllergyBadge, ErrorBanner } from '../components/ui';
+import { ObstetricChip, PregnancyChip } from '../pregnancy';
 
 type Allergy = 'unknown' | 'none' | 'known';
 interface Stamp { at: string; date: string; time: string }
@@ -16,6 +17,11 @@ interface OpdRow {
   patientNumber: string;
   allergyStatus: Allergy;
   allergyDetails: string | null;
+  lastMenstrualPeriod?: string | null;
+  gravida?: number | null;
+  para?: number | null;
+  abortions?: number | null;
+  living?: number | null;
   visitId: number | null;
   visitStatus: 'draft' | 'final' | null;
   hasVitals: boolean;
@@ -39,6 +45,11 @@ interface WardRow {
   patientNumber: string;
   allergyStatus: Allergy;
   allergyDetails: string | null;
+  lastMenstrualPeriod?: string | null;
+  gravida?: number | null;
+  para?: number | null;
+  abortions?: number | null;
+  living?: number | null;
   bedRoom: string;
   bedLabel: string;
   lastObservation:
@@ -171,6 +182,8 @@ export function StationPage() {
                           <span className="badge warn">Vitals not taken</span>
                         )}
                         <AllergyBadge status={r.allergyStatus} details={r.allergyDetails} />
+                        <ObstetricChip gravida={r.gravida} para={r.para} abortions={r.abortions} living={r.living} />
+                        <PregnancyChip lmp={r.lastMenstrualPeriod as string | null} />
                       </div>
                     </div>
                   </div>
@@ -197,6 +210,10 @@ export function StationPage() {
                       <span className="bed-label">{w.bedRoom} · {w.bedLabel}</span>{' '}
                       <Link to={`/admissions/${w.admissionId}`} className="appt-name">{w.patientName}</Link>
                       <div className="muted small">{w.patientNumber} · {w.admissionNumber}</div>
+                      <div className="chips" style={{ marginTop: '0.2rem' }}>
+                        <ObstetricChip gravida={w.gravida} para={w.para} abortions={w.abortions} living={w.living} />
+                        <PregnancyChip lmp={w.lastMenstrualPeriod as string | null} />
+                      </div>
                     </div>
                     <AllergyBadge status={w.allergyStatus} details={w.allergyDetails} />
                   </div>

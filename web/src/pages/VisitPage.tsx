@@ -4,6 +4,7 @@ import { ApiError, api, type PrescriptionItem, type Visit, type VitalsEntry } fr
 import { useAuth } from '../auth';
 import { VisitInvoice } from '../components/VisitInvoice';
 import { AllergyBadge, ErrorBanner, Field, fieldErrorsOf, formatAge } from '../components/ui';
+import { ObstetricChip, PregnancyChip } from '../pregnancy';
 
 const TEXT_FIELDS = [
   { key: 'complaints', label: 'Presenting complaints' },
@@ -173,6 +174,10 @@ export function VisitPage() {
           <h1>{visit.patientName}</h1>
           <div className="muted">
             {visit.patientNumber} · {formatAge(visit.ageYears, visit.ageIsEstimated)} · Visit {visit.visitDate} {visit.visitTime}
+          </div>
+          <div className="chips" style={{ marginTop: '0.35rem' }}>
+            <ObstetricChip gravida={visit.gravida} para={visit.para} abortions={visit.abortions} living={visit.living} />
+            <PregnancyChip lmp={visit.lastMenstrualPeriod as string | null} asOfDate={visit.visitDate} showLmp />
           </div>
         </div>
         <span className={`badge ${isDraft ? 'warn' : 'ok'}`}>{isDraft ? 'Draft' : `Finalised${visit.finalisedByName ? ` by ${visit.finalisedByName}` : ''}`}</span>

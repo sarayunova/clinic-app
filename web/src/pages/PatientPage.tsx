@@ -7,6 +7,7 @@ import { Documents } from '../components/Documents';
 import { ExportRecord } from '../components/ExportRecord';
 import { PAYMENT_STATE_LABEL, formatMoney, startInvoice } from '../money';
 import { AllergyBadge, ErrorBanner, Field, fieldErrorsOf, formatAge } from '../components/ui';
+import { calculateEdd, calculateGestationalAge, formatGpal, PregnancyChip, ObstetricChip } from '../pregnancy';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -66,7 +67,7 @@ const SECTIONS: Section[] = [
       { key: 'surgicalHistory', label: 'Surgical history', kind: 'textarea', wide: true },
       { key: 'familyHistory', label: 'Family history', kind: 'textarea', wide: true },
       { key: 'menstrualHistory', label: 'Menstrual history', kind: 'textarea', wide: true },
-      { key: 'lastMenstrualPeriod', label: 'Last menstrual period', kind: 'date', hint: 'As reported; nothing is calculated from it' },
+      { key: 'lastMenstrualPeriod', label: 'Last menstrual period', kind: 'date', hint: "Calculates EDD & Gestational Age via Naegele's rule" },
       {
         key: 'menopauseStatus',
         label: 'Menopause status',
@@ -80,8 +81,10 @@ const SECTIONS: Section[] = [
         ],
       },
       { key: 'obstetricHistory', label: 'Obstetric history', kind: 'textarea', wide: true },
-      { key: 'gravida', label: 'Gravida', kind: 'int' },
-      { key: 'para', label: 'Para', kind: 'int' },
+      { key: 'gravida', label: 'Gravida (G)', kind: 'int', hint: 'Total pregnancies' },
+      { key: 'para', label: 'Para (P)', kind: 'int', hint: 'Deliveries' },
+      { key: 'abortions', label: 'Abortions (A)', kind: 'int', hint: 'Miscarriages / terminations' },
+      { key: 'living', label: 'Living (L)', kind: 'int', hint: 'Living children' },
       { key: 'ongoingMedicines', label: 'Ongoing medicines', kind: 'textarea', wide: true },
       { key: 'clinicalNotes', label: 'Clinical notes', kind: 'textarea', wide: true },
     ],
@@ -235,6 +238,10 @@ export function PatientPage() {
               {patient!.patientNumber} · {formatAge(patient!.ageYears, patient!.ageIsEstimated)}
               {typeof patient!.phone === 'string' && patient!.phone ? ` · ${patient!.phone}` : ''}
             </div>
+            <div className="chips" style={{ marginTop: '0.35rem' }}>
+              <ObstetricChip gravida={patient!.gravida} para={patient!.para} abortions={patient!.abortions} living={patient!.living} />
+              <PregnancyChip lmp={patient!.lastMenstrualPeriod as string | null} showLmp />
+            </div>
           </div>
           {can('audit:read') && (
             <Link className="btn small" to={`/audit?patientId=${patient!.id}&patient=${encodeURIComponent(`${patient!.fullName} (${patient!.patientNumber})`)}`}>
@@ -372,7 +379,21 @@ export function PatientPage() {
                   if (f.key === 'allergyDetails' && form.allergyStatus !== 'known') return null;
                   return (
                     <div key={f.key} className={f.wide ? 'span2' : ''}>
-                      <Field label={f.label} error={fe[f.key]} hint={f.hint}>
+                      <Field
+                        label={f.label}
+                        error={fe[f.key]}
+                        hint={
+                          f.key === 'lastMenstrualPeriod' && form.lastMenstrualPeriod
+                            ? (() => {
+                                const ga = calculateGestationalAge(form.lastMenstrualPeriod);
+                                const edd = calculateEdd(form.lastMenstrualPeriod);
+                                return ga && edd && ga.isPlausiblePregnancy
+                                  ? `EDD: ${edd} · Current: ${ga.formatted} (${ga.fullFormatted})`
+                                  : f.hint;
+                              })()
+                            : f.hint
+                        }
+                      >
                         {f.kind === 'textarea' ? (
                           <textarea rows={3} value={form[f.key]} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
                         ) : f.kind === 'select' ? (

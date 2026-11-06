@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { api, type Admission, type Visit } from '../api';
 import { Sheet, useClinic } from '../components/Sheet';
 import { ErrorBanner, formatAge } from '../components/ui';
+import { calculateEdd, calculateGestationalAge, formatGpal } from '../pregnancy';
 
 const logPrint = (kind: 'prescription' | 'discharge_summary', id: number) => () => {
   void api('POST', '/api/print-log', { kind, id }).catch(() => {});
@@ -72,6 +73,17 @@ export function PrescriptionPrint() {
         <div><dt>Date</dt><dd>{visit.visitDate}</dd></div>
         <div><dt>Patient no.</dt><dd>{visit.patientNumber}</dd></div>
         <div><dt>Age</dt><dd>{formatAge(visit.ageYears, visit.ageIsEstimated)}</dd></div>
+        {formatGpal(visit) && (
+          <div><dt>Obstetric</dt><dd>{formatGpal(visit)}</dd></div>
+        )}
+        {(() => {
+          const ga = calculateGestationalAge(visit.lastMenstrualPeriod as string | null, visit.visitDate);
+          const edd = calculateEdd(visit.lastMenstrualPeriod as string | null);
+          if (ga && edd && ga.isPlausiblePregnancy) {
+            return <div><dt>Gestational Age</dt><dd>{ga.formatted} · EDD {edd}</dd></div>;
+          }
+          return null;
+        })()}
       </dl>
       <Allergy status={visit.allergyStatus} details={visit.allergyDetails} />
       {withDiagnosis && visit.assessment && <Block title="Assessment">{visit.assessment}</Block>}

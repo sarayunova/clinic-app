@@ -169,7 +169,7 @@ export function registerIpdRoutes(app: FastifyInstance, { db, cfg }: Ctx): void 
 
   const ADMISSION_SELECT = `
     SELECT a.*, p.patient_number, p.full_name AS patient_name, p.date_of_birth, p.estimated_age_years,
-           p.allergy_status, p.allergy_details, b.room AS bed_room, b.label AS bed_label, cu.full_name AS created_by_name
+           p.allergy_status, p.allergy_details, p.last_menstrual_period, p.gravida, p.para, p.abortions, p.living, b.room AS bed_room, b.label AS bed_label, cu.full_name AS created_by_name
       FROM admissions a JOIN patients p ON p.id = a.patient_id JOIN beds b ON b.id = a.bed_id
       LEFT JOIN users cu ON cu.id = a.created_by`;
   const BASIC_KEYS = new Set([

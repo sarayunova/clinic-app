@@ -166,6 +166,14 @@ describe('patients', () => {
     expect((await bad({ lastMenstrualPeriod: '2999-01-01' })).status).toBe(400);
     expect((await bad({ allergyStatus: 'known' })).status).toBe(400); // needs details
     expect((await bad({ gravida: 1, para: 2 })).status).toBe(400);
+    expect((await bad({ gravida: 1, abortions: 2 })).status).toBe(400);
+    expect((await bad({ gravida: 2, para: 1, abortions: 2 })).status).toBe(400);
+    const validGpal = await call('POST', '/api/patients', doctor, { fullName: 'Obstetric Patient', gravida: 3, para: 1, abortions: 1, living: 1 });
+    expect(validGpal.status).toBe(201);
+    expect((validGpal.body as any).patient.gravida).toBe(3);
+    expect((validGpal.body as any).patient.para).toBe(1);
+    expect((validGpal.body as any).patient.abortions).toBe(1);
+    expect((validGpal.body as any).patient.living).toBe(1);
     expect((await bad({ phone: 'abc' })).status).toBe(400);
     expect((await bad({ unexpectedField: 1 })).status).toBe(400);
     expect((await call('POST', '/api/patients', doctor, { fullName: '' })).status).toBe(400);
