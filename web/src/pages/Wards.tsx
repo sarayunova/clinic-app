@@ -195,6 +195,9 @@ export function WardsPage() {
           </p>
         </div>
         <div className="row wrap">
+          <Link className="btn" to="/delivery-ward" style={{ border: '1.5px solid #2563eb', color: '#1e40af' }}>
+            👶 Delivery Ward Board
+          </Link>
           {can('admission:create') && (
             <Link className="btn primary" to="/admissions/new">
               + Admit Patient

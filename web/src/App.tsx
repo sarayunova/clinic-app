@@ -22,6 +22,8 @@ import { PartographPrint } from './pages/PartographPrint';
 import { OperativeNotePrint } from './pages/OperativeNotePrint';
 import { RiskAssessmentPrint } from './pages/RiskAssessmentPrint';
 import { ObstetricDischargePrint } from './pages/ObstetricDischargePrint';
+import { MaternityAdmissionPrint } from './pages/MaternityAdmissionPrint';
+import { DeliveryWardPage } from './pages/DeliveryWardPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditPage } from './pages/AuditPage';
 import { StationPage } from './pages/StationPage';
@@ -90,6 +92,7 @@ function Shell() {
     ...(can('station:read') ? [{ to: '/station', label: 'Nurse station', icon: '🩺', end: false }] : []),
     { to: '/patients', label: 'Patients', icon: '👥', end: false },
     { to: '/wards', label: 'Wards', icon: '🛏️', end: false },
+    ...(can('ipd:read_basic') || can('station:read') ? [{ to: '/delivery-ward', label: 'Delivery ward', icon: '👶', end: false }] : []),
     ...(can('billing:read') ? [{ to: '/billing', label: 'Billing', icon: '💳', end: false }] : []),
     ...(can('settings:manage') ? [{ to: '/settings', label: 'Clinic', icon: '🏥', end: false }] : []),
     ...(can('user:manage') ? [{ to: '/users', label: 'Staff', icon: '🔑', end: false }] : []),
@@ -133,6 +136,8 @@ function Shell() {
           <Route path="/operative-notes/:id/print" element={can('patient:read_clinical') || can('ipd:read') ? <OperativeNotePrint /> : <Navigate to="/patients" replace />} />
           <Route path="/risk-assessments/:id/print" element={can('patient:read_clinical') ? <RiskAssessmentPrint /> : <Navigate to="/patients" replace />} />
           <Route path="/obstetric-discharges/:id/print" element={can('patient:read_clinical') ? <ObstetricDischargePrint /> : <Navigate to="/patients" replace />} />
+          <Route path="/maternity-admissions/:id/print" element={can('patient:read_clinical') || can('ipd:read') ? <MaternityAdmissionPrint /> : <Navigate to="/patients" replace />} />
+          <Route path="/delivery-ward" element={can('ipd:read_basic') || can('station:read') ? <DeliveryWardPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id" element={can('visit:read') ? <VisitPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id/print" element={can('visit:read') ? <PrescriptionPrint /> : <Navigate to="/" replace />} />
           <Route path="/admissions/:id/print" element={can('ipd:read') ? <DischargePrint /> : <Navigate to="/wards" replace />} />

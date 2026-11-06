@@ -18,6 +18,7 @@ import { OperativeNotesList } from '../components/OperativeNotesList';
 import { CommunicationModal } from '../components/CommunicationModal';
 import { AntenatalRiskEngine } from '../components/AntenatalRiskEngine';
 import { ObstetricDischargeManager } from '../components/ObstetricDischargeManager';
+import { MaternityAdmissionManager } from '../components/MaternityAdmissionManager';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -128,7 +129,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'list'
+    'flowsheet' | 'checklist' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -461,6 +462,13 @@ export function PatientPage() {
                     </button>
                     <button
                       type="button"
+                      className={`btn small ${viewMode === 'maternity_admission' ? 'primary' : ''}`}
+                      onClick={() => setViewMode('maternity_admission')}
+                    >
+                      🏥 Labor & Admission
+                    </button>
+                    <button
+                      type="button"
                       className={`btn small ${viewMode === 'postnatal' ? 'primary' : ''}`}
                       onClick={() => setViewMode('postnatal')}
                     >
@@ -539,6 +547,8 @@ export function PatientPage() {
               para={patient!.para}
               onChanged={load}
             />
+          ) : isMaternity && viewMode === 'maternity_admission' ? (
+            <MaternityAdmissionManager patient={patient!} onChanged={load} />
           ) : isMaternity && viewMode === 'postnatal' ? (
             <ObstetricDischargeManager patient={patient!} />
           ) : isPediatric && viewMode === 'pediatric' ? (

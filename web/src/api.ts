@@ -1320,3 +1320,151 @@ export interface ObstetricDischargeListResponse {
   patientId: number;
   discharges: ObstetricDischargeSummary[];
 }
+
+// ---------- Maternity Admission Card & Delivery Ward Handover Board ----------
+
+export interface MaternityAdmission {
+  id: number;
+  patientId: number;
+  admissionId?: number | null;
+  admissionDate: string;
+  laborStage: 'not_in_labor' | 'latent_phase' | 'active_phase' | 'second_stage' | 'third_stage' | 'immediate_postpartum';
+  admissionIndication: 'in_labor' | 'prom' | 'postdated' | 'induction_of_labor' | 'pre_eclampsia' | 'gdm_monitoring' | 'fetal_growth_restriction' | 'reduced_fetal_movements' | 'antepartum_hemorrhage' | 'elective_lscs_planned' | 'other';
+  indicationDetails?: string | null;
+  contractionOnsetAt?: string | null;
+  gestationalAgeWeeks?: number | null;
+  gestationalAgeDays?: number | null;
+  gravida?: number | null;
+  para?: number | null;
+  bloodGroup?: string | null;
+  allergiesSummary?: string | null;
+  highRiskAlerts?: string | null;
+  bishopDilation: number;
+  bishopEffacement: number;
+  bishopStation: number;
+  bishopConsistency: number;
+  bishopPosition: number;
+  bishopTotalScore: number;
+  bishopInterpretation: 'unfavorable' | 'intermediate' | 'favorable';
+  membraneStatus: 'intact' | 'ruptured_clear' | 'ruptured_meconium_thin' | 'ruptured_meconium_thick' | 'ruptured_blood_stained';
+  membraneRupturedAt?: string | null;
+  membraneRuptureHours?: number | null;
+  promAntibioticsGiven: boolean;
+  liquorNotes?: string | null;
+  fetalHeartRate?: number | null;
+  fetalPresentation: 'cephalic_vertex' | 'breech_frank' | 'breech_complete' | 'transverse_lie' | 'compound' | 'other';
+  fetalLie: 'longitudinal' | 'transverse' | 'oblique';
+  fetalEngagement: 'engaged' | 'not_engaged' | 'deeply_engaged';
+  ctgCategory: 'category_1' | 'category_2' | 'category_3' | 'not_performed';
+  bpSystolic?: number | null;
+  bpDiastolic?: number | null;
+  pulse?: number | null;
+  temperatureF?: number | null;
+  spo2?: number | null;
+  urineProtein: 'nil' | 'trace' | '1+' | '2+' | '3+' | '4+';
+  currentLocation: 'triage' | 'antenatal_ward' | 'labor_room' | 'delivery_suite' | 'operating_theatre' | 'recovery_postnatal';
+  attendingMidwifeNurse?: string | null;
+  primaryObstetrician?: string | null;
+  activeOxytocinRate?: string | null;
+  latestCervicalDilationCm?: number | null;
+  latestFetalStation?: string | null;
+  status: 'in_labor' | 'induction' | 'transferred_to_ot' | 'delivered' | 'discharged' | 'cancelled';
+  createdBy: number;
+  createdByName?: string | null;
+  updatedBy: number;
+  updatedByName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  patientName?: string;
+  patientNumber?: string;
+  dateOfBirth?: string | null;
+  patientPhone?: string | null;
+  admissionNumber?: string | null;
+  bedRoom?: string | null;
+  bedLabel?: string | null;
+  latestHandover?: {
+    id: number;
+    shiftName: string;
+    handoverAt: string;
+    recommendation: string;
+    urgencyLevel: string;
+  } | null;
+  lscsPrepActive?: boolean;
+  handovers?: MaternityHandoverEntry[];
+  oxytocinLogs?: OxytocinTitrationLog[];
+  emergencyLscsChecklist?: EmergencyLscsChecklist | null;
+}
+
+export interface MaternityHandoverEntry {
+  id: number;
+  maternityAdmissionId: number;
+  shiftName: 'morning' | 'evening' | 'night';
+  handoverAt: string;
+  outgoingStaff: string;
+  incomingStaff: string;
+  situation: string;
+  background: string;
+  assessment: string;
+  recommendation: string;
+  urgencyLevel: 'routine' | 'watch_closely' | 'immediate_attention';
+  createdBy: number;
+  createdByName?: string | null;
+  createdAt: string;
+}
+
+export interface OxytocinTitrationLog {
+  id: number;
+  maternityAdmissionId: number;
+  loggedAt: string;
+  infusionRateMUPerMin: number;
+  dropsPerMin?: number | null;
+  contractionsPer10min: number;
+  contractionDurationSec: number;
+  contractionIntensity: 'mild' | 'moderate' | 'strong';
+  fetalHeartRate: number;
+  maternalPulse?: number | null;
+  maternalBpSystolic?: number | null;
+  maternalBpDiastolic?: number | null;
+  hyperstimulationNoted: boolean;
+  actionTaken?: string | null;
+  loggedBy: number;
+  loggedByName?: string | null;
+  createdAt: string;
+}
+
+export interface EmergencyLscsChecklist {
+  id: number;
+  maternityAdmissionId: number;
+  decisionAt: string;
+  decisionToDeliveryTargetMins: number;
+  lscsCategory: 'category_1_immediate_threat' | 'category_2_maternal_fetal_compromise' | 'category_3_early_delivery' | 'category_4_elective';
+  surgicalIndication: string;
+  operatingSurgeon?: string | null;
+  anesthetistNotified: boolean;
+  anesthetistName?: string | null;
+  pediatricianNotified: boolean;
+  pediatricianName?: string | null;
+  consentSigned: boolean;
+  consentType?: string | null;
+  npoSolidHours?: number | null;
+  npoClearFluidsHours?: number | null;
+  wideBoreIvAccess: boolean;
+  bloodArranged: boolean;
+  bloodUnitsArranged?: number | null;
+  preopAntacidGiven: boolean;
+  antibioticProphylaxisGiven: boolean;
+  antibioticNameTime?: string | null;
+  foleyCatheterInserted: boolean;
+  abdominalPrepDone: boolean;
+  otReady: boolean;
+  shiftedToOtAt?: string | null;
+  notes?: string | null;
+  updatedBy: number;
+  updatedByName?: string | null;
+  updatedAt: string;
+}
+
+export interface DeliveryWardBoardResponse {
+  count: number;
+  admissions: MaternityAdmission[];
+}
