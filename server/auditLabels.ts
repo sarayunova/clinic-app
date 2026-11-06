@@ -56,6 +56,8 @@ export const ACTION_LABELS: Record<string, string> = {
   'checklist.update': 'Ticked or unticked a setup checklist item',
   'price.create': 'Added a price list item',
   'price.update': 'Changed a price list item',
+  'template.create': 'Created a prescription template',
+  'template.update': 'Changed a prescription template',
   'billing.report': 'Looked at the collection report',
   'settings.update': 'Changed clinic details',
   'backup.run': 'Backup taken',

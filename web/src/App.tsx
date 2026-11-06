@@ -20,6 +20,7 @@ import { AuditPage } from './pages/AuditPage';
 import { StationPage } from './pages/StationPage';
 import { PriceListPage } from './pages/PriceListPage';
 import { ChecklistPage } from './pages/ChecklistPage';
+import { PrescriptionTemplatesPage } from './pages/PrescriptionTemplatesPage';
 import { CollectionReportPage } from './pages/CollectionReport';
 import { ScreenLock } from './components/ScreenLock';
 
@@ -127,6 +128,7 @@ function Shell() {
           <Route path="/invoices/:id/print" element={can('billing:read') ? <InvoicePrint /> : <Navigate to="/" replace />} />
           <Route path="/invoices/:id/receipts/:pid" element={can('billing:read') ? <ReceiptPrint /> : <Navigate to="/" replace />} />
           <Route path="/settings/checklist" element={can('settings:manage') ? <ChecklistPage /> : <Navigate to="/" replace />} />
+          <Route path="/settings/prescription-templates" element={can('visit:write') ? <PrescriptionTemplatesPage /> : <Navigate to="/" replace />} />
           <Route path="/settings" element={can('settings:manage') ? <SettingsPage /> : <Navigate to="/" replace />} />
           <Route path="/users" element={can('user:manage') ? <UsersPage /> : <Navigate to="/" replace />} />
           <Route path="/station" element={can('station:read') ? <StationPage /> : <Navigate to="/" replace />} />

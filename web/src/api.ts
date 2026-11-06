@@ -123,6 +123,18 @@ export interface PrescriptionItem {
   instructions: string | null;
 }
 
+export interface PrescriptionTemplate {
+  id: number;
+  name: string;
+  category: string;
+  items: PrescriptionItem[];
+  active: boolean;
+  createdBy: number;
+  createdByName?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface VitalsEntry {
   id: number;
   recordedTime: string;

@@ -5,6 +5,7 @@ import { useAuth } from '../auth';
 import { VisitInvoice } from '../components/VisitInvoice';
 import { AllergyBadge, ErrorBanner, Field, fieldErrorsOf, formatAge } from '../components/ui';
 import { ObstetricChip, PregnancyChip } from '../pregnancy';
+import { TemplatePicker } from '../components/TemplatePicker';
 
 const TEXT_FIELDS = [
   { key: 'complaints', label: 'Presenting complaints' },
@@ -69,6 +70,7 @@ export function VisitPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmFinalise, setConfirmFinalise] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
   const [viewing, setViewing] = useState<{ no: number; snapshot: Record<string, unknown> & { prescriptionItems: PrescriptionItem[] } } | null>(null);
 
   const adopt = useCallback((v: Visit) => {
@@ -112,6 +114,26 @@ export function VisitPage() {
 
   if (loadError) return <div className="page narrow"><ErrorBanner error={loadError} /><Link to="/">Back to Today</Link></div>;
   if (!visit) return <p className="muted">Loading…</p>;
+
+  function handleInsertTemplate(newItems: PrescriptionItem[], mode: 'append' | 'replace') {
+    setShowTemplates(false);
+    const shaped: ItemForm[] = newItems.map((i) => ({
+      medicine: i.medicine ?? '',
+      strength: i.strength ?? '',
+      dose: i.dose ?? '',
+      route: i.route ?? '',
+      frequency: i.frequency ?? '',
+      duration: i.duration ?? '',
+      instructions: i.instructions ?? '',
+    }));
+    if (mode === 'replace') {
+      setItems(shaped);
+    } else {
+      const existing = items.filter((it) => Object.values(it).some((v) => v.trim() !== ''));
+      setItems([...existing, ...shaped]);
+    }
+    setNotice(`Added ${shaped.length} medicines from template.`);
+  }
 
   const isDraft = visit.status === 'draft';
   const editable = (isDraft && can('visit:write')) || amending;
@@ -244,11 +266,14 @@ export function VisitPage() {
             ))}
           </div>
           {editable && items.length < 30 && (
-            <p>
+            <div className="row wrap" style={{ gap: '0.6rem', marginTop: '0.8rem' }}>
               <button type="button" className="btn" onClick={() => setItems([...items, emptyItem()])}>
                 + Add medicine
               </button>
-            </p>
+              <button type="button" className="btn" onClick={() => setShowTemplates(true)}>
+                + Insert template…
+              </button>
+            </div>
           )}
           {editable && <p className="muted small">Doses and medicines are entered by the doctor; the system never suggests them.</p>}
         </fieldset>
@@ -327,6 +352,10 @@ export function VisitPage() {
             ))}
           </ul>
         </section>
+      )}
+
+      {showTemplates && (
+        <TemplatePicker onInsert={handleInsertTemplate} onClose={() => setShowTemplates(false)} />
       )}
     </div>
   );

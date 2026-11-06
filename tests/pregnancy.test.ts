@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calculateEdd, calculateGestationalAge, formatGpal } from '../web/src/pregnancy.js';
+import { calculateEdd, calculateGestationalAge, formatGpal } from '../web/src/pregnancyCalc.js';
 
 describe('Obstetric calculations & pregnancy tools', () => {
   describe('calculateEdd (Naegele rule: LMP + 280 days)', () => {

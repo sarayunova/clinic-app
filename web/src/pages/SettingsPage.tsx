@@ -34,7 +34,10 @@ export function SettingsPage() {
     <div className="page narrow">
       <h1>Clinic details</h1>
       <p className="muted">These are printed at the top of invoices and receipts.</p>
-      <p><Link className="btn" to="/settings/checklist">Setup checklist: ready for real patients</Link></p>
+      <div className="row wrap" style={{ gap: '0.6rem', marginBottom: '1rem' }}>
+        <Link className="btn" to="/settings/checklist">Setup checklist: ready for real patients</Link>
+        <Link className="btn" to="/settings/prescription-templates">Prescription templates / regimens</Link>
+      </div>
       <ErrorBanner error={error} />
       {saved && <div className="banner ok" role="status">Saved.</div>}
       <form onSubmit={save} className="card stack">
