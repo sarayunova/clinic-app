@@ -17,6 +17,8 @@ import {
   ROUTE_CHIPS,
   MEDICINE_SUGGESTIONS,
 } from '../medicationCatalog';
+import { DictationToolbar, VoiceFieldMic } from '../components/VoiceDictation';
+import { appendDictatedText } from '../voiceDictationUtils';
 
 const TEXT_FIELDS = [
   { key: 'complaints', label: 'Presenting complaints' },
@@ -106,7 +108,15 @@ export function VisitPage() {
   const [confirmFinalise, setConfirmFinalise] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [bookingFollowUp, setBookingFollowUp] = useState(false);
+  const [activeDictationField, setActiveDictationField] = useState<TextKey>('complaints');
   const [viewing, setViewing] = useState<{ no: number; snapshot: Record<string, unknown> & { prescriptionItems: PrescriptionItem[] } } | null>(null);
+
+  const handleAppendDictation = (fieldKey: string, text: string) => {
+    setForm((prev) => ({
+      ...prev,
+      [fieldKey]: appendDictatedText(prev[fieldKey as FormKey] || '', text),
+    }));
+  };
 
   const adopt = useCallback((v: Visit) => {
     setVisit(v);
@@ -302,11 +312,37 @@ export function VisitPage() {
       <form onSubmit={(e) => { e.preventDefault(); if (isDraft) void saveDraft(); }} className="stack">
         <fieldset className="card" disabled={!editable}>
           <legend>Consultation{!editable && <span className="muted small"> (read only)</span>}</legend>
+
+          {editable && (
+            <DictationToolbar
+              activeField={activeDictationField}
+              fieldLabels={Object.fromEntries(TEXT_FIELDS.map((f) => [f.key, f.label]))}
+              onSelectField={(k) => setActiveDictationField(k as TextKey)}
+              onAppendText={handleAppendDictation}
+            />
+          )}
+
           <div className="stack">
             {TEXT_FIELDS.map((f) => (
-              <Field key={f.key} label={f.label} error={fe[f.key]}>
-                <textarea rows={3} value={form[f.key]} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
-              </Field>
+              <div key={f.key} style={{ position: 'relative' }}>
+                {editable && (
+                  <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 1 }}>
+                    <VoiceFieldMic
+                      isListening={activeDictationField === f.key}
+                      onToggle={() => setActiveDictationField(f.key)}
+                      title={`Select ${f.label} for voice dictation`}
+                    />
+                  </div>
+                )}
+                <Field label={f.label} error={fe[f.key]}>
+                  <textarea
+                    rows={3}
+                    value={form[f.key]}
+                    onFocus={() => setActiveDictationField(f.key)}
+                    onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+                  />
+                </Field>
+              </div>
             ))}
             <Field label="Follow-up date" error={fe.followUpDate}>
               <input type="date" value={form.followUpDate} onChange={(e) => setForm({ ...form, followUpDate: e.target.value })} />
