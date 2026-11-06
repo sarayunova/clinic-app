@@ -3,6 +3,7 @@ import path from 'node:path';
 import { openDb } from '../server/db.js';
 import { hashPassword } from '../server/auth.js';
 import { nowIso } from '../server/time.js';
+import { generateSyntheticCtgTrace } from '../web/src/ctgEngine.js';
 
 const DATA_DIR = path.resolve('.devdata');
 if (!fs.existsSync(DATA_DIR)) {
@@ -245,6 +246,33 @@ async function seed() {
       ?, ?
     )
   `).run(gdmProfileId, anitaId, docId, now);
+
+  // Anita's Antenatal CTG / Non-Stress Test (NST)
+  const anitaCtgTrace = generateSyntheticCtgTrace(142, 'moderate', 20, 2, 'none', 1);
+  db.prepare(`
+    INSERT OR IGNORE INTO ctg_episodes (
+      patient_id, test_type, performed_at, gestational_age_weeks,
+      indication, duration_minutes, paper_speed_cm_min, baseline_fhr_bpm,
+      variability_category, variability_amplitude_bpm, accelerations_count,
+      accelerations_criteria, decelerations_type, decelerations_recurrent,
+      uterine_contractions_per_10min, tachysystole_present, fetal_movement_felt,
+      nst_classification, figo_classification, nichd_category,
+      intrauterine_resuscitation_required, clinical_action_plan,
+      recommended_follow_up, fhr_trace_data_json, notes,
+      performed_by, reviewed_by, created_at, updated_at
+    ) VALUES (
+      ?, 'antenatal_nst', '2026-11-06T10:15:00', 32,
+      'Third trimester fetal wellbeing surveillance (32w ANC)', 20, 1.0, 142,
+      'moderate', 12, 2,
+      '15x15', 'none', 0,
+      1, 0, 1,
+      'reactive', 'normal', 'category_1_normal',
+      0, 'Reassuring Reactive NST. Normal baseline FHR and moderate variability.',
+      'Routine follow-up in 2 weeks or earlier if decreased fetal movements.',
+      ?, 'Mother in semi-Fowler position with left tilt. Reassuring fetal movements felt.',
+      ?, ?, ?, ?
+    )
+  `).run(anitaId, JSON.stringify(anitaCtgTrace), nurseId, docId, now, now);
 
   // --- PATIENT 2: Baby of Kavita (Neonatal Jaundice & Bhutani Phototherapy Nomogram) ---
   const babyId = ensurePatient({

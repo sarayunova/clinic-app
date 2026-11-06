@@ -2252,3 +2252,51 @@ export interface GdmProfileResponse {
   summary: any | null;
   recentSurveillance: GdmFetalSurveillance | null;
 }
+
+// ---------- Cardiotocography (CTG) & Non-Stress Test (NST) ----------
+
+export interface CtgEpisode {
+  id: number;
+  patient_id: number;
+  admission_id?: number | null;
+  test_type: 'antenatal_nst' | 'intrapartum_continuous' | 'intrapartum_intermittent' | 'oxytocin_challenge_test';
+  performed_at: string;
+  gestational_age_weeks?: number | null;
+  indication?: string | null;
+  duration_minutes: number;
+  paper_speed_cm_min: number;
+  baseline_fhr_bpm: number;
+  variability_category: 'absent' | 'minimal' | 'moderate' | 'marked' | 'sinusoidal';
+  variability_amplitude_bpm?: number | null;
+  accelerations_count: number;
+  accelerations_criteria: '15x15' | '10x10';
+  decelerations_type: 'none' | 'early' | 'variable_uncomplicated' | 'variable_complicated' | 'late' | 'prolonged';
+  decelerations_recurrent: number | boolean;
+  decelerations_details?: string | null;
+  uterine_contractions_per_10min: number;
+  tachysystole_present: number | boolean;
+  fetal_movement_felt: number | boolean;
+  vibroacoustic_stimulation_done: number | boolean;
+  vas_response?: string | null;
+  nst_classification: 'reactive' | 'non_reactive' | 'equivocal_unsatisfactory';
+  figo_classification: 'normal' | 'suspicious' | 'pathological';
+  nichd_category: 'category_1_normal' | 'category_2_indeterminate' | 'category_3_abnormal';
+  intrauterine_resuscitation_required: number | boolean;
+  resuscitation_measures?: string | null;
+  clinical_action_plan?: string | null;
+  recommended_follow_up?: string | null;
+  fhr_trace_data_json?: string | null;
+  tracePoints?: any[];
+  resuscitationMeasuresList?: string[];
+  notes?: string | null;
+  performed_by?: number | null;
+  reviewed_by?: number | null;
+  performed_by_name?: string | null;
+  reviewed_by_name?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CtgEpisodesResponse {
+  episodes: CtgEpisode[];
+}

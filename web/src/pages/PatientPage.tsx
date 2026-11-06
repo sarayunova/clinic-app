@@ -28,6 +28,7 @@ import { NeonatalJaundiceTracker } from '../components/NeonatalJaundiceTracker';
 import { FolliculometryTracker } from '../components/FolliculometryTracker';
 import { ErasReedaManager } from '../components/ErasReedaManager';
 import { GestationalDiabetesTracker } from '../components/GestationalDiabetesTracker';
+import { CardiotocographyTracker } from '../components/CardiotocographyTracker';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -138,7 +139,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -556,6 +557,13 @@ export function PatientPage() {
                     </button>
                     <button
                       type="button"
+                      className={`btn small ${viewMode === 'ctg' ? 'primary' : ''}`}
+                      onClick={() => setViewMode('ctg')}
+                    >
+                      📈 CTG / NST Trace
+                    </button>
+                    <button
+                      type="button"
                       className={`btn small ${viewMode === 'folliculometry' ? 'primary' : ''}`}
                       onClick={() => setViewMode('folliculometry')}
                     >
@@ -656,6 +664,8 @@ export function PatientPage() {
             <FolliculometryTracker patientId={patient!.id} />
           ) : viewMode === 'gdm' ? (
             <GestationalDiabetesTracker patientId={patient!.id} />
+          ) : viewMode === 'ctg' ? (
+            <CardiotocographyTracker patientId={patient!.id} />
           ) : viewMode === 'eras_reeda' ? (
             <ErasReedaManager patientId={patient!.id} />
           ) : isPediatric && viewMode === 'pediatric' ? (
