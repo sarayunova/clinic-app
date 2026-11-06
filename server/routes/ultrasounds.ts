@@ -78,11 +78,43 @@ export const ultrasoundReportSchema = z
     ntMm: optNullableNumber(0.1, 20),
     nasalBone: nasalBoneEnum.nullable().optional(),
     bpdMm: optNullableNumber(5, 150),
+    ofdMm: optNullableNumber(5, 200),
+    cephalicIndex: optNullableNumber(30, 130),
+    cephalicShape: z.enum(['dolichocephaly', 'mesocephaly', 'brachycephaly']).nullable().optional(),
     hcMm: optNullableNumber(20, 450),
     acMm: optNullableNumber(20, 450),
     flMm: optNullableNumber(5, 120),
+    hcAcRatio: optNullableNumber(0.4, 3.0),
+    flAcRatio: optNullableNumber(10, 50),
+    gaDiscordanceDays: optNullableNumber(-120, 120),
     efwGrams: optNullableNumber(50, 7000),
     efwPercentile: optNullableString(200),
+    growthCategory: z.enum(['severe_fgr', 'moderate_fgr', 'aga', 'lga', 'macrosomia']).nullable().optional(),
+
+    // Doppler Velocimetry
+    uaPi: optNullableNumber(0.1, 5.0),
+    uaRi: optNullableNumber(0.1, 1.5),
+    uaSdRatio: optNullableNumber(0.5, 25.0),
+    uaEndDiastolicFlow: z.enum(['normal_positive', 'reduced', 'aedf_absent', 'redf_reversed', 'not_performed']).nullable().optional(),
+    mcaPi: optNullableNumber(0.1, 5.0),
+    mcaRi: optNullableNumber(0.1, 1.5),
+    mcaPsvCmS: optNullableNumber(5, 250),
+    mcaMom: optNullableNumber(0.1, 5.0),
+    cprRatio: optNullableNumber(0.1, 10.0),
+    cprAssessment: z.enum(['normal', 'brain_sparing_redistribution', 'not_applicable']).nullable().optional(),
+    utaMeanPi: optNullableNumber(0.1, 5.0),
+    utaBilateralNotching: z.boolean().nullable().optional(),
+    dvAWave: z.enum(['positive', 'absent', 'reversed', 'not_performed']).nullable().optional(),
+
+    // Manning Biophysical Profile (BPP)
+    bppBreathing: z.number().int().min(0).max(2).nullable().optional(),
+    bppMovement: z.number().int().min(0).max(2).nullable().optional(),
+    bppTone: z.number().int().min(0).max(2).nullable().optional(),
+    bppAmnioticFluid: z.number().int().min(0).max(2).nullable().optional(),
+    bppNstReactive: z.number().int().min(0).max(2).nullable().optional(),
+    bppTotalScore: optNullableNumber(0, 10),
+    bppInterpretation: z.enum(['reassuring', 'equivocal', 'abnormal_asphyxia_risk', 'not_performed']).nullable().optional(),
+
     anatomySurvey: optNullableString(4000),
     uterusFindings: optNullableString(1000),
     endometrialThicknessMm: optNullableNumber(0.1, 50),
@@ -163,11 +195,42 @@ type DbUltrasoundRow = {
   nt_mm: number | null;
   nasal_bone: string | null;
   bpd_mm: number | null;
+  ofd_mm?: number | null;
+  cephalic_index?: number | null;
+  cephalic_shape?: string | null;
   hc_mm: number | null;
   ac_mm: number | null;
   fl_mm: number | null;
+  hc_ac_ratio?: number | null;
+  fl_ac_ratio?: number | null;
+  ga_discordance_days?: number | null;
   efw_grams: number | null;
   efw_percentile: string | null;
+  growth_category?: string | null;
+
+  // Doppler
+  ua_pi?: number | null;
+  ua_ri?: number | null;
+  ua_sd_ratio?: number | null;
+  ua_end_diastolic_flow?: string | null;
+  mca_pi?: number | null;
+  mca_ri?: number | null;
+  mca_psv_cm_s?: number | null;
+  mca_mom?: number | null;
+  cpr_ratio?: number | null;
+  cpr_assessment?: string | null;
+  uta_mean_pi?: number | null;
+  uta_bilateral_notching?: number | null;
+  dv_a_wave?: string | null;
+
+  // BPP
+  bpp_breathing?: number | null;
+  bpp_movement?: number | null;
+  bpp_tone?: number | null;
+  bpp_amniotic_fluid?: number | null;
+  bpp_nst_reactive?: number | null;
+  bpp_total_score?: number | null;
+  bpp_interpretation?: string | null;
   anatomy_survey: string | null;
   uterus_findings: string | null;
   endometrial_thickness_mm: number | null;
@@ -298,11 +361,42 @@ function mapRow(r: DbUltrasoundRow, images: UltrasoundImageResponse[] = []) {
     ntMm: r.nt_mm,
     nasalBone: r.nasal_bone,
     bpdMm: r.bpd_mm,
+    ofdMm: r.ofd_mm ?? null,
+    cephalicIndex: r.cephalic_index ?? null,
+    cephalicShape: r.cephalic_shape ?? null,
     hcMm: r.hc_mm,
     acMm: r.ac_mm,
     flMm: r.fl_mm,
+    hcAcRatio: r.hc_ac_ratio ?? null,
+    flAcRatio: r.fl_ac_ratio ?? null,
+    gaDiscordanceDays: r.ga_discordance_days ?? null,
     efwGrams: r.efw_grams,
     efwPercentile: r.efw_percentile,
+    growthCategory: r.growth_category ?? null,
+
+    // Doppler
+    uaPi: r.ua_pi ?? null,
+    uaRi: r.ua_ri ?? null,
+    uaSdRatio: r.ua_sd_ratio ?? null,
+    uaEndDiastolicFlow: r.ua_end_diastolic_flow ?? null,
+    mcaPi: r.mca_pi ?? null,
+    mcaRi: r.mca_ri ?? null,
+    mcaPsvCmS: r.mca_psv_cm_s ?? null,
+    mcaMom: r.mca_mom ?? null,
+    cprRatio: r.cpr_ratio ?? null,
+    cprAssessment: r.cpr_assessment ?? null,
+    utaMeanPi: r.uta_mean_pi ?? null,
+    utaBilateralNotching: r.uta_bilateral_notching != null ? Boolean(r.uta_bilateral_notching) : null,
+    dvAWave: r.dv_a_wave ?? null,
+
+    // BPP
+    bppBreathing: r.bpp_breathing ?? null,
+    bppMovement: r.bpp_movement ?? null,
+    bppTone: r.bpp_tone ?? null,
+    bppAmnioticFluid: r.bpp_amniotic_fluid ?? null,
+    bppNstReactive: r.bpp_nst_reactive ?? null,
+    bppTotalScore: r.bpp_total_score ?? null,
+    bppInterpretation: r.bpp_interpretation ?? null,
     anatomySurvey: r.anatomy_survey,
     uterusFindings: r.uterus_findings,
     endometrialThicknessMm: r.endometrial_thickness_mm,
@@ -361,6 +455,97 @@ export function registerUltrasoundRoutes(app: FastifyInstance, { db }: Ctx): voi
     };
   });
 
+  // GET /api/patients/:id/ultrasounds/growth-velocity
+  app.get('/api/patients/:id/ultrasounds/growth-velocity', async (req) => {
+    requirePerm(req, 'patient:read_clinical');
+    const patientId = Number((req.params as { id: string }).id);
+    if (!Number.isInteger(patientId) || patientId <= 0) throw badRequest('Invalid patient ID');
+
+    const rows = db
+      .prepare(
+        `SELECT id, scan_date, gestational_age_weeks, gestational_age_days, efw_grams, efw_percentile, growth_category
+         FROM patient_ultrasound_reports
+         WHERE patient_id = ? AND efw_grams IS NOT NULL
+         ORDER BY scan_date ASC, id ASC`
+      )
+      .all(patientId) as {
+        id: number;
+        scan_date: string;
+        gestational_age_weeks: number | null;
+        gestational_age_days: number | null;
+        efw_grams: number;
+        efw_percentile: string | null;
+        growth_category: string | null;
+      }[];
+
+    const intervals: Array<{
+      fromScanId: number;
+      fromDate: string;
+      fromEfwGrams: number;
+      fromGaWeeks: number | null;
+      toScanId: number;
+      toDate: string;
+      toEfwGrams: number;
+      toGaWeeks: number | null;
+      intervalDays: number;
+      weightDeltaGrams: number;
+      gramsPerDay: number;
+      gramsPerWeek: number;
+      velocityStatus: 'normal' | 'slow' | 'stagnant' | 'negative';
+    }> = [];
+
+    for (let i = 1; i < rows.length; i++) {
+      const prev = rows[i - 1];
+      const curr = rows[i];
+      if (!prev || !curr) continue;
+      const d1 = new Date(`${prev.scan_date}T00:00:00Z`).getTime();
+      const d2 = new Date(`${curr.scan_date}T00:00:00Z`).getTime();
+      const intervalDays = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+      if (intervalDays <= 0) continue;
+
+      const weightDeltaGrams = curr.efw_grams - prev.efw_grams;
+      const gramsPerDay = Math.round((weightDeltaGrams / intervalDays) * 10) / 10;
+      const gramsPerWeek = Math.round(gramsPerDay * 7);
+
+      let velocityStatus: 'normal' | 'slow' | 'stagnant' | 'negative' = 'normal';
+      if (gramsPerDay < 0) velocityStatus = 'negative';
+      else if (gramsPerDay < 10) velocityStatus = 'stagnant';
+      else if (gramsPerDay < 20) velocityStatus = 'slow';
+
+      intervals.push({
+        fromScanId: prev.id,
+        fromDate: prev.scan_date,
+        fromEfwGrams: prev.efw_grams,
+        fromGaWeeks: prev.gestational_age_weeks,
+        toScanId: curr.id,
+        toDate: curr.scan_date,
+        toEfwGrams: curr.efw_grams,
+        toGaWeeks: curr.gestational_age_weeks,
+        intervalDays,
+        weightDeltaGrams,
+        gramsPerDay,
+        gramsPerWeek,
+        velocityStatus,
+      });
+    }
+
+    return {
+      patientId,
+      scansCount: rows.length,
+      scans: rows.map((r) => ({
+        id: r.id,
+        scanDate: r.scan_date,
+        gaWeeks: r.gestational_age_weeks,
+        gaDays: r.gestational_age_days,
+        efwGrams: r.efw_grams,
+        efwPercentile: r.efw_percentile,
+        growthCategory: r.growth_category,
+      })),
+      intervals,
+      latestInterval: intervals.length > 0 ? intervals[intervals.length - 1] : null,
+    };
+  });
+
   // GET /api/ultrasounds/:id
   app.get('/api/ultrasounds/:id', async (req) => {
     requirePerm(req, 'patient:read_clinical');
@@ -409,14 +594,28 @@ export function registerUltrasoundRoutes(app: FastifyInstance, { db }: Ctx): voi
         patient_id, visit_id, scan_date, scan_type, indication, clinical_lmp, edd_by_lmp, edd_by_scan,
         gestational_age_weeks, gestational_age_days, fetal_number, cardiac_activity, fhr_bpm,
         presentation, placenta_location, placenta_grade, amniotic_fluid_type, amniotic_fluid_cm, amniotic_fluid_assessment,
-        gsd_mm, crl_mm, nt_mm, nasal_bone, bpd_mm, hc_mm, ac_mm, fl_mm, efw_grams, efw_percentile,
+        gsd_mm, crl_mm, nt_mm, nasal_bone,
+        bpd_mm, ofd_mm, cephalic_index, cephalic_shape,
+        hc_mm, ac_mm, fl_mm, hc_ac_ratio, fl_ac_ratio, ga_discordance_days,
+        efw_grams, efw_percentile, growth_category,
+        ua_pi, ua_ri, ua_sd_ratio, ua_end_diastolic_flow,
+        mca_pi, mca_ri, mca_psv_cm_s, mca_mom,
+        cpr_ratio, cpr_assessment, uta_mean_pi, uta_bilateral_notching, dv_a_wave,
+        bpp_breathing, bpp_movement, bpp_tone, bpp_amniotic_fluid, bpp_nst_reactive, bpp_total_score, bpp_interpretation,
         anatomy_survey, uterus_findings, endometrial_thickness_mm, right_ovary_findings, left_ovary_findings, free_fluid,
         impression, recommendations, sonographer_name, attachment_id, created_by, updated_by, created_at, updated_at
       ) VALUES (
         ?, ?, ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?,
-        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?,
+        ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?,
+        ?, ?, ?,
+        ?, ?, ?, ?,
+        ?, ?, ?, ?,
+        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?, ?, ?
       )
@@ -447,11 +646,38 @@ export function registerUltrasoundRoutes(app: FastifyInstance, { db }: Ctx): voi
       b.ntMm ?? null,
       b.nasalBone ?? null,
       b.bpdMm ?? null,
+      b.ofdMm ?? null,
+      b.cephalicIndex ?? null,
+      b.cephalicShape ?? null,
       b.hcMm ?? null,
       b.acMm ?? null,
       b.flMm ?? null,
+      b.hcAcRatio ?? null,
+      b.flAcRatio ?? null,
+      b.gaDiscordanceDays ?? null,
       b.efwGrams ?? null,
       b.efwPercentile ?? null,
+      b.growthCategory ?? null,
+      b.uaPi ?? null,
+      b.uaRi ?? null,
+      b.uaSdRatio ?? null,
+      b.uaEndDiastolicFlow ?? 'normal_positive',
+      b.mcaPi ?? null,
+      b.mcaRi ?? null,
+      b.mcaPsvCmS ?? null,
+      b.mcaMom ?? null,
+      b.cprRatio ?? null,
+      b.cprAssessment ?? 'normal',
+      b.utaMeanPi ?? null,
+      b.utaBilateralNotching != null ? (b.utaBilateralNotching ? 1 : 0) : 0,
+      b.dvAWave ?? 'not_performed',
+      b.bppBreathing ?? 2,
+      b.bppMovement ?? 2,
+      b.bppTone ?? 2,
+      b.bppAmnioticFluid ?? 2,
+      b.bppNstReactive ?? null,
+      b.bppTotalScore ?? 10,
+      b.bppInterpretation ?? 'reassuring',
       b.anatomySurvey ?? null,
       b.uterusFindings ?? null,
       b.endometrialThicknessMm ?? null,
@@ -528,11 +754,38 @@ export function registerUltrasoundRoutes(app: FastifyInstance, { db }: Ctx): voi
       ntMm: 'nt_mm',
       nasalBone: 'nasal_bone',
       bpdMm: 'bpd_mm',
+      ofdMm: 'ofd_mm',
+      cephalicIndex: 'cephalic_index',
+      cephalicShape: 'cephalic_shape',
       hcMm: 'hc_mm',
       acMm: 'ac_mm',
       flMm: 'fl_mm',
+      hcAcRatio: 'hc_ac_ratio',
+      flAcRatio: 'fl_ac_ratio',
+      gaDiscordanceDays: 'ga_discordance_days',
       efwGrams: 'efw_grams',
       efwPercentile: 'efw_percentile',
+      growthCategory: 'growth_category',
+      uaPi: 'ua_pi',
+      uaRi: 'ua_ri',
+      uaSdRatio: 'ua_sd_ratio',
+      uaEndDiastolicFlow: 'ua_end_diastolic_flow',
+      mcaPi: 'mca_pi',
+      mcaRi: 'mca_ri',
+      mcaPsvCmS: 'mca_psv_cm_s',
+      mcaMom: 'mca_mom',
+      cprRatio: 'cpr_ratio',
+      cprAssessment: 'cpr_assessment',
+      utaMeanPi: 'uta_mean_pi',
+      utaBilateralNotching: 'uta_bilateral_notching',
+      dvAWave: 'dv_a_wave',
+      bppBreathing: 'bpp_breathing',
+      bppMovement: 'bpp_movement',
+      bppTone: 'bpp_tone',
+      bppAmnioticFluid: 'bpp_amniotic_fluid',
+      bppNstReactive: 'bpp_nst_reactive',
+      bppTotalScore: 'bpp_total_score',
+      bppInterpretation: 'bpp_interpretation',
       anatomySurvey: 'anatomy_survey',
       uterusFindings: 'uterus_findings',
       endometrialThicknessMm: 'endometrial_thickness_mm',
@@ -548,7 +801,11 @@ export function registerUltrasoundRoutes(app: FastifyInstance, { db }: Ctx): voi
     for (const [k, col] of Object.entries(fieldMap)) {
       if (k in b) {
         fields.push(`${col} = ?`);
-        values.push((b as Record<string, string | number | null>)[k] ?? null);
+        let val = (b as Record<string, unknown>)[k] ?? null;
+        if (k === 'utaBilateralNotching' && val != null) {
+          val = val ? 1 : 0;
+        }
+        values.push(val as string | number | null);
       }
     }
 

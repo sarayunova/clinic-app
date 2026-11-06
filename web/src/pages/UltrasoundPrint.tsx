@@ -236,6 +236,25 @@ export function UltrasoundPrint() {
                   <td style={{ padding: '0.35rem' }} className="muted small">Outer-to-inner parietal bone (Hadlock)</td>
                 </tr>
               )}
+              {report.ofdMm != null && (
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '0.35rem' }}>Occipitofrontal Diameter (OFD)</td>
+                  <td style={{ padding: '0.35rem' }}><strong>{report.ofdMm} mm</strong></td>
+                  <td style={{ padding: '0.35rem' }} className="muted small">Outer frontal to outer occipital bone</td>
+                </tr>
+              )}
+              {report.cephalicIndex != null && (
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '0.35rem' }}>Cephalic Index (CI)</td>
+                  <td style={{ padding: '0.35rem' }}><strong>{report.cephalicIndex}%</strong></td>
+                  <td style={{ padding: '0.35rem' }} className="muted small">
+                    <span style={{ textTransform: 'capitalize', fontWeight: report.cephalicShape !== 'mesocephaly' ? 'bold' : 'normal' }}>
+                      {report.cephalicShape || 'Normal'}
+                    </span>
+                    {report.cephalicShape && report.cephalicShape !== 'mesocephaly' ? ' (Caution: prioritize HC for GA)' : ' (Normal 70.0 - 86.0%)'}
+                  </td>
+                </tr>
+              )}
               {report.hcMm != null && (
                 <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ padding: '0.35rem' }}>Head Circumference (HC)</td>
@@ -257,6 +276,20 @@ export function UltrasoundPrint() {
                   <td style={{ padding: '0.35rem' }} className="muted small">Diaphysis length excluding epiphyses (Hadlock)</td>
                 </tr>
               )}
+              {report.hcAcRatio != null && (
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '0.35rem' }}>HC / AC Ratio</td>
+                  <td style={{ padding: '0.35rem' }}><strong>{report.hcAcRatio}</strong></td>
+                  <td style={{ padding: '0.35rem' }} className="muted small">Asymmetry / head-sparing ratio index</td>
+                </tr>
+              )}
+              {report.flAcRatio != null && (
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '0.35rem' }}>FL / AC Ratio</td>
+                  <td style={{ padding: '0.35rem' }}><strong>{report.flAcRatio}%</strong></td>
+                  <td style={{ padding: '0.35rem' }} className="muted small">Normal reference range 20–24%</td>
+                </tr>
+              )}
               {report.efwGrams != null && (
                 <tr style={{ background: '#f0fdf4', borderTop: '2px solid #86efac' }}>
                   <td style={{ padding: '0.45rem', fontWeight: 600 }}>Estimated Fetal Weight (EFW)</td>
@@ -265,6 +298,19 @@ export function UltrasoundPrint() {
                   </td>
                   <td style={{ padding: '0.45rem' }}>
                     <strong>{report.efwPercentile || 'Hadlock Formula'}</strong>
+                    {report.growthCategory && (
+                      <span style={{
+                        marginLeft: '0.5rem',
+                        padding: '0.15rem 0.4rem',
+                        borderRadius: '3px',
+                        fontSize: '0.8rem',
+                        fontWeight: 'bold',
+                        background: report.growthCategory === 'severe_fgr' ? '#ffe4e6' : report.growthCategory === 'moderate_fgr' ? '#fef3c7' : '#dcfce7',
+                        color: report.growthCategory === 'severe_fgr' ? '#be123c' : report.growthCategory === 'moderate_fgr' ? '#b45309' : '#15803d',
+                      }}>
+                        {report.growthCategory.replace('_', ' ').toUpperCase()}
+                      </span>
+                    )}
                   </td>
                 </tr>
               )}
@@ -323,7 +369,155 @@ export function UltrasoundPrint() {
         </section>
       )}
 
-      {/* Anatomical Survey Checklist (For anomaly scan) */}
+      {/* Fetal & Uteroplacental Doppler Velocimetry */}
+      {isObstetric && (report.uaPi != null || report.mcaPi != null || report.cprRatio != null || (report.uaEndDiastolicFlow && report.uaEndDiastolicFlow !== 'not_performed' && report.uaEndDiastolicFlow !== 'normal_positive')) && (
+        <section className="sheet-block" style={{ marginTop: '0.7rem' }}>
+          <h3 style={{ margin: '0 0 0.35rem 0', fontSize: '0.95rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.2rem' }}>
+            Fetal &amp; Uteroplacental Doppler Velocimetry
+          </h3>
+          <table className="sheet-table" style={{ width: '100%', fontSize: '0.85rem', borderCollapse: 'collapse', marginTop: '0.25rem' }}>
+            <thead>
+              <tr style={{ background: '#f8fafc', borderBottom: '1px solid #cbd5e1', textAlign: 'left' }}>
+                <th style={{ padding: '0.35rem' }}>Vascular Territory</th>
+                <th style={{ padding: '0.35rem' }}>Pulsatility Index (PI)</th>
+                <th style={{ padding: '0.35rem' }}>Resistance Index (RI)</th>
+                <th style={{ padding: '0.35rem' }}>Velocity / Flow Characteristics</th>
+                <th style={{ padding: '0.35rem' }}>Clinical Assessment</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* UA */}
+              <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                <td style={{ padding: '0.35rem' }}><strong>Umbilical Artery (UA)</strong></td>
+                <td style={{ padding: '0.35rem' }}>{report.uaPi != null ? <strong>{report.uaPi}</strong> : '—'}</td>
+                <td style={{ padding: '0.35rem' }}>{report.uaRi != null ? report.uaRi : '—'}</td>
+                <td style={{ padding: '0.35rem' }}>
+                  {report.uaSdRatio ? `S/D: ${report.uaSdRatio} · ` : ''}
+                  <span style={{
+                    fontWeight: report.uaEndDiastolicFlow === 'redf_reversed' || report.uaEndDiastolicFlow === 'aedf_absent' ? 'bold' : 'normal',
+                    color: report.uaEndDiastolicFlow === 'redf_reversed' || report.uaEndDiastolicFlow === 'aedf_absent' ? '#dc2626' : undefined,
+                  }}>
+                    {report.uaEndDiastolicFlow === 'redf_reversed' ? '🚨 Reversed Diastolic (REDF)' : report.uaEndDiastolicFlow === 'aedf_absent' ? '⚠️ Absent Diastolic (AEDF)' : report.uaEndDiastolicFlow === 'reduced' ? 'Reduced Diastolic' : 'Positive Forward Flow'}
+                  </span>
+                </td>
+                <td style={{ padding: '0.35rem' }} className="small">
+                  {report.uaEndDiastolicFlow === 'redf_reversed' ? 'Critical Placental Obliteration' : report.uaEndDiastolicFlow === 'aedf_absent' ? 'Severe Placental Insufficiency' : 'Normal Fetoplacental Impedance'}
+                </td>
+              </tr>
+              {/* MCA */}
+              {(report.mcaPi != null || report.mcaPsvCmS != null) && (
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '0.35rem' }}><strong>Middle Cerebral Artery (MCA)</strong></td>
+                  <td style={{ padding: '0.35rem' }}>{report.mcaPi != null ? <strong>{report.mcaPi}</strong> : '—'}</td>
+                  <td style={{ padding: '0.35rem' }}>{report.mcaRi != null ? report.mcaRi : '—'}</td>
+                  <td style={{ padding: '0.35rem' }}>
+                    {report.mcaPsvCmS != null ? `PSV: ${report.mcaPsvCmS} cm/s` : '—'}
+                  </td>
+                  <td style={{ padding: '0.35rem' }} className="small">
+                    {report.mcaPsvCmS && report.mcaPsvCmS > 60 ? 'Screen for Fetal Anemia' : 'Normal Cerebral Resistance'}
+                  </td>
+                </tr>
+              )}
+              {/* CPR Ratio */}
+              {report.cprRatio != null && (
+                <tr style={{ background: report.cprAssessment === 'brain_sparing_redistribution' ? '#fee2e2' : '#f0fdf4', borderTop: '1px solid #cbd5e1' }}>
+                  <td style={{ padding: '0.35rem' }}><strong>Cerebroplacental Ratio (CPR)</strong></td>
+                  <td colSpan={2} style={{ padding: '0.35rem' }}>
+                    <strong>MCA-PI / UA-PI = {report.cprRatio}</strong>
+                  </td>
+                  <td colSpan={2} style={{ padding: '0.35rem' }}>
+                    <span style={{
+                      fontWeight: 'bold',
+                      color: report.cprAssessment === 'brain_sparing_redistribution' ? '#dc2626' : '#16a34a',
+                    }}>
+                      {report.cprAssessment === 'brain_sparing_redistribution' ? '⚠️ Brain-Sparing Redistribution (< 1.08)' : '✓ Normal Ratio (≥ 1.08)'}
+                    </span>
+                  </td>
+                </tr>
+              )}
+              {/* UtA & DV */}
+              {(report.utaMeanPi != null || (report.dvAWave && report.dvAWave !== 'not_performed')) && (
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '0.35rem' }}><strong>UtA &amp; Ductus Venosus</strong></td>
+                  <td style={{ padding: '0.35rem' }}>{report.utaMeanPi != null ? `UtA PI: ${report.utaMeanPi}` : '—'}</td>
+                  <td style={{ padding: '0.35rem' }}>{report.utaBilateralNotching ? '⚠️ Bilateral Notch' : 'No Notch'}</td>
+                  <td colSpan={2} style={{ padding: '0.35rem' }}>
+                    DV a-wave: <strong>{report.dvAWave === 'reversed' ? '🚨 Reversed' : report.dvAWave === 'absent' ? '⚠️ Absent' : 'Positive (Normal)'}</strong>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </section>
+      )}
+
+      {/* Manning Biophysical Profile (BPP) */}
+      {isObstetric && report.bppTotalScore != null && (
+        <section className="sheet-block" style={{ marginTop: '0.7rem' }}>
+          <h3 style={{ margin: '0 0 0.35rem 0', fontSize: '0.95rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.2rem' }}>
+            Manning Biophysical Profile (BPP)
+          </h3>
+          <table className="sheet-table" style={{ width: '100%', fontSize: '0.85rem', borderCollapse: 'collapse', marginTop: '0.25rem' }}>
+            <thead>
+              <tr style={{ background: '#f8fafc', borderBottom: '1px solid #cbd5e1', textAlign: 'left' }}>
+                <th style={{ padding: '0.35rem' }}>Biophysical Variable</th>
+                <th style={{ padding: '0.35rem' }}>Criterion Requirement</th>
+                <th style={{ padding: '0.35rem' }}>Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                <td style={{ padding: '0.35rem' }}>Fetal Breathing Movements</td>
+                <td style={{ padding: '0.35rem' }} className="muted small">≥ 1 episode of continuous breathing lasting ≥ 30 sec in 30 min</td>
+                <td style={{ padding: '0.35rem' }}><strong>{report.bppBreathing ?? 2} / 2</strong></td>
+              </tr>
+              <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                <td style={{ padding: '0.35rem' }}>Gross Body Movements</td>
+                <td style={{ padding: '0.35rem' }} className="muted small">≥ 3 discrete body or limb movements in 30 min</td>
+                <td style={{ padding: '0.35rem' }}><strong>{report.bppMovement ?? 2} / 2</strong></td>
+              </tr>
+              <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                <td style={{ padding: '0.35rem' }}>Fetal Tone</td>
+                <td style={{ padding: '0.35rem' }} className="muted small">≥ 1 episode of active extension with return to flexion</td>
+                <td style={{ padding: '0.35rem' }}><strong>{report.bppTone ?? 2} / 2</strong></td>
+              </tr>
+              <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                <td style={{ padding: '0.35rem' }}>Amniotic Fluid Volume</td>
+                <td style={{ padding: '0.35rem' }} className="muted small">≥ 1 vertical pocket of fluid measuring ≥ 2 cm x 1 cm</td>
+                <td style={{ padding: '0.35rem' }}><strong>{report.bppAmnioticFluid ?? 2} / 2</strong></td>
+              </tr>
+              {report.bppNstReactive != null && (
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '0.35rem' }}>Non-Stress Test (NST)</td>
+                  <td style={{ padding: '0.35rem' }} className="muted small">≥ 2 accelerations (≥15 bpm for 15 sec) in 20-40 min</td>
+                  <td style={{ padding: '0.35rem' }}><strong>{report.bppNstReactive} / 2</strong></td>
+                </tr>
+              )}
+              <tr style={{
+                background: report.bppInterpretation === 'reassuring' ? '#f0fdf4' : report.bppInterpretation === 'equivocal' ? '#fffbeb' : '#fee2e2',
+                borderTop: '2px solid #94a3b8',
+              }}>
+                <td colSpan={2} style={{ padding: '0.45rem', fontWeight: 600 }}>
+                  Total Manning BPP Score &amp; Clinical Status:
+                </td>
+                <td style={{ padding: '0.45rem' }}>
+                  <strong style={{ fontSize: '1rem' }}>
+                    {report.bppTotalScore} / {report.bppNstReactive != null ? '10' : '8'}
+                  </strong>
+                  {' · '}
+                  <span style={{
+                    textTransform: 'uppercase',
+                    fontWeight: 'bold',
+                    color: report.bppInterpretation === 'reassuring' ? '#15803d' : report.bppInterpretation === 'equivocal' ? '#b45309' : '#dc2626',
+                  }}>
+                    {report.bppInterpretation?.replace('_', ' ') || 'Reassuring'}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      )}
       {isObstetric && Object.keys(parsedAnatomy).length > 0 && (
         <section className="sheet-block" style={{ marginTop: '0.7rem' }}>
           <h3 style={{ margin: '0 0 0.35rem 0', fontSize: '0.95rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.2rem' }}>

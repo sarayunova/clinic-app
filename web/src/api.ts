@@ -917,11 +917,42 @@ export interface UltrasoundReport {
   ntMm?: number | null;
   nasalBone?: 'present' | 'absent' | 'hypoplastic' | 'not_visualized' | null;
   bpdMm?: number | null;
+  ofdMm?: number | null;
+  cephalicIndex?: number | null;
+  cephalicShape?: 'dolichocephaly' | 'mesocephaly' | 'brachycephaly' | null;
   hcMm?: number | null;
   acMm?: number | null;
   flMm?: number | null;
+  hcAcRatio?: number | null;
+  flAcRatio?: number | null;
+  gaDiscordanceDays?: number | null;
   efwGrams?: number | null;
   efwPercentile?: string | null;
+  growthCategory?: 'severe_fgr' | 'moderate_fgr' | 'aga' | 'lga' | 'macrosomia' | null;
+
+  // Doppler Velocimetry
+  uaPi?: number | null;
+  uaRi?: number | null;
+  uaSdRatio?: number | null;
+  uaEndDiastolicFlow?: 'normal_positive' | 'reduced' | 'aedf_absent' | 'redf_reversed' | 'not_performed' | null;
+  mcaPi?: number | null;
+  mcaRi?: number | null;
+  mcaPsvCmS?: number | null;
+  mcaMom?: number | null;
+  cprRatio?: number | null;
+  cprAssessment?: 'normal' | 'brain_sparing_redistribution' | 'not_applicable' | null;
+  utaMeanPi?: number | null;
+  utaBilateralNotching?: boolean | null;
+  dvAWave?: 'positive' | 'absent' | 'reversed' | 'not_performed' | null;
+
+  // Manning Biophysical Profile (BPP)
+  bppBreathing?: number | null;
+  bppMovement?: number | null;
+  bppTone?: number | null;
+  bppAmnioticFluid?: number | null;
+  bppNstReactive?: number | null;
+  bppTotalScore?: number | null;
+  bppInterpretation?: 'reassuring' | 'equivocal' | 'abnormal_asphyxia_risk' | 'not_performed' | null;
   anatomySurvey?: string | null;
   uterusFindings?: string | null;
   endometrialThicknessMm?: number | null;
@@ -948,6 +979,38 @@ export interface UltrasoundReport {
 export interface UltrasoundListResponse {
   patientId: number;
   reports: UltrasoundReport[];
+}
+
+export interface UltrasoundGrowthInterval {
+  fromScanId: number;
+  fromDate: string;
+  fromEfwGrams: number;
+  fromGaWeeks: number | null;
+  toScanId: number;
+  toDate: string;
+  toEfwGrams: number;
+  toGaWeeks: number | null;
+  intervalDays: number;
+  weightDeltaGrams: number;
+  gramsPerDay: number;
+  gramsPerWeek: number;
+  velocityStatus: 'normal' | 'slow' | 'stagnant' | 'negative';
+}
+
+export interface UltrasoundGrowthVelocityResponse {
+  patientId: number;
+  scansCount: number;
+  scans: Array<{
+    id: number;
+    scanDate: string;
+    gaWeeks: number | null;
+    gaDays: number | null;
+    efwGrams: number;
+    efwPercentile: string | null;
+    growthCategory: string | null;
+  }>;
+  intervals: UltrasoundGrowthInterval[];
+  latestInterval: UltrasoundGrowthInterval | null;
 }
 
 export interface UltrasoundBiometryScan {
