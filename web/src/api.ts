@@ -1667,3 +1667,128 @@ export interface PphAssessmentsResponse {
   count: number;
   assessments: PphAssessment[];
 }
+
+export interface NeonatalNewsObservation {
+  id: number;
+  resuscitationEventId: number;
+  patientId: number;
+  recordedAt: string;
+  postnatalAgeHours?: number | null;
+  heartRateBpm?: number | null;
+  hrScore: number;
+  respiratoryRateBpm?: number | null;
+  rrScore: number;
+  temperatureC?: number | null;
+  tempScore: number;
+  spo2Percent?: number | null;
+  spo2Score: number;
+  supplementalOxygen: boolean;
+  oxygenScore: number;
+  color: 'pink' | 'acrocyanosis' | 'pallor' | 'central_cyanosis' | 'jaundice_early';
+  colorScore: number;
+  toneNeurology: 'normal_active' | 'mildly_floppy_jittery' | 'lethargic_poor_suck' | 'severely_hypotonic_seizures';
+  toneScore: number;
+  gruntingStridor: 'none' | 'intermittent_audible_stethoscope' | 'persistent_audible_naked_ear';
+  gruntingScore: number;
+  totalNewsScore: number;
+  alertSeverity: 'green_low' | 'yellow_medium' | 'red_high';
+  bloodGlucoseMgDl?: number | null;
+  feedingStatus?: 'breastfeeding_well' | 'poor_latch' | 'expressed_breast_milk' | 'formula' | 'npo_iv_fluids' | null;
+  clinicalActionTaken?: string | null;
+  recordedBy: number;
+  recordedByName?: string | null;
+  createdAt: string;
+}
+
+export interface NeonatalResuscitationEvent {
+  id: number;
+  patientId: number;
+  babyPatientId?: number | null;
+  maternityAdmissionId?: number | null;
+  deliveryTimestamp: string;
+  gestationalAgeWeeks?: number | null;
+  gestationalAgeDays?: number | null;
+  birthWeightGrams?: number | null;
+  babyGender: 'female' | 'male' | 'ambiguous' | 'unspecified';
+  deliveryMode: 'vaginal' | 'cesarean' | 'assisted_vacuum_forceps';
+  liquorAppearance: 'clear' | 'meconium_thin' | 'meconium_thick' | 'blood_stained' | 'absent';
+
+  apgar1mHeartRate: number;
+  apgar1mRespiratoryEffort: number;
+  apgar1mMuscleTone: number;
+  apgar1mReflexIrritability: number;
+  apgar1mColor: number;
+  apgar1mTotal: number;
+
+  apgar5mHeartRate: number;
+  apgar5mRespiratoryEffort: number;
+  apgar5mMuscleTone: number;
+  apgar5mReflexIrritability: number;
+  apgar5mColor: number;
+  apgar5mTotal: number;
+
+  apgar10mHeartRate?: number | null;
+  apgar10mRespiratoryEffort?: number | null;
+  apgar10mMuscleTone?: number | null;
+  apgar10mReflexIrritability?: number | null;
+  apgar10mColor?: number | null;
+  apgar10mTotal?: number | null;
+
+  sasThoracoabdominalMovement: number;
+  sasIntercostalRetraction: number;
+  sasXiphoidRetraction: number;
+  sasNaresDilation: number;
+  sasExpiratoryGrunt: number;
+  sasTotalScore: number;
+  sasDistressSeverity: 'none' | 'mild' | 'moderate' | 'severe';
+
+  initialStepsCompleted: boolean;
+  delayedCordClampingSeconds?: number | null;
+  temperatureControlMethod: 'skin_to_skin' | 'radiant_warmer' | 'plastic_wrap_preterm' | 'transwarmer_mattress' | 'incubator';
+  initialTemperatureC?: number | null;
+  meconiumManagement: 'not_applicable' | 'vigorous_routine_care' | 'non_vigorous_bulb_suction' | 'endotracheal_suctioning';
+  supplementalOxygenGiven: boolean;
+  targetFio2Percent?: number | null;
+  ppvInitiated: boolean;
+  ppvDevice?: 't_piece_resuscitator' | 'self_inflating_bag' | 'flow_inflating_bag' | null;
+  ppvStartSeconds?: number | null;
+  mrSopaStepsRequired: boolean;
+  laryngealMaskOrEttUsed: 'none' | 'lma_size_1' | 'ett_oral' | 'ett_nasal';
+  chestCompressionsPerformed: boolean;
+  chestCompressionsDurationSeconds?: number | null;
+  epinephrineGiven: boolean;
+  epinephrineDoseMg?: number | null;
+  volumeExpanderGiven: boolean;
+  volumeExpanderMl?: number | null;
+
+  atRiskHypoglycemia: boolean;
+  hypoglycemiaRiskReason?: string | null;
+  initialBloodGlucoseMgDl?: number | null;
+  glucoseManagementAction: 'none' | 'early_breastfeeding' | 'supplemental_formula_ebm' | 'dextrose_10pct_bolus_infusion';
+
+  primaryResuscitationOutcome: 'routine_maternal_side' | 'postnatal_ward_observation' | 'sncu_level_2' | 'nicu_level_3' | 'neonatal_death';
+  cordBloodGasPh?: number | null;
+  cordBloodGasBe?: number | null;
+  pediatricianAttending?: string | null;
+  resuscitationNurse?: string | null;
+  notes?: string | null;
+
+  createdBy: number;
+  createdByName?: string | null;
+  updatedBy: number;
+  updatedByName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+
+  motherName?: string;
+  motherPatientNumber?: string;
+  babyName?: string | null;
+  babyPatientNumber?: string | null;
+  newsObservations?: NeonatalNewsObservation[];
+}
+
+export interface NeonatalResuscitationsResponse {
+  patientId: number;
+  count: number;
+  events: NeonatalResuscitationEvent[];
+}

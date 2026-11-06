@@ -22,6 +22,7 @@ import { MaternityAdmissionManager } from '../components/MaternityAdmissionManag
 import { AntenatalLabTracker } from '../components/AntenatalLabTracker';
 import { MedicationSafetyChecker } from '../components/MedicationSafetyChecker';
 import { PphQblManager } from '../components/PphQblManager';
+import { NeonatalResuscitationManager } from '../components/NeonatalResuscitationManager';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -132,7 +133,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'neonatal_resus' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -498,16 +499,32 @@ export function PatientPage() {
                     >
                       🤱 Postnatal Discharge
                     </button>
+                    <button
+                      type="button"
+                      className={`btn small ${viewMode === 'neonatal_resus' ? 'primary' : ''}`}
+                      onClick={() => setViewMode('neonatal_resus')}
+                    >
+                      👶 Neonatal Resuscitation &amp; NEW-S
+                    </button>
                   </>
                 )}
                 {isPediatric && (
-                  <button
-                    type="button"
-                    className={`btn small ${viewMode === 'pediatric' ? 'primary' : ''}`}
-                    onClick={() => setViewMode('pediatric')}
-                  >
-                    👶 Child Health & Vaccines
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      className={`btn small ${viewMode === 'pediatric' ? 'primary' : ''}`}
+                      onClick={() => setViewMode('pediatric')}
+                    >
+                      👶 Child Health &amp; Vaccines
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn small ${viewMode === 'neonatal_resus' ? 'primary' : ''}`}
+                      onClick={() => setViewMode('neonatal_resus')}
+                    >
+                      🩺 Birth Resuscitation &amp; NEW-S
+                    </button>
+                  </>
                 )}
                 <button
                   type="button"
@@ -581,6 +598,8 @@ export function PatientPage() {
             <MaternityAdmissionManager patient={patient!} onChanged={load} />
           ) : isMaternity && viewMode === 'postnatal' ? (
             <ObstetricDischargeManager patient={patient!} />
+          ) : viewMode === 'neonatal_resus' ? (
+            <NeonatalResuscitationManager patientId={patient!.id} />
           ) : isPediatric && viewMode === 'pediatric' ? (
             <PediatricTracker
               patientId={patient!.id}
