@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, type LabOrder } from '../api';
 import { Sheet, useClinic } from '../components/Sheet';
+import { SignatureBlock } from '../components/SignatureBlock';
 import { ErrorBanner } from '../components/ui';
 
 export function LabOrderPrint() {
@@ -225,14 +226,12 @@ export function LabOrderPrint() {
           <div className="muted small" style={{ fontSize: '0.72rem' }}>Date &amp; Time: __________________</div>
         </div>
 
-        <div style={{ textAlign: 'right', minWidth: '220px' }}>
-          <div style={{ borderBottom: '1px solid #0f172a', width: '220px', marginBottom: '0.35rem' }} />
-          <div style={{ fontWeight: 600 }}>{order.orderedByName || clinic.doctorName}</div>
-          <div className="muted small">Ordering Clinician / Medical Officer</div>
-          {clinic.registrationNo && (
-            <div className="muted small">Reg. No: {clinic.registrationNo}</div>
-          )}
-        </div>
+        <SignatureBlock
+          clinic={clinic}
+          signatoryName={order.orderedByName || clinic.doctorName}
+          designation="Ordering Clinician / Medical Officer"
+          style={{ marginTop: 0 }}
+        />
       </div>
     </Sheet>
   );

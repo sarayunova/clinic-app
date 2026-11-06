@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, type UltrasoundReport } from '../api';
 import { Sheet, useClinic } from '../components/Sheet';
+import { SignatureBlock } from '../components/SignatureBlock';
 import { ErrorBanner } from '../components/ui';
 import { ANATOMICAL_SURVEY_ITEMS } from '../ultrasoundBiometry';
 
@@ -435,14 +436,12 @@ export function UltrasoundPrint() {
           * Ultrasound biometry calculations reflect Hadlock standards. Clinical correlation is recommended.
         </div>
 
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ borderBottom: '1px solid #0f172a', width: '220px', marginBottom: '0.35rem' }} />
-          <div style={{ fontWeight: 600 }}>{report.sonographerName || clinic.doctorName}</div>
-          <div className="muted small">Consultant Sonologist / Obstetrician</div>
-          {clinic.registrationNo && (
-            <div className="muted small">Reg. No: {clinic.registrationNo}</div>
-          )}
-        </div>
+        <SignatureBlock
+          clinic={clinic}
+          signatoryName={report.sonographerName || clinic.doctorName}
+          designation="Consultant Sonologist / Obstetrician"
+          style={{ marginTop: 0 }}
+        />
       </div>
     </Sheet>
   );

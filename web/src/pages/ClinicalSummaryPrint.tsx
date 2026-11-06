@@ -5,6 +5,7 @@ import {
   type ClinicalSummaryResponse,
 } from '../api';
 import { Sheet, useClinic } from '../components/Sheet';
+import { SignatureBlock } from '../components/SignatureBlock';
 import { ErrorBanner, formatAge } from '../components/ui';
 
 type PrintMode = 'antenatal_card' | 'referral_letter' | 'health_summary';
@@ -30,15 +31,7 @@ function Section({ title, children, badge }: { title: string; children: ReactNod
   );
 }
 
-function Signature({ name, reg }: { name: string; reg?: string }) {
-  return (
-    <div className="signature" style={{ marginTop: '1.5rem' }}>
-      <div className="signature-line" />
-      <div><strong>{name}</strong></div>
-      {reg && <div className="small muted">Reg. no. {reg}</div>}
-    </div>
-  );
-}
+
 
 export function ClinicalSummaryPrint() {
   const { id } = useParams();
@@ -656,7 +649,7 @@ export function ClinicalSummaryPrint() {
         <div className="small muted">
           Clinical decision support sheet · Confidential medical record · Generated from electronic clinic register
         </div>
-        <Signature name={clinic.doctorName || 'Attending Physician'} reg={clinic.registrationNo} />
+        <SignatureBlock clinic={clinic} signatoryName={clinic.doctorName || 'Attending Physician'} designation="Consultant Obstetrician / Gynecologist" style={{ marginTop: '0' }} />
       </div>
     </Sheet>
   );

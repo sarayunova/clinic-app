@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
 import { api, type Admission, type Visit } from '../api';
 import { Sheet, useClinic } from '../components/Sheet';
+import { SignatureBlock } from '../components/SignatureBlock';
 import { ErrorBanner, formatAge } from '../components/ui';
 import { calculateEdd, calculateGestationalAge, formatGpal } from '../pregnancy';
 
@@ -27,15 +28,7 @@ function Block({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function Signature({ name, reg }: { name: string; reg?: string }) {
-  return (
-    <div className="signature">
-      <div className="signature-line" />
-      <div>{name}</div>
-      {reg && <div className="small">Reg. no. {reg}</div>}
-    </div>
-  );
-}
+
 
 export function PrescriptionPrint() {
   const { id } = useParams();
@@ -113,7 +106,7 @@ export function PrescriptionPrint() {
       )}
       {visit.advice && <Block title="Advice">{visit.advice}</Block>}
       {visit.followUpDate && <p><strong>Follow-up: </strong>{visit.followUpDate}</p>}
-      <Signature name={visit.finalisedByName ?? clinic.doctorName} reg={clinic.registrationNo} />
+      <SignatureBlock clinic={clinic} signatoryName={visit.finalisedByName ?? clinic.doctorName} />
       {amended > 0 && <p className="small">This is the current version; the consultation was amended {amended} time{amended > 1 ? 's' : ''} after it was finalised.</p>}
     </Sheet>
   );
@@ -160,7 +153,7 @@ export function DischargePrint() {
       {addenda.map((a) => (
         <Block key={a.id} title={`Addendum, ${a.createdDate}`}>{a.content}</Block>
       ))}
-      <Signature name={s.writtenByName} reg={clinic.registrationNo} />
+      <SignatureBlock clinic={clinic} signatoryName={s.writtenByName ?? clinic.doctorName} designation="Consultant In-Charge" />
     </Sheet>
   );
 }

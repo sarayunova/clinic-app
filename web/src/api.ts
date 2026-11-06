@@ -524,6 +524,19 @@ export interface ClinicSettings {
   phone: string;
   doctorName: string;
   registrationNo: string;
+  clinicTagline?: string;
+  email?: string;
+  website?: string;
+  doctorQualifications?: string;
+  headerLayout?: 'centered' | 'split' | 'modern';
+  footerText?: string;
+  showLogoOnPrint?: string;
+  showSignatureOnPrint?: string;
+  preprintedStationery?: string;
+  topMarginMm?: string;
+  stampText?: string;
+  logoDataUrl?: string;
+  signatureDataUrl?: string;
 }
 
 export interface BackupStatus {

@@ -72,8 +72,48 @@ const listSchema = z.object({
   status: z.enum(['draft', 'unpaid', 'all']).default('unpaid'),
   patientId: z.coerce.number().int().min(1).optional(),
 });
-const SETTING_KEYS = ['clinicName', 'address', 'phone', 'doctorName', 'registrationNo'] as const;
-const settingsSchema = z.object(Object.fromEntries(SETTING_KEYS.map((k) => [k, z.string().trim().max(300)]))).strict().partial();
+const SETTING_KEYS = [
+  'clinicName',
+  'address',
+  'phone',
+  'doctorName',
+  'registrationNo',
+  'clinicTagline',
+  'email',
+  'website',
+  'doctorQualifications',
+  'headerLayout',
+  'footerText',
+  'showLogoOnPrint',
+  'showSignatureOnPrint',
+  'preprintedStationery',
+  'topMarginMm',
+  'stampText',
+  'logoDataUrl',
+  'signatureDataUrl',
+] as const;
+const settingsSchema = z
+  .object({
+    clinicName: z.string().trim().max(300).optional(),
+    address: z.string().trim().max(600).optional(),
+    phone: z.string().trim().max(150).optional(),
+    doctorName: z.string().trim().max(300).optional(),
+    registrationNo: z.string().trim().max(150).optional(),
+    clinicTagline: z.string().trim().max(300).optional(),
+    email: z.string().trim().max(150).optional(),
+    website: z.string().trim().max(150).optional(),
+    doctorQualifications: z.string().trim().max(300).optional(),
+    headerLayout: z.enum(['centered', 'split', 'modern']).or(z.literal('')).optional(),
+    footerText: z.string().trim().max(600).optional(),
+    showLogoOnPrint: z.enum(['0', '1']).or(z.literal('')).optional(),
+    showSignatureOnPrint: z.enum(['0', '1']).or(z.literal('')).optional(),
+    preprintedStationery: z.enum(['0', '1']).or(z.literal('')).optional(),
+    topMarginMm: z.string().regex(/^\d{0,3}$/, 'Margin must be 0 to 999 mm').optional(),
+    stampText: z.string().trim().max(200).optional(),
+    logoDataUrl: z.string().max(2_500_000).optional(),
+    signatureDataUrl: z.string().max(2_500_000).optional(),
+  })
+  .strict();
 
 type Row = Record<string, unknown>;
 
@@ -168,14 +208,24 @@ export function registerBillingRoutes(app: FastifyInstance, { db, cfg }: Ctx): v
     return out;
   });
 
-  app.put('/api/settings', async (req) => {
+  app.put('/api/settings', { bodyLimit: 3_000_000 }, async (req) => {
     const user = requirePerm(req, 'settings:manage');
     const body = parse(settingsSchema, req.body) as Record<string, string>;
     tx(db, () => {
       for (const [k, v] of Object.entries(body)) {
         db.prepare('INSERT INTO settings(key, value, updated_at) VALUES (?,?,?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at').run(k, v, nowIso());
       }
-      audit(db, { actorId: user.id, action: 'settings.update', entity: 'settings', entityId: 0, detail: body });
+      const auditDetail: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(body)) {
+        if (k === 'logoDataUrl' && v && v.length > 50) {
+          auditDetail[k] = '[image data attached]';
+        } else if (k === 'signatureDataUrl' && v && v.length > 50) {
+          auditDetail[k] = '[signature data attached]';
+        } else {
+          auditDetail[k] = v;
+        }
+      }
+      audit(db, { actorId: user.id, action: 'settings.update', entity: 'settings', entityId: 0, detail: auditDetail });
     });
     return { ok: true };
   });
