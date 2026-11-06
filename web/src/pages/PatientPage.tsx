@@ -26,6 +26,7 @@ import { NeonatalResuscitationManager } from '../components/NeonatalResuscitatio
 import { MaternalMeowsManager } from '../components/MaternalMeowsManager';
 import { NeonatalJaundiceTracker } from '../components/NeonatalJaundiceTracker';
 import { FolliculometryTracker } from '../components/FolliculometryTracker';
+import { ErasReedaManager } from '../components/ErasReedaManager';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -136,7 +137,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -584,6 +585,13 @@ export function PatientPage() {
                 </button>
                 <button
                   type="button"
+                  className={`btn small ${viewMode === 'eras_reeda' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('eras_reeda')}
+                >
+                  🩹 ERAS &amp; REEDA Wound
+                </button>
+                <button
+                  type="button"
                   className={`btn small ${viewMode === 'list' ? 'primary' : ''}`}
                   onClick={() => setViewMode('list')}
                 >
@@ -636,6 +644,8 @@ export function PatientPage() {
             />
           ) : viewMode === 'folliculometry' ? (
             <FolliculometryTracker patientId={patient!.id} />
+          ) : viewMode === 'eras_reeda' ? (
+            <ErasReedaManager patientId={patient!.id} />
           ) : isPediatric && viewMode === 'pediatric' ? (
             <PediatricTracker
               patientId={patient!.id}

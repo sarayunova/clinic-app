@@ -2094,3 +2094,60 @@ export interface FolliculometryCyclesResponse {
   patientId: number;
   cycles: FolliculometryCycle[];
 }
+
+export interface ReedaWoundAssessment {
+  id: number;
+  pathwayId: number;
+  patientId: number;
+  assessmentDatetime: string;
+  postOpDay: number;
+  rednessScore: number;
+  edemaScore: number;
+  ecchymosisScore: number;
+  dischargeScore: number;
+  approximationScore: number;
+  totalReedaScore: number;
+  painScore10?: number | null;
+  dressingCondition: 'dry_intact' | 'soaked' | 'removed_clean' | 'reinforcement_needed';
+  healingCategory: 'optimal_healing' | 'mild_inflammation' | 'moderate_impairment_suspected_ssi' | 'severe_complication_dehiscence';
+  actionPlan?: string | null;
+  assessorNotes?: string | null;
+  createdBy: number;
+  createdByName?: string | null;
+  createdAt: string;
+}
+
+export interface ErasPostOpPathway {
+  id: number;
+  patientId: number;
+  patientName?: string | null;
+  patientNumber?: string | null;
+  admissionId?: number | null;
+  operativeNoteId?: number | null;
+  surgeryDatetime: string;
+  surgeryType: 'elective_lscs' | 'emergency_lscs' | 'laparotomy' | 'myomectomy' | 'other_gynecologic_surgery';
+  incisionType: 'pfannenstiel' | 'joel_cohen' | 'midline_vertical' | 'other';
+  skinClosureType: 'subcuticular_monocryl' | 'staples' | 'interrupted_mattress' | 'dermabond_glue';
+  oralFluidsAchievedHours?: number | null;
+  regularDietAchievedHours?: number | null;
+  catheterRemovedHours?: number | null;
+  firstMobilizationHours?: number | null;
+  multimodalAnalgesiaAdherent: boolean;
+  dvtProphylaxisApplied: 'early_mobilization_ted' | 'scd_mechanical' | 'lmwh_pharmacological' | 'none';
+  status: 'active' | 'discharge_ready' | 'discharged' | 'escalated_complication';
+  clinicalNotes?: string | null;
+  createdBy: number;
+  createdByName?: string | null;
+  updatedBy: number;
+  updatedByName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  assessmentsCount: number;
+  assessments: ReedaWoundAssessment[];
+  latestAssessment?: ReedaWoundAssessment | null;
+}
+
+export interface ErasPathwaysResponse {
+  patientId: number;
+  pathways: ErasPostOpPathway[];
+}
