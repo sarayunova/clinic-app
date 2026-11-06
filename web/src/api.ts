@@ -1237,3 +1237,86 @@ export interface PatientRiskSummary {
   prophylaxisPrescribed: string[];
   latestAssessment?: AntenatalRiskAssessment | null;
 }
+
+// ---------- Obstetric Postnatal Discharge Summary & Puerperium Care Pack ----------
+
+export interface ObstetricDischargeSummary {
+  id: number;
+  patientId: number;
+  admissionId?: number | null;
+  admissionNumber?: string | null;
+  dischargeDate: string;
+  deliveryAt?: string | null;
+  deliveryMode: 'normal_vaginal' | 'assisted_vacuum' | 'assisted_forceps' | 'elective_lscs' | 'emergency_lscs' | 'vbac';
+  deliveryIndication?: string | null;
+  deliveryNotes?: string | null;
+  primaryObstetrician?: string | null;
+  perineumWoundStatus: 'intact' | 'episiotomy_healed' | 'perineal_tear_repaired' | 'lscs_wound_clean' | 'superficial_dehiscence' | 'infected' | 'other';
+  perineumNotes?: string | null;
+  fundalInvolution: 'contracted_normal' | 'well_contracted' | 'subinvoluted' | 'tender' | 'boggy';
+  fundalHeightCm?: string | null;
+  lochiaCharacter: 'rubra' | 'serosa' | 'alba' | 'excessive' | 'foul_smelling';
+  lochiaNotes?: string | null;
+  lactationStatus: 'established' | 'initiating' | 'suppressed' | 'cracked_nipples' | 'engorgement' | 'mastitis';
+  breastExamination?: string | null;
+  bladderBowelStatus?: string | null;
+  dischargeBpSystolic?: number | null;
+  dischargeBpDiastolic?: number | null;
+  dischargePulse?: number | null;
+  dischargeTempF?: number | null;
+  dischargeSpo2?: number | null;
+  contraceptionCounselled: boolean;
+  contraceptionChosen: 'ppiucd_inserted' | 'progestin_only_pill' | 'lactational_amenorrhea' | 'barrier_condom' | 'tubal_sterilization' | 'inj_depo' | 'undecided' | 'none';
+  contraceptionNotes?: string | null;
+  dischargeMedicinesText?: string | null;
+  alarmSignsCounselled: boolean;
+  babyGender: 'female' | 'male' | 'ambiguous';
+  babyBirthWeightGrams?: number | null;
+  babyDischargeWeightGrams?: number | null;
+  babyLengthCm?: number | null;
+  babyHcCm?: number | null;
+  babyGestationalAgeWeeks?: number | null;
+  babyGestationalAgeDays?: number | null;
+  babyApgar1min?: number | null;
+  babyApgar5min?: number | null;
+  babyCryAtBirth: 'immediate_vigorous' | 'delayed' | 'required_stimulation' | 'none';
+  babyResuscitationDetails?: string | null;
+  babyBloodGroup?: string | null;
+  babyPediatricPatientId?: number | null;
+  babyPatientNumber?: string | null;
+  babyPatientName?: string | null;
+  neonatalExam: Record<string, string>;
+  neonatalFeedingMethod: 'exclusive_breastfeeding' | 'expressed_breast_milk' | 'mixed_feeding' | 'formula_feeding';
+  meconiumPassed: boolean;
+  urinePassed: boolean;
+  jaundiceAssessment: 'none' | 'mild_physiological' | 'phototherapy_required' | 'pathological';
+  bcgGiven: boolean;
+  bcgDate?: string | null;
+  opvZeroGiven: boolean;
+  opvZeroDate?: string | null;
+  hepbBirthGiven: boolean;
+  hepbBirthDate?: string | null;
+  hearingScreenResult: 'pass' | 'refer' | 'not_screened';
+  metabolicScreenResult: 'normal' | 'pending' | 'abnormal' | 'not_screened';
+  maternalFollowupDate?: string | null;
+  newbornFollowupDate?: string | null;
+  consultantSpecialInstructions?: string | null;
+  status: 'draft' | 'finalized';
+  createdBy: number;
+  createdByName?: string | null;
+  updatedBy: number;
+  updatedByName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  patientNumber?: string;
+  patientName?: string;
+  dateOfBirth?: string | null;
+  patientPhone?: string | null;
+  gravida?: number | null;
+  para?: number | null;
+}
+
+export interface ObstetricDischargeListResponse {
+  patientId: number;
+  discharges: ObstetricDischargeSummary[];
+}

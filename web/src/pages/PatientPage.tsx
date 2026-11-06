@@ -17,6 +17,7 @@ import { PartographTracker } from '../components/PartographTracker';
 import { OperativeNotesList } from '../components/OperativeNotesList';
 import { CommunicationModal } from '../components/CommunicationModal';
 import { AntenatalRiskEngine } from '../components/AntenatalRiskEngine';
+import { ObstetricDischargeManager } from '../components/ObstetricDischargeManager';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -127,7 +128,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'list'
+    'flowsheet' | 'checklist' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -458,6 +459,13 @@ export function PatientPage() {
                     >
                       ⚠️ High-Risk Scoring
                     </button>
+                    <button
+                      type="button"
+                      className={`btn small ${viewMode === 'postnatal' ? 'primary' : ''}`}
+                      onClick={() => setViewMode('postnatal')}
+                    >
+                      🤱 Postnatal Discharge
+                    </button>
                   </>
                 )}
                 {isPediatric && (
@@ -531,6 +539,8 @@ export function PatientPage() {
               para={patient!.para}
               onChanged={load}
             />
+          ) : isMaternity && viewMode === 'postnatal' ? (
+            <ObstetricDischargeManager patient={patient!} />
           ) : isPediatric && viewMode === 'pediatric' ? (
             <PediatricTracker
               patientId={patient!.id}
