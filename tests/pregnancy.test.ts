@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calculateEdd, calculateGestationalAge, formatGpal } from '../web/src/pregnancyCalc.js';
+import { calculateEdd, calculateGestationalAge, formatGpal, getTrimester } from '../web/src/pregnancyCalc.js';
 
 describe('Obstetric calculations & pregnancy tools', () => {
   describe('calculateEdd (Naegele rule: LMP + 280 days)', () => {
@@ -80,6 +80,18 @@ describe('Obstetric calculations & pregnancy tools', () => {
 
     it('handles loose object types safely', () => {
       expect(formatGpal({ gravida: 'bad' as unknown as number })).toBeNull();
+    });
+  });
+
+  describe('getTrimester', () => {
+    it('categorizes gestation into standard trimesters', () => {
+      expect(getTrimester(8)).toEqual({ trimester: 1, label: '1st Trimester' });
+      expect(getTrimester(13)).toEqual({ trimester: 1, label: '1st Trimester' });
+      expect(getTrimester(14)).toEqual({ trimester: 2, label: '2nd Trimester' });
+      expect(getTrimester(24)).toEqual({ trimester: 2, label: '2nd Trimester' });
+      expect(getTrimester(27)).toEqual({ trimester: 2, label: '2nd Trimester' });
+      expect(getTrimester(28)).toEqual({ trimester: 3, label: '3rd Trimester' });
+      expect(getTrimester(38)).toEqual({ trimester: 3, label: '3rd Trimester' });
     });
   });
 });

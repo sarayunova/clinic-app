@@ -83,3 +83,15 @@ export function formatGpal(opts: {
   if (l !== null) parts.push(`L${l}`);
   return parts.length > 0 ? parts.join(' ') : null;
 }
+
+/**
+ * Returns the obstetric trimester based on completed weeks of gestation:
+ * - 1st Trimester: < 14 weeks
+ * - 2nd Trimester: 14 to 27 completed weeks (< 28 weeks)
+ * - 3rd Trimester: >= 28 weeks
+ */
+export function getTrimester(weeks: number): { trimester: 1 | 2 | 3; label: string } {
+  if (weeks < 14) return { trimester: 1, label: '1st Trimester' };
+  if (weeks < 28) return { trimester: 2, label: '2nd Trimester' };
+  return { trimester: 3, label: '3rd Trimester' };
+}

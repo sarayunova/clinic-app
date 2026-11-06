@@ -118,6 +118,11 @@ export type Patient = Record<string, unknown> & {
   allergyDetails: string | null;
   ageYears: number | null;
   ageIsEstimated: boolean;
+  lastMenstrualPeriod?: string | null;
+  gravida?: number | null;
+  para?: number | null;
+  abortions?: number | null;
+  living?: number | null;
 };
 
 export interface UserRow {
@@ -217,11 +222,26 @@ export interface Visit {
 
 export interface VisitSummary {
   id: number;
+  visitAt: string;
   visitDate: string;
   status: 'draft' | 'final';
   assessment: string | null;
   complaints: string | null;
+  examination?: string | null;
+  antenatalNotes?: string | null;
+  investigations?: string | null;
+  advice?: string | null;
+  followUpDate?: string | null;
   amendments: number;
+  prescriptionCount?: number;
+  vitals?: {
+    systolicMmhg?: number | null;
+    diastolicMmhg?: number | null;
+    pulseBpm?: number | null;
+    temperatureC?: number | null;
+    weightKg?: number | null;
+    heightCm?: number | null;
+  } | null;
 }
 
 // ---------- Inpatient care ----------

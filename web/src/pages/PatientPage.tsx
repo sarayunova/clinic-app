@@ -8,6 +8,7 @@ import { ExportRecord } from '../components/ExportRecord';
 import { PAYMENT_STATE_LABEL, formatMoney, startInvoice } from '../money';
 import { AllergyBadge, ErrorBanner, Field, fieldErrorsOf, formatAge } from '../components/ui';
 import { calculateEdd, calculateGestationalAge, formatGpal, PregnancyChip, ObstetricChip } from '../pregnancy';
+import { AntenatalFlowsheet } from '../components/AntenatalFlowsheet';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -117,6 +118,7 @@ export function PatientPage() {
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
+  const [viewMode, setViewMode] = useState<'flowsheet' | 'list'>('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
   const [invoices, setInvoices] = useState<Invoice[] | null>(null);
@@ -341,21 +343,48 @@ export function PatientPage() {
 
       {visits && (
         <section className="card stack">
-          <h2 style={{ margin: 0 }}>Visits</h2>
-          {visits.length === 0 && <p className="muted">No consultations recorded yet.</p>}
-          <ul className="list">
-            {visits.map((v) => (
-              <li key={v.id}>
-                <Link className="list-item" to={`/visits/${v.id}`}>
-                  <strong>
-                    {v.visitDate} · {v.status === 'draft' ? 'Draft' : 'Finalised'}
-                    {v.amendments > 0 ? ` · amended ${v.amendments}×` : ''}
-                  </strong>
-                  <span className="muted">{v.assessment ?? v.complaints ?? 'No notes yet'}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <div className="page-head" style={{ marginBottom: 0 }}>
+            <h2 style={{ margin: 0 }}>Consultations ({visits.length})</h2>
+            {Boolean(patient?.lastMenstrualPeriod || patient?.gravida != null || visits.some((v) => v.antenatalNotes)) && (
+              <div className="row wrap no-print" style={{ gap: '0.4rem' }}>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'flowsheet' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('flowsheet')}
+                >
+                  🤰 Antenatal Flowsheet
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'list' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('list')}
+                >
+                  📋 Visit List
+                </button>
+              </div>
+            )}
+          </div>
+
+          {Boolean(patient?.lastMenstrualPeriod || patient?.gravida != null || visits.some((v) => v.antenatalNotes)) && viewMode === 'flowsheet' ? (
+            <AntenatalFlowsheet patient={patient!} visits={visits} />
+          ) : (
+            <>
+              {visits.length === 0 && <p className="muted">No consultations recorded yet.</p>}
+              <ul className="list">
+                {visits.map((v) => (
+                  <li key={v.id}>
+                    <Link className="list-item" to={`/visits/${v.id}`}>
+                      <strong>
+                        {v.visitDate} · {v.status === 'draft' ? 'Draft' : 'Finalised'}
+                        {v.amendments > 0 ? ` · amended ${v.amendments}×` : ''}
+                      </strong>
+                      <span className="muted">{v.assessment ?? v.complaints ?? 'No notes yet'}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </section>
       )}
 

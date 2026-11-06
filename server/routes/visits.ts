@@ -328,11 +328,45 @@ export function registerVisitRoutes(app: FastifyInstance, { db, cfg }: Ctx): voi
     if (!Number.isInteger(pid) || pid < 1) throw notFound('Patient');
     const rows = db
       .prepare(
-        `SELECT v.id, v.visit_at, v.status, v.assessment, v.complaints,
-                (SELECT COUNT(*) FROM visit_revisions r WHERE r.visit_id = v.id AND r.kind = 'amendment') AS amendments
-           FROM visits v WHERE v.patient_id = ? ORDER BY v.visit_at DESC, v.id DESC`,
+        `SELECT v.id, v.visit_at, v.status, v.assessment, v.complaints, v.examination,
+                v.antenatal_notes, v.investigations, v.advice, v.follow_up_date,
+                (SELECT COUNT(*) FROM visit_revisions r WHERE r.visit_id = v.id AND r.kind = 'amendment') AS amendments,
+                (SELECT COUNT(*) FROM prescription_items pi WHERE pi.visit_id = v.id) AS prescription_count,
+                t.systolic_mmhg, t.diastolic_mmhg, t.pulse_bpm, t.temperature_c, t.weight_kg, t.height_cm
+           FROM visits v
+           LEFT JOIN (
+             SELECT visit_id, systolic_mmhg, diastolic_mmhg, pulse_bpm, temperature_c, weight_kg, height_cm,
+                    ROW_NUMBER() OVER (PARTITION BY visit_id ORDER BY recorded_at DESC, id DESC) AS rn
+               FROM visit_vitals
+           ) t ON t.visit_id = v.id AND t.rn = 1
+          WHERE v.patient_id = ?
+          ORDER BY v.visit_at DESC, v.id DESC`,
       )
       .all(pid) as Row[];
-    return rows.map((r) => ({ ...camelize(r), visitDate: localDate(new Date(r.visit_at as string), cfg.timezone) }));
+    return rows.map((r) => {
+      const o = camelize(r);
+      const hasVitals =
+        r.systolic_mmhg != null ||
+        r.diastolic_mmhg != null ||
+        r.pulse_bpm != null ||
+        r.temperature_c != null ||
+        r.weight_kg != null ||
+        r.height_cm != null;
+
+      return {
+        ...o,
+        visitDate: localDate(new Date(r.visit_at as string), cfg.timezone),
+        vitals: hasVitals
+          ? {
+              systolicMmhg: (r.systolic_mmhg as number | null) ?? null,
+              diastolicMmhg: (r.diastolic_mmhg as number | null) ?? null,
+              pulseBpm: (r.pulse_bpm as number | null) ?? null,
+              temperatureC: (r.temperature_c as number | null) ?? null,
+              weightKg: (r.weight_kg as number | null) ?? null,
+              heightCm: (r.height_cm as number | null) ?? null,
+            }
+          : null,
+      };
+    });
   });
 }

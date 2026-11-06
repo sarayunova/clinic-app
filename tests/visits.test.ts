@@ -227,6 +227,21 @@ describe('finalising and amending', () => {
     expect(list[0]).toMatchObject({ id: draft.id, status: 'final', amendments: 0 });
   });
 
+  it('returns enriched visit summary with vitals and details for longitudinal flowsheet', async () => {
+    await checkIn();
+    const draft = await draftWithContent();
+    await call('POST', `/api/visits/${draft.id}/vitals`, nurse, { systolicMmhg: 118, diastolicMmhg: 78, weightKg: 58.5 });
+    await call('POST', `/api/visits/${draft.id}/finalise`, doctor, { version: draft.version });
+
+    const list = (await call('GET', `/api/patients/${patientId}/visits`, doctor)).body as Json[];
+    expect(list[0]).toMatchObject({
+      id: draft.id,
+      status: 'final',
+      assessment: 'Progressing normally',
+      vitals: { systolicMmhg: 118, diastolicMmhg: 78, weightKg: 58.5 },
+    });
+  });
+
   it('writes audit entries for create, view, finalise and amend', async () => {
     await checkIn();
     const draft = await draftWithContent();
