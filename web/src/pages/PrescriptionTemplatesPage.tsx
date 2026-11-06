@@ -2,6 +2,36 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { api, type PrescriptionItem, type PrescriptionTemplate } from '../api';
 import { ErrorBanner, Field, fieldErrorsOf } from '../components/ui';
+import { QuickMedPicker } from '../components/QuickMedPicker';
+import {
+  applyQuickMedication,
+  findStandardDirections,
+  ROUTE_CHIPS,
+  MEDICINE_SUGGESTIONS,
+} from '../medicationCatalog';
+
+const FREQ_OPTIONS = [
+  { label: '1-0-0', val: '1-0-0 (once daily)' },
+  { label: '1-0-1', val: '1-0-1 (twice daily)' },
+  { label: '1-1-1', val: '1-1-1 (thrice daily)' },
+  { label: '0-0-1', val: '0-0-1 (bedtime)' },
+  { label: 'SOS', val: 'SOS (when needed)' },
+  { label: 'QID', val: '1-1-1-1 (four times daily)' },
+  { label: 'Weekly', val: 'Once weekly' },
+];
+
+const DUR_OPTIONS = [
+  { label: '3 d', val: '3 days' },
+  { label: '5 d', val: '5 days' },
+  { label: '7 d', val: '7 days' },
+  { label: '14 d', val: '14 days' },
+  { label: '30 d', val: '30 days' },
+  { label: 'Till delivery', val: 'Till delivery' },
+];
+
+const ROUTE_OPTIONS = ['oral', 'IV', 'IM', 'per vaginal', 'topical', 'sublingual'];
+
+const INSTR_OPTIONS = ['After food', 'Before food', 'Empty stomach', 'At bedtime', 'With milk'];
 
 const CATEGORIES = ['Antenatal', 'Gynaecology', 'Post-op', 'General'] as const;
 
@@ -203,6 +233,7 @@ export function PrescriptionTemplatesPage() {
 
           <fieldset className="card stack">
             <legend>Medicines in this template</legend>
+            <QuickMedPicker onSelect={(qm) => setItems((curr) => applyQuickMedication(curr, qm))} />
             {items.map((it, idx) => (
               <div key={idx} className="rx-item">
                 <div className="rx-head">
@@ -228,8 +259,109 @@ export function PrescriptionTemplatesPage() {
                             setItems(items.map((x, j) => (j === idx ? { ...x, [f.key]: e.target.value } : x)))
                           }
                           required={f.key === 'medicine'}
+                          list={f.key === 'medicine' ? 'rx-tmpl-medicine-suggestions' : f.key === 'route' ? 'rx-tmpl-route-suggestions' : undefined}
                         />
+                        {f.key === 'medicine' && it.medicine && (() => {
+                          const std = findStandardDirections(it.medicine);
+                          if (!std) return null;
+                          return (
+                            <div style={{ marginTop: '0.25rem' }}>
+                              <button
+                                type="button"
+                                className="chip-btn pill-add"
+                                onClick={() =>
+                                  setItems(
+                                    items.map((x, j) =>
+                                      j === idx
+                                        ? {
+                                            ...x,
+                                            medicine: std.medicine,
+                                            strength: std.strength,
+                                            dose: std.dose,
+                                            route: std.route,
+                                            frequency: std.frequency,
+                                            duration: std.duration,
+                                            instructions: std.instructions,
+                                          }
+                                        : x
+                                    )
+                                  )
+                                }
+                              >
+                                ⚡ Fill standard directions ({std.strength}, {std.frequency})
+                              </button>
+                            </div>
+                          );
+                        })()}
+                        {f.key === 'frequency' && (
+                          <div className="chips rx-chips">
+                            {FREQ_OPTIONS.map((c) => (
+                              <button
+                                key={c.label}
+                                type="button"
+                                className={`chip-btn ${it.frequency === c.val ? 'active' : ''}`}
+                                onClick={() => setItems(items.map((x, j) => (j === idx ? { ...x, frequency: c.val } : x)))}
+                              >
+                                {c.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {f.key === 'duration' && (
+                          <div className="chips rx-chips">
+                            {DUR_OPTIONS.map((d) => (
+                              <button
+                                key={d.label}
+                                type="button"
+                                className={`chip-btn ${it.duration === d.val ? 'active' : ''}`}
+                                onClick={() => setItems(items.map((x, j) => (j === idx ? { ...x, duration: d.val } : x)))}
+                              >
+                                {d.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {f.key === 'route' && (
+                          <div className="chips rx-chips">
+                            {ROUTE_OPTIONS.map((r) => (
+                              <button
+                                key={r}
+                                type="button"
+                                className={`chip-btn ${it.route === r ? 'active' : ''}`}
+                                onClick={() => setItems(items.map((x, j) => (j === idx ? { ...x, route: r } : x)))}
+                              >
+                                {r}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {f.key === 'instructions' && (
+                          <div className="chips rx-chips">
+                            {INSTR_OPTIONS.map((ins) => (
+                              <button
+                                key={ins}
+                                type="button"
+                                className="chip-btn"
+                                onClick={() =>
+                                  setItems(
+                                    items.map((x, j) =>
+                                      j === idx
+                                        ? {
+                                            ...x,
+                                            instructions: x.instructions ? `${x.instructions}; ${ins}` : ins,
+                                          }
+                                        : x
+                                    )
+                                  )
+                                }
+                              >
+                                + {ins}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </Field>
+
                     </div>
                   ))}
                 </div>
@@ -247,6 +379,16 @@ export function PrescriptionTemplatesPage() {
                 </button>
               </p>
             )}
+            <datalist id="rx-tmpl-medicine-suggestions">
+              {MEDICINE_SUGGESTIONS.map((m) => (
+                <option key={m} value={m} />
+              ))}
+            </datalist>
+            <datalist id="rx-tmpl-route-suggestions">
+              {ROUTE_CHIPS.map((r) => (
+                <option key={r} value={r} />
+              ))}
+            </datalist>
           </fieldset>
 
           <div className="row wrap">

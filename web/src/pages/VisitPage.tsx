@@ -10,6 +10,13 @@ import { TemplatePicker } from '../components/TemplatePicker';
 import { Documents } from '../components/Documents';
 import { VitalsAlertBadges, LiveVitalsAlertBanner, BmiBadge } from '../components/VitalsBadges';
 import { evaluateVitalsAlerts, calculateBmi } from '../vitalsAlerts';
+import { QuickMedPicker } from '../components/QuickMedPicker';
+import {
+  applyQuickMedication,
+  findStandardDirections,
+  ROUTE_CHIPS,
+  MEDICINE_SUGGESTIONS,
+} from '../medicationCatalog';
 
 const TEXT_FIELDS = [
   { key: 'complaints', label: 'Presenting complaints' },
@@ -40,6 +47,29 @@ const ITEM_FIELDS: { key: keyof PrescriptionItem; label: string; wide?: boolean;
   { key: 'instructions', label: 'Instructions', wide: true },
 ];
 const emptyItem = (): ItemForm => ({ medicine: '', strength: '', dose: '', route: '', frequency: '', duration: '', instructions: '' });
+
+const FREQ_OPTIONS = [
+  { label: '1-0-0', val: '1-0-0 (once daily)' },
+  { label: '1-0-1', val: '1-0-1 (twice daily)' },
+  { label: '1-1-1', val: '1-1-1 (thrice daily)' },
+  { label: '0-0-1', val: '0-0-1 (bedtime)' },
+  { label: 'SOS', val: 'SOS (when needed)' },
+  { label: 'QID', val: '1-1-1-1 (four times daily)' },
+  { label: 'Weekly', val: 'Once weekly' },
+];
+
+const DUR_OPTIONS = [
+  { label: '3 d', val: '3 days' },
+  { label: '5 d', val: '5 days' },
+  { label: '7 d', val: '7 days' },
+  { label: '14 d', val: '14 days' },
+  { label: '30 d', val: '30 days' },
+  { label: 'Till delivery', val: 'Till delivery' },
+];
+
+const ROUTE_OPTIONS = ['oral', 'IV', 'IM', 'per vaginal', 'topical', 'sublingual'];
+
+const INSTR_OPTIONS = ['After food', 'Before food', 'Empty stomach', 'At bedtime', 'With milk'];
 
 const toForm = (v: Pick<Visit, FormKey>): Record<FormKey, string> =>
   Object.fromEntries(FORM_KEYS.map((k) => [k, v[k] ?? ''])) as Record<FormKey, string>;
@@ -286,6 +316,14 @@ export function VisitPage() {
 
         <fieldset className="card" disabled={!editable}>
           <legend>Prescription{!editable && <span className="muted small"> (read only)</span>}</legend>
+
+          {editable && (
+            <QuickMedPicker
+              onSelect={(qm) => setItems((curr) => applyQuickMedication(curr, qm))}
+              disabled={!editable}
+            />
+          )}
+
           {items.length === 0 && <p className="muted">{editable ? 'No medicines added.' : 'No medicines prescribed.'}</p>}
           <div className="stack">
             {items.map((it, i) => (
@@ -303,10 +341,110 @@ export function VisitPage() {
                     <div key={f.key} className={f.wide ? 'span2' : ''}>
                       <Field label={f.label} error={fe[`prescriptionItems.${i}.${f.key}`]}>
                         <input
+                          list={f.key === 'medicine' ? 'rx-medicine-suggestions' : f.key === 'route' ? 'rx-route-suggestions' : undefined}
                           value={it[f.key]}
                           placeholder={editable ? f.placeholder : undefined}
                           onChange={(e) => setItems(items.map((x, j) => (j === i ? { ...x, [f.key]: e.target.value } : x)))}
                         />
+                        {editable && f.key === 'medicine' && it.medicine && (() => {
+                          const std = findStandardDirections(it.medicine);
+                          if (!std) return null;
+                          return (
+                            <div style={{ marginTop: '0.25rem' }}>
+                              <button
+                                type="button"
+                                className="chip-btn pill-add"
+                                onClick={() =>
+                                  setItems(
+                                    items.map((x, j) =>
+                                      j === i
+                                        ? {
+                                            ...x,
+                                            medicine: std.medicine,
+                                            strength: std.strength,
+                                            dose: std.dose,
+                                            route: std.route,
+                                            frequency: std.frequency,
+                                            duration: std.duration,
+                                            instructions: std.instructions,
+                                          }
+                                        : x
+                                    )
+                                  )
+                                }
+                              >
+                                ⚡ Fill standard directions ({std.strength}, {std.frequency})
+                              </button>
+                            </div>
+                          );
+                        })()}
+                        {editable && f.key === 'frequency' && (
+                          <div className="chips rx-chips">
+                            {FREQ_OPTIONS.map((c) => (
+                              <button
+                                key={c.label}
+                                type="button"
+                                className={`chip-btn ${it.frequency === c.val ? 'active' : ''}`}
+                                onClick={() => setItems(items.map((x, j) => (j === i ? { ...x, frequency: c.val } : x)))}
+                              >
+                                {c.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {editable && f.key === 'duration' && (
+                          <div className="chips rx-chips">
+                            {DUR_OPTIONS.map((d) => (
+                              <button
+                                key={d.label}
+                                type="button"
+                                className={`chip-btn ${it.duration === d.val ? 'active' : ''}`}
+                                onClick={() => setItems(items.map((x, j) => (j === i ? { ...x, duration: d.val } : x)))}
+                              >
+                                {d.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {editable && f.key === 'route' && (
+                          <div className="chips rx-chips">
+                            {ROUTE_OPTIONS.map((r) => (
+                              <button
+                                key={r}
+                                type="button"
+                                className={`chip-btn ${it.route === r ? 'active' : ''}`}
+                                onClick={() => setItems(items.map((x, j) => (j === i ? { ...x, route: r } : x)))}
+                              >
+                                {r}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {editable && f.key === 'instructions' && (
+                          <div className="chips rx-chips">
+                            {INSTR_OPTIONS.map((ins) => (
+                              <button
+                                key={ins}
+                                type="button"
+                                className="chip-btn"
+                                onClick={() =>
+                                  setItems(
+                                    items.map((x, j) =>
+                                      j === i
+                                        ? {
+                                            ...x,
+                                            instructions: x.instructions ? `${x.instructions}; ${ins}` : ins,
+                                          }
+                                        : x
+                                    )
+                                  )
+                                }
+                              >
+                                + {ins}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </Field>
                     </div>
                   ))}
@@ -325,6 +463,16 @@ export function VisitPage() {
             </div>
           )}
           {editable && <p className="muted small">Doses and medicines are entered by the doctor; the system never suggests them.</p>}
+          <datalist id="rx-medicine-suggestions">
+            {MEDICINE_SUGGESTIONS.map((m) => (
+              <option key={m} value={m} />
+            ))}
+          </datalist>
+          <datalist id="rx-route-suggestions">
+            {ROUTE_CHIPS.map((r) => (
+              <option key={r} value={r} />
+            ))}
+          </datalist>
         </fieldset>
 
         {amending && (

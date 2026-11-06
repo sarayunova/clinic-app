@@ -2,6 +2,11 @@ import { useState, type FormEvent } from 'react';
 import { api, type Admission, type MedRecord, type MedicineOrder } from '../api';
 import { useAuth } from '../auth';
 import { ErrorBanner, Field, fieldErrorsOf, todayLocal } from './ui';
+import {
+  QUICK_IPD_ORDERS,
+  IPD_ROUTE_CHIPS,
+  MEDICINE_SUGGESTIONS,
+} from '../medicationCatalog';
 
 const OUTCOME_LABEL = { given: 'Given', withheld: 'Withheld', refused: 'Refused' } as const;
 
@@ -38,6 +43,16 @@ export function Medicines({ adm, onChanged, onNotice }: { adm: Admission; onChan
         ))}
       </ul>
       <p className="muted small">The doctor orders; the nurse records what was actually given, withheld or refused. The system does not check doses or interactions.</p>
+      <datalist id="ipd-med-suggestions">
+        {MEDICINE_SUGGESTIONS.map((m) => (
+          <option key={m} value={m} />
+        ))}
+      </datalist>
+      <datalist id="ipd-route-suggestions">
+        {IPD_ROUTE_CHIPS.map((r) => (
+          <option key={r} value={r} />
+        ))}
+      </datalist>
     </section>
   );
 }
@@ -74,13 +89,90 @@ function OrderForm({ adm, onDone, onCancel }: { adm: Admission; onDone: () => Pr
 
   return (
     <form onSubmit={submit} className="card stack">
+      <div className="quick-meds-box" style={{ marginBottom: '0.4rem' }}>
+        <strong style={{ fontSize: '0.85rem' }}>⚡ Quick Inpatient Orders:</strong>
+        <div className="chips rx-chips">
+          {QUICK_IPD_ORDERS.map((qo) => (
+            <button
+              key={qo.id}
+              type="button"
+              className="chip-btn pill-add"
+              onClick={() =>
+                setF({
+                  medicine: qo.medicine,
+                  strength: qo.strength,
+                  dose: qo.dose,
+                  route: qo.route,
+                  frequency: qo.frequency,
+                  instructions: qo.instructions,
+                })
+              }
+            >
+              + {qo.name}
+            </button>
+          ))}
+        </div>
+      </div>
       <ErrorBanner error={error} />
       <div className="grid2">
-        {text('medicine', 'Medicine', true)}
+        <Field label="Medicine" error={fe.medicine}>
+          <input
+            list="ipd-med-suggestions"
+            value={f.medicine}
+            onChange={(e) => setF({ ...f, medicine: e.target.value })}
+            required
+            maxLength={200}
+          />
+        </Field>
         {text('strength', 'Strength')}
         {text('dose', 'Dose', true, 'e.g. 1 tablet, 100 mg')}
-        {text('route', 'Route', false, 'e.g. oral, IV')}
-        {text('frequency', 'Frequency', true, 'e.g. every 8 hours')}
+        <Field label="Route" error={fe.route} hint="e.g. oral, IV">
+          <input
+            list="ipd-route-suggestions"
+            value={f.route}
+            onChange={(e) => setF({ ...f, route: e.target.value })}
+            maxLength={200}
+          />
+          <div className="chips rx-chips">
+            {IPD_ROUTE_CHIPS.map((r) => (
+              <button
+                key={r}
+                type="button"
+                className={`chip-btn ${f.route === r ? 'active' : ''}`}
+                onClick={() => setF({ ...f, route: r })}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+        </Field>
+        <Field label="Frequency" error={fe.frequency} hint="e.g. every 8 hours">
+          <input
+            value={f.frequency}
+            onChange={(e) => setF({ ...f, frequency: e.target.value })}
+            required
+            maxLength={200}
+          />
+          <div className="chips rx-chips">
+            {[
+              { label: '1-0-0', val: '1-0-0 (once daily)' },
+              { label: '1-0-1', val: '1-0-1 (twice daily)' },
+              { label: '1-1-1', val: '1-1-1 (thrice daily)' },
+              { label: 'SOS', val: 'SOS (when needed)' },
+              { label: 'Stat', val: 'Stat (once now)' },
+              { label: 'Continuous', val: 'Continuous' },
+            ].map((c) => (
+              <button
+                key={c.label}
+                type="button"
+                className={`chip-btn ${f.frequency === c.val ? 'active' : ''}`}
+                onClick={() => setF({ ...f, frequency: c.val })}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+        </Field>
       </div>
       <Field label="Instructions" error={fe.instructions}>
         <input value={f.instructions} onChange={(e) => setF({ ...f, instructions: e.target.value })} maxLength={500} />
