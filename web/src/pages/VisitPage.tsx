@@ -7,6 +7,7 @@ import { BookAppointment } from '../components/BookAppointment';
 import { AllergyBadge, ErrorBanner, Field, fieldErrorsOf, formatAge } from '../components/ui';
 import { ObstetricChip, PregnancyChip } from '../pregnancy';
 import { TemplatePicker } from '../components/TemplatePicker';
+import { Documents } from '../components/Documents';
 import { VitalsAlertBadges, LiveVitalsAlertBanner, BmiBadge } from '../components/VitalsBadges';
 import { evaluateVitalsAlerts, calculateBmi } from '../vitalsAlerts';
 
@@ -263,6 +264,10 @@ export function VisitPage() {
 
       {!isDraft && <VisitInvoice patientId={visit.patientId} visitId={visit.id} />}
       <VitalsCard visit={visit} canAdd={isDraft && can('vitals:write')} onAdded={adopt} />
+
+      {can('attachment:read') && (
+        <Documents patientId={visit.patientId} currentVisitId={visit.id} />
+      )}
 
       <form onSubmit={(e) => { e.preventDefault(); if (isDraft) void saveDraft(); }} className="stack">
         <fieldset className="card" disabled={!editable}>
