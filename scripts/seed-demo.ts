@@ -1940,6 +1940,152 @@ async function seed() {
     }
   }
 
+  // 15A: Neonatal RDS, Bubble CPAP & LISA Surfactant
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_rds_episodes (
+      patient_id, admission_id, episode_code, onset_datetime, gestational_age_weeks,
+      birth_weight_kg, current_weight_kg, silverman_anderson_score, downes_score,
+      fio2_requirement_percent, arterial_pao2_mmhg, alveolar_pao2_mmhg, a_a_ratio,
+      oxygenation_index, surfactant_indicated, surfactant_brand, surfactant_dose_mg_per_kg,
+      surfactant_total_dose_mg, surfactant_total_volume_ml, administration_method,
+      surfactant_administered_at, repeat_surfactant_needed, niv_modality, current_peep_cmh2o,
+      current_flow_lpm, current_fio2_percent, status, consultant_neonatologist_id,
+      clinical_notes, created_at
+    ) VALUES (
+      ?, NULL, 'RDS-20261107-1001', '2026-11-07T05:00:00', 29.5,
+      1.25, 1.25, 5, 5,
+      35.0, 52.0, 205.0, 0.25,
+      4.4, 1, 'curosurf_poractant_alfa', 200.0,
+      250.0, 3.13, 'lisa_mist_thin_catheter',
+      '2026-11-07T05:30:00', 0, 'bubble_cpap', 6.0,
+      6.0, 35.0, 'surfactant_administered_stabilized', ?,
+      'Preterm 29.5w with respiratory distress. Less Invasive Surfactant Administration (LISA) completed with Curosurf 250mg. Maintained on Bubble CPAP.', ?
+    )
+  `).run(babyId, docId, now);
+
+  const existingRds = db.prepare('SELECT id FROM neonatal_rds_episodes WHERE episode_code = ?').get('RDS-20261107-1001') as { id: number } | undefined;
+  if (existingRds) {
+    const nivLogs = [
+      { hr: 1, rr: 58, hrBpm: 142, spo2: 93, silv: 3, down: 3, peep: 6.0, fio2: 32, columella: 'intact', notes: 'Post-LISA surfactant bubbling continuous. Good chest expansion.' },
+      { hr: 2, rr: 52, hrBpm: 138, spo2: 95, silv: 2, down: 2, peep: 5.5, fio2: 28, columella: 'intact', notes: 'Weaning FiO2 to 28%. Nasal columella pink and intact with silicone barrier.' },
+    ];
+    for (const nl of nivLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_niv_flowsheet_logs (
+          rds_episode_id, log_datetime, hours_on_protocol, respiratory_rate_bpm,
+          heart_rate_bpm, spo2_percent, silverman_score, downes_score,
+          peep_cmh2o, flow_lpm, fio2_percent, nasal_columella_skin_check,
+          gastric_distension, arterial_blood_gas_ph, arterial_pco2_mmhg,
+          arterial_pao2_mmhg, logged_by_id, notes, created_at
+        ) VALUES (
+          ?, '2026-11-07T07:00:00', ?, ?,
+          ?, ?, ?, ?,
+          ?, 6.0, ?, ?,
+          'none', 7.34, 44.0,
+          65.0, ?, ?, ?
+        )
+      `).run(existingRds.id, nl.hr, nl.rr, nl.hrBpm, nl.spo2, nl.silv, nl.down, nl.peep, nl.fio2, nl.columella, docId, nl.notes, now);
+    }
+  }
+
+  // 15B: Maternal Venous Thromboembolism (VTE) Risk Assessment & Thromboprophylaxis
+  db.prepare(`
+    INSERT OR IGNORE INTO maternal_vte_assessments (
+      patient_id, admission_id, assessment_type, assessment_datetime,
+      gestational_age_weeks, current_weight_kg, bmi,
+      previous_vte_unprovoked_or_estrogen, previous_vte_provoked,
+      known_high_risk_thrombophilia, medical_comorbidities, surgical_procedure_in_pregnancy,
+      gross_varicose_veins, age_over_35, parity_geq_3, smoker,
+      bmi_geq_30, bmi_geq_40, multiple_pregnancy, assisted_reproductive_tech_ivf,
+      pre_eclampsia, cesarean_section_emergency, cesarean_section_elective,
+      prolonged_labor_over_24h, postpartum_hemorrhage_over_1000ml, preterm_birth_under_37w,
+      stillbirth_in_this_pregnancy, systemic_infection_current, immobility_bedrest_over_3d,
+      hyperemesis_or_dehydration, low_risk_thrombophilia, family_history_vte_first_degree,
+      total_vte_score, risk_tier, lmwh_prescribed, lmwh_agent,
+      lmwh_daily_dose_mg_or_units, weight_tier_bracket, anti_embolic_stockings_ordered,
+      neuraxial_anesthesia_eligible, last_dose_datetime, next_safe_neuraxial_datetime,
+      assessed_by_id, clinical_notes, created_at
+    ) VALUES (
+      ?, NULL, 'postnatal', '2026-11-07T07:00:00',
+      NULL, 78.0, 29.2,
+      0, 0,
+      0, 0, 0,
+      0, 1, 1, 0,
+      0, 0, 0, 0,
+      0, 1, 0,
+      0, 0, 0,
+      0, 0, 0,
+      0, 0, 0,
+      4, 'high_immediate_prophylaxis_indicated', 1, 'enoxaparin',
+      '40 mg SC once daily', '50 - 90 kg (Standard body weight)', 1,
+      0, '2026-11-07T08:00:00', '2026-11-07T20:00:00',
+      ?, 'Postnatal Day 1 following emergency CS for fetal bradycardia. Age > 35, Parity >= 3, Emergency CS (Score 4: High risk). Enoxaparin 40mg SC daily prescribed for 6 weeks.', ?
+    )
+  `).run(anitaId, docId, now);
+
+  const existingVte = db.prepare('SELECT id FROM maternal_vte_assessments WHERE patient_id = ?').get(anitaId) as { id: number } | undefined;
+  if (existingVte) {
+    db.prepare(`
+      INSERT OR IGNORE INTO maternal_vte_dose_logs (
+        assessment_id, administered_at, agent, dose,
+        route, site, administered_by_id, platelet_count,
+        anti_xa_level, bleeding_signs_observed, notes, created_at
+      ) VALUES (
+        ?, '2026-11-07T08:00:00', 'Enoxaparin (Clexane)', '40 mg',
+        'subcutaneous', 'abdomen_left', ?, 245000.0,
+        NULL, 0, 'Subcutaneous injection into left abdominal wall. No hematoma. 12-hour spinal safety blackout active.', ?
+      )
+    `).run(existingVte.id, docId, now);
+  }
+
+  // 15C: Pediatric Status Epilepticus Resuscitation & Refractory Seizure Algorithm
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_seizure_episodes (
+      patient_id, admission_id, episode_code, seizure_start_datetime,
+      seizure_type, etiology, patient_age_months, weight_kg,
+      broselow_color_zone, current_algorithm_phase, seizure_cessation_datetime,
+      total_seizure_duration_minutes, blood_glucose_mg_dl, d10w_bolus_given_ml,
+      phase2_benzodiazepine_given, phase2_dose_count, phase3_second_line_agent,
+      phase3_second_line_dose_mg, phase3_infusion_status, phase4_picu_escalation_status,
+      attending_pediatrician_id, clinical_notes, created_at
+    ) VALUES (
+      ?, NULL, 'SZ-20261107-2001', '2026-11-07T08:15:00',
+      'generalized_tonic_clonic', 'febrile_status', 18.0, 11.5,
+      'purple', 'seizure_aborted_postictal', '2026-11-07T08:23:30',
+      8.5, 84.0, NULL,
+      'Midazolam Intranasal 2.3 mg', 1, NULL,
+      NULL, 'not_started', 'not_needed',
+      ?, 'Febrile status epilepticus in 18-month-old child. Seizure lasted 8.5 minutes. Aborted within 3.5 minutes of Intranasal Midazolam 2.3 mg delivery. Stable in postictal recovery.', ?
+    )
+  `).run(aaravId, docId, now);
+
+  const existingSz = db.prepare('SELECT id FROM pediatric_seizure_episodes WHERE episode_code = ?').get('SZ-20261107-2001') as { id: number } | undefined;
+  if (existingSz) {
+    const timelineEvents = [
+      { elapsed: 1.0, action: 'airway_oxygen_positioning', med: null, dose: null, route: 'inhalation', hr: 148, bpS: 98, bpD: 60, spo2: 97, motor: 1, obs: 'Airway opened, lateral recovery positioning, 100% O2 via NRB mask at 15 LPM.' },
+      { elapsed: 3.0, action: 'blood_glucose_checked', med: 'Point-of-care Blood Glucose', dose: '84 mg/dL', route: null, hr: 150, bpS: 100, bpD: 62, spo2: 98, motor: 1, obs: 'Normoglycemic (84 mg/dL). No D10W bolus required.' },
+      { elapsed: 5.0, action: 'first_line_benzodiazepine', med: 'Midazolam (Intranasal)', dose: '2.3 mg', route: 'intranasal', hr: 144, bpS: 96, bpD: 58, spo2: 97, motor: 1, obs: 'Administered 0.46 mL of 5 mg/mL solution divided into bilateral nares via MAD atomizer.' },
+      { elapsed: 8.5, action: 'seizure_aborted', med: null, dose: null, route: null, hr: 124, bpS: 94, bpD: 56, spo2: 99, motor: 0, obs: 'Complete cessation of bilateral clonic jerking. Pupils reactive, breathing regular.' },
+    ];
+    for (const te of timelineEvents) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_seizure_timeline_logs (
+          seizure_episode_id, elapsed_minutes, timestamp,
+          action_type, medication_name, dose_administered,
+          route, heart_rate_bpm, blood_pressure_systolic,
+          blood_pressure_diastolic, spo2_percent, active_motor_activity,
+          logged_by_id, clinical_observations, created_at
+        ) VALUES (
+          ?, ?, '2026-11-07T08:20:00',
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingSz.id, te.elapsed, te.action, te.med, te.dose, te.route, te.hr, te.bpS, te.bpD, te.spo2, te.motor, docId, te.obs, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

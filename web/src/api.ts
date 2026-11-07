@@ -5848,6 +5848,321 @@ export const deletePediatricDkaFlowsheet = (logId: number): Promise<{ success: b
 export const auditPediatricDkaPrint = (id: number): Promise<{ success: boolean }> =>
   api('POST', `/api/pediatric-dka/episodes/${id}/print`, {});
 
+// ==========================================
+// SERIES 15: Neonatal RDS, Maternal VTE, Pediatric Seizures
+// ==========================================
+
+// --- Series 15A: Neonatal RDS & Bubble CPAP ---
+export interface NeonatalRdsRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  patient_name?: string;
+  patient_uhid?: string;
+  patient_dob?: string;
+  patient_gender?: string;
+  episode_code: string;
+  onset_datetime: string;
+  gestational_age_weeks: number;
+  birth_weight_kg: number;
+  current_weight_kg: number;
+  silverman_anderson_score: number;
+  downes_score: number;
+  fio2_requirement_percent: number;
+  arterial_pao2_mmhg: number | null;
+  alveolar_pao2_mmhg: number | null;
+  a_a_ratio: number | null;
+  oxygenation_index: number | null;
+  surfactant_indicated: number;
+  surfactant_brand: 'curosurf_poractant_alfa' | 'survanta_beractant' | 'infasurf_calfactant' | null;
+  surfactant_dose_mg_per_kg: number | null;
+  surfactant_total_dose_mg: number | null;
+  surfactant_total_volume_ml: number | null;
+  administration_method: 'lisa_mist_thin_catheter' | 'insure_intubate_surfactant_extubate' | 'endotracheal_invasive' | null;
+  surfactant_administered_at: string | null;
+  repeat_surfactant_needed: number;
+  niv_modality: 'bubble_cpap' | 'variable_flow_cpap' | 'high_flow_nasal_cannula' | 'biphasic_niv' | 'intubated_conventional_cmv';
+  current_peep_cmh2o: number;
+  current_flow_lpm: number;
+  current_fio2_percent: number;
+  status: 'active_niv' | 'surfactant_administered_stabilized' | 'escalated_to_invasive_ventilation' | 'weaned_to_room_air' | 'discontinued';
+  consultant_neonatologist_id: number;
+  consultant_neonatologist_name?: string;
+  clinical_notes: string | null;
+  created_at: string;
+}
+
+export interface NeonatalNivFlowsheetRecord {
+  id: number;
+  rds_episode_id: number;
+  log_datetime: string;
+  hours_on_protocol: number;
+  respiratory_rate_bpm: number;
+  heart_rate_bpm: number;
+  spo2_percent: number;
+  silverman_score: number;
+  downes_score: number;
+  peep_cmh2o: number;
+  flow_lpm: number;
+  fio2_percent: number;
+  nasal_columella_skin_check: 'intact' | 'erythema' | 'erosion' | 'necrosis';
+  gastric_distension: 'none' | 'mild' | 'marked_vented';
+  arterial_blood_gas_ph: number | null;
+  arterial_pco2_mmhg: number | null;
+  arterial_pao2_mmhg: number | null;
+  logged_by_id: number;
+  logged_by_name?: string;
+  notes: string | null;
+  created_at: string;
+}
+
+export const getNeonatalRdsEpisodes = (params?: {
+  patientId?: number;
+  status?: string;
+}): Promise<{ episodes: NeonatalRdsRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.status) q.append('status', params.status);
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ episodes: NeonatalRdsRecord[] }>('GET', `/api/neonatal-rds/episodes${queryStr}`);
+};
+
+export const getNeonatalRdsEpisode = (
+  id: number
+): Promise<{ episode: NeonatalRdsRecord; flowsheetLogs: NeonatalNivFlowsheetRecord[] }> =>
+  api('GET', `/api/neonatal-rds/episodes/${id}`);
+
+export const createNeonatalRdsEpisode = (payload: any): Promise<{ episode: NeonatalRdsRecord }> =>
+  api('POST', '/api/neonatal-rds/episodes', payload);
+
+export const updateNeonatalRdsEpisode = (id: number, payload: any): Promise<{ episode: NeonatalRdsRecord }> =>
+  api('PUT', `/api/neonatal-rds/episodes/${id}`, payload);
+
+export const deleteNeonatalRdsEpisode = (id: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/neonatal-rds/episodes/${id}`);
+
+export const logNeonatalNivFlowsheet = (
+  rdsId: number,
+  payload: any
+): Promise<{ log: NeonatalNivFlowsheetRecord }> =>
+  api('POST', `/api/neonatal-rds/episodes/${rdsId}/flowsheet`, payload);
+
+export const deleteNeonatalNivFlowsheet = (logId: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/neonatal-rds/flowsheet/${logId}`);
+
+export const auditNeonatalRdsPrint = (id: number): Promise<{ success: boolean }> =>
+  api('POST', `/api/neonatal-rds/episodes/${id}/print`, {});
+
+export const calculateNeonatalRds = (payload: any): Promise<any> =>
+  api('POST', '/api/neonatal-rds/calculate', payload);
+
+// --- Series 15B: Maternal VTE Risk & Thromboprophylaxis ---
+export interface MaternalVteAssessmentRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  patient_name?: string;
+  patient_uhid?: string;
+  patient_dob?: string;
+  assessment_type: 'antenatal_early' | 'antenatal_intrapartum' | 'postnatal';
+  assessment_datetime: string;
+  gestational_age_weeks: number | null;
+  current_weight_kg: number;
+  bmi: number;
+  previous_vte_unprovoked_or_estrogen: number;
+  previous_vte_provoked: number;
+  known_high_risk_thrombophilia: number;
+  medical_comorbidities: number;
+  surgical_procedure_in_pregnancy: number;
+  gross_varicose_veins: number;
+  age_over_35: number;
+  parity_geq_3: number;
+  smoker: number;
+  bmi_geq_30: number;
+  bmi_geq_40: number;
+  multiple_pregnancy: number;
+  assisted_reproductive_tech_ivf: number;
+  pre_eclampsia: number;
+  cesarean_section_emergency: number;
+  cesarean_section_elective: number;
+  prolonged_labor_over_24h: number;
+  postpartum_hemorrhage_over_1000ml: number;
+  preterm_birth_under_37w: number;
+  stillbirth_in_this_pregnancy: number;
+  systemic_infection_current: number;
+  immobility_bedrest_over_3d: number;
+  hyperemesis_or_dehydration: number;
+  low_risk_thrombophilia: number;
+  family_history_vte_first_degree: number;
+  total_vte_score: number;
+  risk_tier: 'low_mobilization_hydration' | 'intermediate_prophylaxis_indicated' | 'high_immediate_prophylaxis_indicated';
+  lmwh_prescribed: number;
+  lmwh_agent: 'enoxaparin' | 'dalteparin' | 'tinzaparin' | 'unfractionated_heparin' | null;
+  lmwh_daily_dose_mg_or_units: string | null;
+  weight_tier_bracket: string | null;
+  anti_embolic_stockings_ordered: number;
+  neuraxial_anesthesia_eligible: number;
+  last_dose_datetime: string | null;
+  next_safe_neuraxial_datetime: string | null;
+  assessed_by_id: number;
+  assessed_by_name?: string;
+  clinical_notes: string | null;
+  created_at: string;
+}
+
+export interface MaternalVteDoseLogRecord {
+  id: number;
+  assessment_id: number;
+  administered_at: string;
+  agent: string;
+  dose: string;
+  route: string;
+  site: 'abdomen_left' | 'abdomen_right' | 'thigh_left' | 'thigh_right' | 'upper_arm' | null;
+  administered_by_id: number;
+  administered_by_name?: string;
+  platelet_count: number | null;
+  anti_xa_level: number | null;
+  bleeding_signs_observed: number;
+  notes: string | null;
+  created_at: string;
+}
+
+export const getMaternalVteAssessments = (params?: {
+  patientId?: number;
+  riskTier?: string;
+  assessmentType?: string;
+}): Promise<{ assessments: MaternalVteAssessmentRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.riskTier) q.append('riskTier', params.riskTier);
+  if (params?.assessmentType) q.append('assessmentType', params.assessmentType);
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ assessments: MaternalVteAssessmentRecord[] }>('GET', `/api/maternal-vte/assessments${queryStr}`);
+};
+
+export const getMaternalVteAssessment = (
+  id: number
+): Promise<{ assessment: MaternalVteAssessmentRecord; doseLogs: MaternalVteDoseLogRecord[]; neuraxialStatus: any }> =>
+  api('GET', `/api/maternal-vte/assessments/${id}`);
+
+export const createMaternalVteAssessment = (payload: any): Promise<{ assessment: MaternalVteAssessmentRecord }> =>
+  api('POST', '/api/maternal-vte/assessments', payload);
+
+export const updateMaternalVteAssessment = (id: number, payload: any): Promise<{ assessment: MaternalVteAssessmentRecord }> =>
+  api('PUT', `/api/maternal-vte/assessments/${id}`, payload);
+
+export const deleteMaternalVteAssessment = (id: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/maternal-vte/assessments/${id}`);
+
+export const logMaternalVteDose = (
+  assessmentId: number,
+  payload: any
+): Promise<{ log: MaternalVteDoseLogRecord }> =>
+  api('POST', `/api/maternal-vte/assessments/${assessmentId}/doses`, payload);
+
+export const deleteMaternalVteDose = (logId: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/maternal-vte/doses/${logId}`);
+
+export const auditMaternalVtePrint = (id: number): Promise<{ success: boolean }> =>
+  api('POST', `/api/maternal-vte/assessments/${id}/print`, {});
+
+export const calculateMaternalVte = (payload: any): Promise<any> =>
+  api('POST', '/api/maternal-vte/calculate', payload);
+
+// --- Series 15C: Pediatric Status Epilepticus Resuscitation ---
+export interface PediatricSeizureRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  patient_name?: string;
+  patient_uhid?: string;
+  patient_dob?: string;
+  patient_gender?: string;
+  episode_code: string;
+  seizure_start_datetime: string;
+  seizure_type: 'generalized_tonic_clonic' | 'focal_with_impaired_awareness' | 'myoclonic' | 'absence_atypical' | 'subtle_neonatal' | 'non_convulsive_status';
+  etiology: 'febrile_status' | 'known_epilepsy' | 'cns_infection_meningitis_encephalitis' | 'electrolyte_derangement_hypoglycemia_hyponatremia' | 'acute_trauma_intracranial_hemorrhage' | 'toxic_ingestion' | 'unknown_cryptogenic' | null;
+  patient_age_months: number;
+  weight_kg: number;
+  broselow_color_zone: string | null;
+  current_algorithm_phase: 'phase_1_stabilization_0_5m' | 'phase_2_first_line_bzd_5_20m' | 'phase_3_second_line_asm_20_40m' | 'phase_4_refractory_rsi_picu_gt_40m' | 'seizure_aborted_postictal';
+  seizure_cessation_datetime: string | null;
+  total_seizure_duration_minutes: number | null;
+  blood_glucose_mg_dl: number | null;
+  d10w_bolus_given_ml: number | null;
+  phase2_benzodiazepine_given: string | null;
+  phase2_dose_count: number;
+  phase3_second_line_agent: string | null;
+  phase3_second_line_dose_mg: number | null;
+  phase3_infusion_status: 'not_started' | 'infusing' | 'completed' | 'failed_to_abort' | null;
+  phase4_picu_escalation_status: 'not_needed' | 'rsi_intubation_underway' | 'midazolam_infusion_titrating' | 'propofol_infusion_titrating' | 'ketamine_infusion_titrating' | 'admitted_picu_continuous_eeg' | null;
+  attending_pediatrician_id: number;
+  attending_pediatrician_name?: string;
+  clinical_notes: string | null;
+  created_at: string;
+}
+
+export interface PediatricSeizureTimelineRecord {
+  id: number;
+  seizure_episode_id: number;
+  elapsed_minutes: number;
+  timestamp: string;
+  action_type: 'airway_oxygen_positioning' | 'blood_glucose_checked' | 'd10w_bolus_administered' | 'iv_io_access_secured' | 'first_line_benzodiazepine' | 'second_line_asm_administered' | 'rsi_intubation_preoxygenation' | 'anesthetic_infusion_started' | 'seizure_aborted' | 'eeg_monitoring_initiated' | 'vital_signs_recorded';
+  medication_name: string | null;
+  dose_administered: string | null;
+  route: string | null;
+  heart_rate_bpm: number | null;
+  blood_pressure_systolic: number | null;
+  blood_pressure_diastolic: number | null;
+  spo2_percent: number | null;
+  active_motor_activity: number;
+  logged_by_id: number;
+  logged_by_name?: string;
+  clinical_observations: string | null;
+  created_at: string;
+}
+
+export const getPediatricSeizureEpisodes = (params?: {
+  patientId?: number;
+  phase?: string;
+}): Promise<{ episodes: PediatricSeizureRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.phase) q.append('phase', params.phase);
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ episodes: PediatricSeizureRecord[] }>('GET', `/api/pediatric-seizures/episodes${queryStr}`);
+};
+
+export const getPediatricSeizureEpisode = (
+  id: number
+): Promise<{ episode: PediatricSeizureRecord; timelineLogs: PediatricSeizureTimelineRecord[] }> =>
+  api('GET', `/api/pediatric-seizures/episodes/${id}`);
+
+export const createPediatricSeizureEpisode = (payload: any): Promise<{ episode: PediatricSeizureRecord }> =>
+  api('POST', '/api/pediatric-seizures/episodes', payload);
+
+export const updatePediatricSeizureEpisode = (id: number, payload: any): Promise<{ episode: PediatricSeizureRecord }> =>
+  api('PUT', `/api/pediatric-seizures/episodes/${id}`, payload);
+
+export const deletePediatricSeizureEpisode = (id: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/pediatric-seizures/episodes/${id}`);
+
+export const logPediatricSeizureTimeline = (
+  episodeId: number,
+  payload: any
+): Promise<{ log: PediatricSeizureTimelineRecord }> =>
+  api('POST', `/api/pediatric-seizures/episodes/${episodeId}/timeline`, payload);
+
+export const deletePediatricSeizureTimeline = (logId: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/pediatric-seizures/timeline/${logId}`);
+
+export const auditPediatricSeizurePrint = (id: number): Promise<{ success: boolean }> =>
+  api('POST', `/api/pediatric-seizures/episodes/${id}/print`, {});
+
+export const calculatePediatricSeizure = (payload: any): Promise<any> =>
+  api('POST', '/api/pediatric-seizures/calculate', payload);
+
+
 
 
 

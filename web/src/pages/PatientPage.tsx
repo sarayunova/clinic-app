@@ -59,6 +59,9 @@ import { PediatricAllergyTab } from '../components/PediatricAllergyTab';
 import { NeonatalHieTab } from '../components/NeonatalHieTab';
 import { MaternalSepsisTab } from '../components/MaternalSepsisTab';
 import { PediatricDkaTab } from '../components/PediatricDkaTab';
+import { NeonatalRdsTab } from '../components/NeonatalRdsTab';
+import { MaternalVteTab } from '../components/MaternalVteTab';
+import { PediatricSeizureTab } from '../components/PediatricSeizureTab';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -169,7 +172,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'abdm' | 'pediatric' | 'pediatric_growth' | 'pediatric_renal' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'pac' | 'blood_bank' | 'risk' | 'postnatal' | 'maternity_admission' | 'ams' | 'mgso4' | 'pews_pals' | 'nicu_tpn' | 'maternal_comorbidities' | 'pediatric_allergy' | 'neonatal_hie' | 'maternal_sepsis' | 'pediatric_dka' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'abdm' | 'pediatric' | 'pediatric_growth' | 'pediatric_renal' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'pac' | 'blood_bank' | 'risk' | 'postnatal' | 'maternity_admission' | 'ams' | 'mgso4' | 'pews_pals' | 'nicu_tpn' | 'maternal_comorbidities' | 'pediatric_allergy' | 'neonatal_hie' | 'maternal_sepsis' | 'pediatric_dka' | 'neonatal_rds' | 'maternal_vte' | 'pediatric_seizures' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -862,6 +865,27 @@ export function PatientPage() {
                 </button>
                 <button
                   type="button"
+                  className={`btn small ${viewMode === 'neonatal_rds' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('neonatal_rds')}
+                >
+                  🫁 Neonatal RDS & Bubble CPAP
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'maternal_vte' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('maternal_vte')}
+                >
+                  🩸 Maternal VTE (RCOG 37a)
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'pediatric_seizures' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('pediatric_seizures')}
+                >
+                  ⚡ Pediatric Seizures (AES)
+                </button>
+                <button
+                  type="button"
                   className={`btn small ${viewMode === 'list' ? 'primary' : ''}`}
                   onClick={() => setViewMode('list')}
                 >
@@ -1043,6 +1067,21 @@ export function PatientPage() {
             />
           ) : viewMode === 'pediatric_dka' ? (
             <PediatricDkaTab
+              patientId={patient!.id}
+              patientName={patient!.fullName}
+            />
+          ) : viewMode === 'neonatal_rds' ? (
+            <NeonatalRdsTab
+              patientId={patient!.id}
+              patientName={patient!.fullName}
+            />
+          ) : viewMode === 'maternal_vte' ? (
+            <MaternalVteTab
+              patientId={patient!.id}
+              patientName={patient!.fullName}
+            />
+          ) : viewMode === 'pediatric_seizures' ? (
+            <PediatricSeizureTab
               patientId={patient!.id}
               patientName={patient!.fullName}
             />
