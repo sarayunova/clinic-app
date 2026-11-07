@@ -1404,7 +1404,8 @@ async function seed() {
     )
   `).run(anitaId, otSchedId || null, docId, now, now);
 
-  const reqId = Number(bloodReqRes.lastInsertRowid);
+  const existingReq = db.prepare('SELECT id FROM blood_requisitions WHERE requisition_number = ?').get('REQ-2026-0001') as { id: number } | undefined;
+  const reqId = existingReq ? existingReq.id : Number(bloodReqRes.lastInsertRowid);
 
   // MTP Activation demo for acute atonic PPH
   const mtpRes = db.prepare(`
@@ -1426,7 +1427,8 @@ async function seed() {
     )
   `).run(sunitaId, otSchedId || null, `${todayStr}T04:15:00`, docId, `${todayStr}T06:30:00`, now, now);
 
-  const mtpDemoId = Number(mtpRes.lastInsertRowid);
+  const existingMtp = db.prepare('SELECT id FROM massive_transfusion_activations WHERE mtp_code = ?').get('MTP-2026-0001') as { id: number } | undefined;
+  const mtpDemoId = existingMtp ? existingMtp.id : Number(mtpRes.lastInsertRowid);
   if (mtpDemoId > 0) {
     // Round 1
     db.prepare(`
@@ -1487,6 +1489,75 @@ async function seed() {
       'COMPLETED', ?, ?
     )
   `).run(reqId || null, anitaId, now, now);
+
+  // --- SERIES 11C: Pediatric Renal Surveillance, Peritoneal Dialysis & KDIGO AKI ---
+  const renalAssessRes = db.prepare(`
+    INSERT OR IGNORE INTO pediatric_renal_assessments (
+      patient_id, assessment_datetime, patient_category, height_cm, dry_weight_kg, current_weight_kg,
+      baseline_creatinine_mg_dl, current_creatinine_mg_dl, urine_output_ml, urine_output_hours,
+      serum_sodium_meq_l, urine_sodium_meq_l, serum_bun_mg_dl, urine_urea_mg_dl, urine_creatinine_mg_dl,
+      calculated_egfr, calculated_uop_ml_kg_h, calculated_fluid_overload_pct, calculated_fena_pct,
+      calculated_feurea_pct, kdigo_scr_stage, kdigo_uop_stage, kdigo_overall_stage, prerenal_vs_atn,
+      nephrotoxic_medications, clinical_action_plan, assessed_by_id, created_at
+    ) VALUES (
+      ?, '2026-11-06T08:00:00', 'term_infant', 49.0, 3.10, 3.65,
+      0.45, 1.65, 10.0, 12.0,
+      136.0, 42.0, 38.0, 320.0, 35.0,
+      13.4, 0.23, 17.7, 3.09,
+      40.0, 3, 3, 3, 'intrinsic_atn',
+      '["Amikacin","Vancomycin"]',
+      'Severe oliguric KDIGO Stage 3 AKI with 17.7% Fluid Overload. Hold aminoglycosides immediately. Initiate urgent bedside Peritoneal Dialysis.',
+      ?, ?
+    )
+  `).run(babyId, docId, now);
+
+  const pdSessRes = db.prepare(`
+    INSERT OR IGNORE INTO peritoneal_dialysis_sessions (
+      patient_id, session_number, start_datetime, indication, catheter_type, catheter_insertion_date,
+      patient_weight_kg, solution_type, fill_volume_ml_per_kg, calculated_fill_volume_ml,
+      inflow_time_minutes, dwell_time_minutes, drain_time_minutes, target_cycles_count,
+      heparin_units_per_liter, potassium_meq_per_liter, antibiotic_additive, status,
+      prescribed_by_id, cumulative_inflow_ml, cumulative_outflow_ml, cumulative_net_uf_ml, created_at
+    ) VALUES (
+      ?, 'PD-20261107-1002', '2026-11-06T10:00:00', 'kdigo_stage_3_aki', 'flexible_curved_cook', '2026-11-06',
+      3.65, 'dextrose_1_5', 15.0, 55.0,
+      15, 45, 20, 12,
+      500, 0, 'Cefazolin 500mg/L prophylactic IP', 'active',
+      ?, 165.0, 207.0, 42.0, ?
+    )
+  `).run(babyId, docId, now);
+
+  const existingPd = db.prepare('SELECT id FROM peritoneal_dialysis_sessions WHERE session_number = ?').get('PD-20261107-1002') as { id: number } | undefined;
+  const pdSessionId = existingPd ? existingPd.id : Number(pdSessRes.lastInsertRowid);
+
+  // 3 completed PD cycles
+  const cyclesData = [
+    { num: 1, time: '2026-11-06T10:15:00', inM: 55, dwell: 45, outM: 65, net: 10, cum: 10, app: 'clear_straw' },
+    { num: 2, time: '2026-11-06T11:40:00', inM: 55, dwell: 45, outM: 72, net: 17, cum: 27, app: 'clear_straw' },
+    { num: 3, time: '2026-11-06T13:05:00', inM: 55, dwell: 45, outM: 70, net: 15, cum: 42, app: 'clear_straw' },
+  ];
+
+  for (const c of cyclesData) {
+    db.prepare(`
+      INSERT OR IGNORE INTO pd_cycle_flowsheet_logs (
+        session_id, cycle_number, cycle_start_time, inflow_ml, dwell_duration_minutes,
+        outflow_ml, net_uf_ml, cumulative_uf_ml, effluent_appearance, abdominal_girth_cm,
+        catheter_site_leakage, patient_tolerance, nurse_id, notes, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 29.0, 0, 'well_tolerated', ?, 'Good drainage without distress', ?)
+    `).run(pdSessionId, c.num, c.time, c.inM, c.dwell, c.outM, c.net, c.cum, c.app, nurseId, now);
+  }
+
+  // Effluent surveillance lab
+  db.prepare(`
+    INSERT OR IGNORE INTO pd_effluent_surveillance (
+      session_id, sample_datetime, wbc_count_per_mcl, neutrophils_percent,
+      gram_stain, culture_growth, peritonitis_confirmed, empiric_antibiotic_initiated, logged_by_id, created_at
+    ) VALUES (
+      ?, '2026-11-06T11:45:00', 18, 22.5,
+      'No organisms seen on Gram stain', 'No bacterial growth at 48 hours', 0,
+      'Cefazolin IP continuation', ?, ?
+    )
+  `).run(pdSessionId, docId, now);
 
   // Book today's outpatient appointments for the active queue
   const appts = [

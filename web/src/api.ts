@@ -4455,4 +4455,293 @@ export const getPatientBloodBankHistory = (patientId: number): Promise<{
 export const auditMtpPrint = (id: number): Promise<{ success: boolean }> =>
   api<{ success: boolean }>('POST', `/api/mtp/${id}/audit-print`, {});
 
+// ==========================================
+// SERIES 11C: PEDIATRIC RENAL & PERITONEAL DIALYSIS
+// ==========================================
+
+export interface PediatricRenalAssessmentRecord {
+  id: number;
+  patient_id: number;
+  assessment_datetime: string;
+  patient_category: 'preterm_infant' | 'term_infant' | 'child' | 'adolescent_female' | 'adolescent_male';
+  height_cm: number;
+  dry_weight_kg: number;
+  current_weight_kg: number;
+  baseline_creatinine_mg_dl: number;
+  current_creatinine_mg_dl: number;
+  urine_output_ml: number | null;
+  urine_output_hours: number | null;
+  serum_sodium_meq_l: number | null;
+  urine_sodium_meq_l: number | null;
+  serum_bun_mg_dl: number | null;
+  urine_urea_mg_dl: number | null;
+  urine_creatinine_mg_dl: number | null;
+  calculated_egfr: number;
+  calculated_uop_ml_kg_h: number | null;
+  calculated_fluid_overload_pct: number;
+  calculated_fena_pct: number | null;
+  calculated_feurea_pct: number | null;
+  kdigo_scr_stage: number;
+  kdigo_uop_stage: number | null;
+  kdigo_overall_stage: number;
+  prerenal_vs_atn: 'prerenal' | 'intrinsic_atn' | 'indeterminate' | 'not_evaluated';
+  nephrotoxic_medications: string | null;
+  clinical_action_plan: string | null;
+  assessed_by_id: number;
+  assessed_by_name?: string;
+  patient_name?: string;
+  patient_uhid?: string;
+  patient_dob?: string;
+  patient_gender?: string;
+  created_at: string;
+}
+
+export interface PdSessionRecord {
+  id: number;
+  patient_id: number;
+  session_number: string;
+  start_datetime: string;
+  end_datetime: string | null;
+  indication:
+    | 'kdigo_stage_3_aki'
+    | 'severe_fluid_overload_gt20'
+    | 'refractory_hyperkalemia'
+    | 'severe_metabolic_acidosis'
+    | 'inborn_error_metabolism'
+    | 'uremic_encephalopathy'
+    | 'other';
+  catheter_type:
+    | 'acute_rigid_percutaneous'
+    | 'flexible_curved_cook'
+    | 'tenckhoff_single_cuff'
+    | 'tenckhoff_double_cuff'
+    | 'other';
+  catheter_insertion_date: string | null;
+  patient_weight_kg: number;
+  solution_type: 'dextrose_1_5' | 'dextrose_2_5' | 'dextrose_4_25' | 'custom_compound';
+  fill_volume_ml_per_kg: number;
+  calculated_fill_volume_ml: number;
+  inflow_time_minutes: number;
+  dwell_time_minutes: number;
+  drain_time_minutes: number;
+  target_cycles_count: number;
+  heparin_units_per_liter: number;
+  potassium_meq_per_liter: number;
+  antibiotic_additive: string | null;
+  status: 'active' | 'completed' | 'aborted';
+  deactivation_reason: string | null;
+  prescribed_by_id: number;
+  prescribed_by_name?: string;
+  completed_by_id?: number | null;
+  completed_by_name?: string | null;
+  cumulative_inflow_ml: number;
+  cumulative_outflow_ml: number;
+  cumulative_net_uf_ml: number;
+  patient_name?: string;
+  patient_uhid?: string;
+  patient_dob?: string;
+  patient_gender?: string;
+  total_cycles_logged?: number;
+  created_at: string;
+}
+
+export interface PdCycleRecord {
+  id: number;
+  session_id: number;
+  cycle_number: number;
+  cycle_start_time: string;
+  inflow_ml: number;
+  dwell_duration_minutes: number;
+  outflow_ml: number;
+  net_uf_ml: number;
+  cumulative_uf_ml: number;
+  effluent_appearance:
+    | 'clear_straw'
+    | 'hazy'
+    | 'cloudy_turbid'
+    | 'blood_tinged'
+    | 'frank_blood'
+    | 'fibrin_clots';
+  abdominal_girth_cm: number | null;
+  catheter_site_leakage: number;
+  patient_tolerance:
+    | 'well_tolerated'
+    | 'mild_distress'
+    | 'severe_pain_distension'
+    | 'respiratory_compromise';
+  nurse_id: number;
+  nurse_name?: string;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface PdEffluentLabRecord {
+  id: number;
+  session_id: number;
+  sample_datetime: string;
+  wbc_count_per_mcl: number;
+  neutrophils_percent: number;
+  gram_stain: string | null;
+  culture_growth: string | null;
+  peritonitis_confirmed: number;
+  empiric_antibiotic_initiated: string | null;
+  logged_by_id: number;
+  logged_by_name?: string;
+  session_number?: string;
+  patient_name?: string;
+  patient_uhid?: string;
+  created_at: string;
+}
+
+export const getPediatricRenalAssessments = (params?: {
+  patientId?: number;
+  limit?: number;
+}): Promise<{ assessments: PediatricRenalAssessmentRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.limit) q.append('limit', String(params.limit));
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ assessments: PediatricRenalAssessmentRecord[] }>(
+    'GET',
+    `/api/pediatric-renal/assessments${queryStr}`
+  );
+};
+
+export const createPediatricRenalAssessment = (payload: {
+  patientId: number;
+  assessmentDatetime: string;
+  patientCategory: string;
+  heightCm: number;
+  dryWeightKg: number;
+  currentWeightKg: number;
+  baselineCreatinineMgDl: number;
+  currentCreatinineMgDl: number;
+  urineOutputMl?: number | null;
+  urineOutputHours?: number | null;
+  serumSodiumMeqL?: number | null;
+  urineSodiumMeqL?: number | null;
+  serumBunMgDl?: number | null;
+  urineUreaMgDl?: number | null;
+  urineCreatinineMgDl?: number | null;
+  nephrotoxicMedications: string[];
+  clinicalActionPlan?: string | null;
+}): Promise<{ assessment: PediatricRenalAssessmentRecord }> =>
+  api<{ assessment: PediatricRenalAssessmentRecord }>('POST', '/api/pediatric-renal/assessments', payload);
+
+export const getPediatricRenalAssessment = (
+  id: number
+): Promise<{ assessment: PediatricRenalAssessmentRecord }> =>
+  api<{ assessment: PediatricRenalAssessmentRecord }>('GET', `/api/pediatric-renal/assessments/${id}`);
+
+export const deletePediatricRenalAssessment = (
+  id: number
+): Promise<{ success: boolean; message: string }> =>
+  api<{ success: boolean; message: string }>('DELETE', `/api/pediatric-renal/assessments/${id}`);
+
+export const getPdSessions = (params?: {
+  patientId?: number;
+  status?: string;
+}): Promise<{ sessions: PdSessionRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.status) q.append('status', params.status);
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ sessions: PdSessionRecord[] }>('GET', `/api/pediatric-renal/pd-sessions${queryStr}`);
+};
+
+export const createPdSession = (payload: {
+  patientId: number;
+  startDatetime: string;
+  indication: string;
+  catheterType: string;
+  catheterInsertionDate?: string | null;
+  patientWeightKg: number;
+  solutionType: string;
+  fillVolumeMlPerKg: number;
+  inflowTimeMinutes?: number;
+  dwellTimeMinutes?: number;
+  drainTimeMinutes?: number;
+  targetCyclesCount?: number;
+  heparinUnitsPerLiter?: number;
+  potassiumMeqPerLiter?: number;
+  antibioticAdditive?: string | null;
+}): Promise<{ session: PdSessionRecord }> =>
+  api<{ session: PdSessionRecord }>('POST', '/api/pediatric-renal/pd-sessions', payload);
+
+export const getPdSession = (
+  id: number
+): Promise<{
+  session: PdSessionRecord;
+  cycles: PdCycleRecord[];
+  effluentLabs: PdEffluentLabRecord[];
+}> =>
+  api<{
+    session: PdSessionRecord;
+    cycles: PdCycleRecord[];
+    effluentLabs: PdEffluentLabRecord[];
+  }>('GET', `/api/pediatric-renal/pd-sessions/${id}`);
+
+export const updatePdSessionStatus = (
+  id: number,
+  payload: { status: 'completed' | 'aborted' | 'active'; deactivationReason?: string }
+): Promise<{ session: PdSessionRecord }> =>
+  api<{ session: PdSessionRecord }>('PUT', `/api/pediatric-renal/pd-sessions/${id}/status`, payload);
+
+export const logPdCycle = (
+  sessionId: number,
+  payload: {
+    cycleNumber: number;
+    cycleStartTime: string;
+    inflowMl: number;
+    dwellDurationMinutes: number;
+    outflowMl: number;
+    effluentAppearance: string;
+    abdominalGirthCm?: number | null;
+    catheterSiteLeakage: boolean;
+    patientTolerance: string;
+    notes?: string | null;
+  }
+): Promise<{ cycle: PdCycleRecord }> =>
+  api<{ cycle: PdCycleRecord }>('POST', `/api/pediatric-renal/pd-sessions/${sessionId}/cycles`, payload);
+
+export const deletePdCycle = (
+  sessionId: number,
+  cycleId: number
+): Promise<{ success: boolean; message: string }> =>
+  api<{ success: boolean; message: string }>(
+    'DELETE',
+    `/api/pediatric-renal/pd-sessions/${sessionId}/cycles/${cycleId}`
+  );
+
+export const logPdEffluentLab = (
+  sessionId: number,
+  payload: {
+    sampleDatetime: string;
+    wbcCountPerMcl: number;
+    neutrophilsPercent: number;
+    gramStain?: string | null;
+    cultureGrowth?: string | null;
+    empiricAntibioticInitiated?: string | null;
+  }
+): Promise<{ effluentLab: PdEffluentLabRecord }> =>
+  api<{ effluentLab: PdEffluentLabRecord }>(
+    'POST',
+    `/api/pediatric-renal/pd-sessions/${sessionId}/effluent-labs`,
+    payload
+  );
+
+export const getPediatricRenalDashboard = (): Promise<{
+  activeSessions: (PdSessionRecord & { cycles_logged: number })[];
+  highRiskRenalPatients: PediatricRenalAssessmentRecord[];
+  peritonitisAlerts: (PdEffluentLabRecord & {
+    session_number: string;
+    patient_name: string;
+    patient_uhid: string;
+  })[];
+}> => api('GET', '/api/pediatric-renal/dashboard');
+
+export const auditPdPrint = (id: number): Promise<{ success: boolean }> =>
+  api<{ success: boolean }>('POST', `/api/pediatric-renal/pd-sessions/${id}/print`, {});
+
+
 
