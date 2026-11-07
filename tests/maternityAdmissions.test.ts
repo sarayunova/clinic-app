@@ -31,31 +31,6 @@ async function login(username: string, password = PW) {
   return r.setCookie!.split(';')[0]!;
 }
 
-beforeEach(async () => {
-  db = openDb(':memory:');
-  app = await buildApp({ db, cfg, secureCookies: false });
-  const setup = await call('POST', '/api/setup', undefined, { username: 'dr.rao', fullName: 'Dr Rao', password: PW });
-  doctor = setup.setCookie!.split(';')[0]!;
-  for (const [username, role] of [['nurse1', 'nurse'], ['desk1', 'attender']] as const) {
-    await call('POST', '/api/users', doctor, { username, fullName: username, role, password: 'temporary-pass-1' });
-    const first = await login(username, 'temporary-pass-1');
-    await call('POST', '/api/auth/change-password', first, { currentPassword: 'temporary-pass-1', newPassword: PW });
-  }
-  nurse = await login('nurse1');
-  desk = await login('desk1');
-
-  motherId = (await call('POST', '/api/patients', doctor, {
-    fullName: 'Kavita Sundaram',
-    dateOfBirth: '1995-04-12',
-    phone: '9880012345',
-    lastMenstrualPeriod: '2026-02-05',
-    gravida: 2,
-    para: 1,
-    living: 1,
-    abortions: 0,
-  })).body.patient.id;
-});
-
 describe('Maternity Scoring & Decision Calculations', () => {
   it('calculates Modified Bishop Score and interpretation correctly', () => {
     // Unfavorable cervix (Score 0)
@@ -100,6 +75,31 @@ describe('Maternity Scoring & Decision Calculations', () => {
 });
 
 describe('Maternity Admission & Delivery Ward Handover API', () => {
+  beforeEach(async () => {
+    db = openDb(':memory:');
+    app = await buildApp({ db, cfg, secureCookies: false });
+    const setup = await call('POST', '/api/setup', undefined, { username: 'dr.rao', fullName: 'Dr Rao', password: PW });
+    doctor = setup.setCookie!.split(';')[0]!;
+    for (const [username, role] of [['nurse1', 'nurse'], ['desk1', 'attender']] as const) {
+      await call('POST', '/api/users', doctor, { username, fullName: username, role, password: 'temporary-pass-1' });
+      const first = await login(username, 'temporary-pass-1');
+      await call('POST', '/api/auth/change-password', first, { currentPassword: 'temporary-pass-1', newPassword: PW });
+    }
+    nurse = await login('nurse1');
+    desk = await login('desk1');
+
+    motherId = (await call('POST', '/api/patients', doctor, {
+      fullName: 'Kavita Sundaram',
+      dateOfBirth: '1995-04-12',
+      phone: '9880012345',
+      lastMenstrualPeriod: '2026-02-05',
+      gravida: 2,
+      para: 1,
+      living: 1,
+      abortions: 0,
+    })).body.patient.id;
+  }, 20000);
+
   it('creates a maternity admission card with Bishop score calculation and PROM tracking', async () => {
     const res = await call('POST', `/api/patients/${motherId}/maternity-admissions`, doctor, {
       admissionDate: '2026-11-06',

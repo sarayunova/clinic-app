@@ -87,6 +87,13 @@ export const ACTION_LABELS: Record<string, string> = {
   'cervical.biopsy_add': 'Recorded cervical biopsy specimen',
   'cervical.biopsy_update': 'Updated cervical biopsy histopathology',
   'cervical.print': 'Printed colposcopy & cervical screening report',
+  'contraception.counseling_create': 'Recorded contraceptive counseling & WHO MEC evaluation',
+  'contraception.counseling_delete': 'Deleted contraceptive counseling record',
+  'iucd.insertion_create': 'Recorded IUCD insertion procedure',
+  'iucd.insertion_update': 'Updated IUCD record / removal details',
+  'iucd.insertion_delete': 'Deleted IUCD insertion record',
+  'iucd.followup_create': 'Recorded IUCD follow-up thread check',
+  'iucd.print': 'Printed contraceptive & IUCD card',
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

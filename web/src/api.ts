@@ -2455,3 +2455,70 @@ export interface CervicalScreeningDetailResponse {
     description: string;
   };
 }
+
+export interface ContraceptiveCounselingRecord {
+  id: number;
+  patient_id: number;
+  counseling_date: string;
+  reproductive_plan: string;
+  desired_spacing_years: number | null;
+  breastfeeding_status: string;
+  medical_conditions: string[];
+  eligibility_results: Record<string, { method: string; name: string; category: number; status: string; reasons: string[]; clinicalNotes: string }> | null;
+  chosen_method: string;
+  method_rationale: string | null;
+  prescribed_units: string | null;
+  next_followup_date: string | null;
+  counseled_by_name?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IucdFollowup {
+  id: number;
+  insertion_id: number;
+  patient_id: number;
+  followup_date: string;
+  visit_interval: string;
+  thread_status: string;
+  pelvic_ultrasound_done: number;
+  ultrasound_finding: string | null;
+  bleeding_pattern: string;
+  pelvic_pain_score: number;
+  signs_of_infection: number;
+  action_taken: string;
+  clinical_notes: string | null;
+  examined_by_name?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IucdInsertionRecord {
+  id: number;
+  patient_id: number;
+  counseling_id: number | null;
+  device_type: string;
+  device_brand_name: string | null;
+  lot_batch_number: string | null;
+  device_expiry_date: string | null;
+  insertion_timing: string;
+  insertion_date: string;
+  insertion_time: string | null;
+  inserted_by: string;
+  uterine_depth_cm: number | null;
+  analgesia_used: string;
+  thread_length_cut_cm: number | null;
+  insertion_ease: string;
+  complications: string;
+  post_insertion_ultrasound: string;
+  lifespan_years: number;
+  expected_removal_date: string;
+  status: string;
+  removal_date: string | null;
+  removal_reason: string | null;
+  clinical_notes: string | null;
+  created_by_name?: string | null;
+  created_at: string;
+  updated_at: string;
+  followups: IucdFollowup[];
+}

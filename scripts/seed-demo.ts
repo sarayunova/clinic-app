@@ -601,6 +601,57 @@ async function seed() {
     )
   `).run(anitaId, docId, docId, now, now);
 
+  // --- Contraception Counseling & Postpartum IUCD Registry ---
+  // Sunita Rao (P-1004): Intracesarean PPIUCD (Cu-T 380A) with WHO MEC counseling
+  const sunitaCounselingRes = db.prepare(`
+    INSERT OR IGNORE INTO contraceptive_counseling_records (
+      patient_id, counseling_date, reproductive_plan, desired_spacing_years,
+      breastfeeding_status, medical_conditions_json, eligibility_results_json,
+      chosen_method, method_rationale, next_followup_date, counseled_by, created_at, updated_at
+    ) VALUES (
+      ?, '2026-11-03', 'limiting_completed_family', NULL,
+      'exclusive_breastfeeding_lt_6w', '["postpartum_lt_3w", "breastfeeding_lt_6w"]',
+      '{}', 'cu_t_380a',
+      'Patient Para 2 with completed family desires long-acting non-hormonal contraception. Decided on intracesarean PPIUCD Cu-T 380A.',
+      '2026-12-16', ?, ?, ?
+    )
+  `).run(sunitaId, docId, now, now);
+  const sunitaCounselingId = Number(sunitaCounselingRes.lastInsertRowid) || 1;
+
+  const sunitaIucdRes = db.prepare(`
+    INSERT OR IGNORE INTO iucd_insertions (
+      patient_id, counseling_id, device_type, device_brand_name, lot_batch_number,
+      device_expiry_date, insertion_timing, insertion_date, insertion_time, inserted_by,
+      uterine_depth_cm, analgesia_used, thread_length_cut_cm, insertion_ease,
+      complications, post_insertion_ultrasound, lifespan_years, expected_removal_date,
+      status, clinical_notes, created_by, updated_by, created_at, updated_at
+    ) VALUES (
+      ?, ?, 'cu_t_380a', 'Pregna TCu380A', 'LOT-PPIUCD-2026',
+      '2031-10-01', 'post_cesarean_intracesarean', '2026-11-04', '09:35', 'Dr. Demo Sharma',
+      9.0, 'general_epidural_anesthesia', 4.0, 'smooth',
+      'none', 'fundal_position_confirmed', 10, '2036-11-04',
+      'in_situ', 'High fundal placement achieved using ring forceps before uterine incision closure. Strings directed toward cervical os without entrapment in hysterotomy suture.',
+      ?, ?, ?, ?
+    )
+  `).run(sunitaId, sunitaCounselingId, docId, docId, now, now);
+  const sunitaIucdId = Number(sunitaIucdRes.lastInsertRowid) || 1;
+
+  db.prepare(`
+    INSERT OR IGNORE INTO iucd_followups (
+      insertion_id, patient_id, followup_date, visit_interval,
+      thread_status, pelvic_ultrasound_done, ultrasound_finding,
+      bleeding_pattern, pelvic_pain_score, signs_of_infection,
+      action_taken, clinical_notes, examined_by, created_at, updated_at
+    ) VALUES (
+      ?, ?, '2026-11-06', '6_weeks_post_insertion',
+      'threads_visible_normal', 1, 'normal_fundal',
+      'normal_regular', 1, 0,
+      'continue_in_situ_reassured',
+      'Bedside ultrasound confirms fundal position. Threads visible at external os ~3cm. Patient reassured.',
+      ?, ?, ?
+    )
+  `).run(sunitaIucdId, sunitaId, docId, now, now);
+
   // Book today's outpatient appointments for the active queue
   const todayStr = new Date().toISOString().slice(0, 10);
   const appts = [
