@@ -4120,3 +4120,339 @@ export const deletePatientPac = (id: number): Promise<{ success: boolean; messag
 export const auditOtPrint = (id: number): Promise<{ success: boolean }> =>
   api<{ success: boolean }>('POST', `/api/ot-schedules/${id}/audit-print`, {});
 
+// Series 11B: Blood Bank Cross-Match Requisitions & Massive Transfusion Protocol (MTP)
+export type BloodGroupAbo =
+  | 'A_POS'
+  | 'A_NEG'
+  | 'B_POS'
+  | 'B_NEG'
+  | 'AB_POS'
+  | 'AB_NEG'
+  | 'O_POS'
+  | 'O_NEG'
+  | 'UNKNOWN';
+
+export type BloodUrgency =
+  | 'ROUTINE'
+  | 'URGENT_WITHIN_2HR'
+  | 'STAT_EMERGENCY_UNMATCHED';
+
+export type BloodComponentType =
+  | 'PRBC'
+  | 'FFP'
+  | 'PLATELET_RDP'
+  | 'PLATELET_SDP'
+  | 'CRYOPRECIPITATE'
+  | 'WHOLE_BLOOD';
+
+export type BloodRequisitionStatus =
+  | 'REQUESTED'
+  | 'SAMPLE_RECEIVED'
+  | 'CROSSMATCHED'
+  | 'ISSUED'
+  | 'PARTIALLY_TRANSFUSED'
+  | 'COMPLETED'
+  | 'CANCELLED';
+
+export type MtpTriggerReason =
+  | 'PPH_ATONY'
+  | 'PLACENTA_ACCRETA_SPECTRUM'
+  | 'UTERINE_RUPTURE'
+  | 'SURGICAL_TRAUMA'
+  | 'ABRUPTIO_PLACENTAE_DIC'
+  | 'ECTOPIC_HEMORRHAGE'
+  | 'OTHER';
+
+export type MtpStatus = 'ACTIVE' | 'DEACTIVATED' | 'CANCELLED';
+
+export type TransfusionStatus = 'TRANSFUSING' | 'COMPLETED' | 'STOPPED_REACTION' | 'DISCARDED';
+
+export interface BloodRequisitionRecord {
+  id: number;
+  patient_id: number;
+  admission_id?: number | null;
+  ot_schedule_id?: number | null;
+  requisition_number: string;
+  blood_group_abo: BloodGroupAbo;
+  urgency: BloodUrgency;
+  clinical_indication: string;
+  prbc_units: number;
+  ffp_units: number;
+  platelet_units: number;
+  cryoprecipitate_units: number;
+  whole_blood_units: number;
+  special_requirements?: string | null;
+  status: BloodRequisitionStatus;
+  requesting_doctor_id: number;
+  requesting_doctor_name: string;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  uhid?: string;
+  patient_name?: string;
+  patient_age?: number | null;
+  patient_phone?: string | null;
+  doctor_full_name?: string;
+}
+
+export interface MtpActivationRecord {
+  id: number;
+  patient_id: number;
+  admission_id?: number | null;
+  ot_schedule_id?: number | null;
+  mtp_code: string;
+  activation_time: string;
+  activated_by_id: number;
+  activated_by_name: string;
+  trigger_reason: MtpTriggerReason;
+  baseline_shock_index?: number | null;
+  baseline_estimated_blood_loss_ml: number;
+  current_pack_round: number;
+  total_prbc_transfused: number;
+  total_ffp_transfused: number;
+  total_platelets_transfused: number;
+  total_cryo_transfused: number;
+  txa_given: number;
+  calcium_gluconate_given: number;
+  deactivation_time?: string | null;
+  deactivated_by_name?: string | null;
+  outcome_summary?: string | null;
+  status: MtpStatus;
+  created_at: string;
+  updated_at: string;
+  uhid?: string;
+  patient_name?: string;
+  patient_age?: number | null;
+  patient_phone?: string | null;
+  activator_name?: string;
+}
+
+export interface MtpRoundRecord {
+  id: number;
+  mtp_id: number;
+  round_number: number;
+  round_start_time: string;
+  prbc_issued: number;
+  prbc_transfused: number;
+  ffp_issued: number;
+  ffp_transfused: number;
+  platelets_issued: number;
+  platelets_transfused: number;
+  cryo_issued: number;
+  cryo_transfused: number;
+  temp_celsius?: number | null;
+  heart_rate?: number | null;
+  blood_pressure_sys?: number | null;
+  blood_pressure_dia?: number | null;
+  spo2?: number | null;
+  hb_g_dl?: number | null;
+  platelets_k_ul?: number | null;
+  inr?: number | null;
+  fibrinogen_mg_dl?: number | null;
+  ionized_calcium_mmol_l?: number | null;
+  ph_abg?: number | null;
+  lactate_mmol_l?: number | null;
+  clinical_notes?: string | null;
+  recorded_by_name: string;
+  created_at: string;
+}
+
+export interface TransfusionRecord {
+  id: number;
+  requisition_id?: number | null;
+  patient_id: number;
+  mtp_id?: number | null;
+  unit_number: string;
+  component_type: BloodComponentType;
+  unit_blood_group: BloodGroupAbo;
+  start_time: string;
+  end_time?: string | null;
+  two_nurse_verifier_1: string;
+  two_nurse_verifier_2: string;
+  pre_vitals_temp?: number | null;
+  pre_vitals_hr?: number | null;
+  pre_vitals_bp?: string | null;
+  vitals_15m_temp?: number | null;
+  vitals_15m_hr?: number | null;
+  vitals_15m_bp?: string | null;
+  post_vitals_temp?: number | null;
+  post_vitals_hr?: number | null;
+  post_vitals_bp?: string | null;
+  adverse_reaction_observed: number;
+  reaction_type?: string | null;
+  reaction_details?: string | null;
+  action_taken?: string | null;
+  transfusion_status: TransfusionStatus;
+  created_at: string;
+  updated_at: string;
+  uhid?: string;
+  patient_name?: string;
+}
+
+export const getBloodRequisitions = (params?: {
+  patientId?: number;
+  status?: string;
+  urgency?: string;
+}): Promise<{ requisitions: BloodRequisitionRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.status) q.append('status', params.status);
+  if (params?.urgency) q.append('urgency', params.urgency);
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ requisitions: BloodRequisitionRecord[] }>('GET', `/api/blood-requisitions${queryStr}`);
+};
+
+export const createBloodRequisition = (payload: {
+  patientId: number;
+  admissionId?: number | null;
+  otScheduleId?: number | null;
+  bloodGroupAbo?: BloodGroupAbo;
+  urgency?: BloodUrgency;
+  clinicalIndication: string;
+  prbcUnits?: number;
+  ffpUnits?: number;
+  plateletUnits?: number;
+  cryoprecipitateUnits?: number;
+  wholeBloodUnits?: number;
+  specialRequirements?: string | null;
+  notes?: string | null;
+}): Promise<BloodRequisitionRecord> =>
+  api<BloodRequisitionRecord>('POST', '/api/blood-requisitions', payload);
+
+export const getBloodRequisition = (id: number): Promise<{
+  requisition: BloodRequisitionRecord;
+  transfusions: TransfusionRecord[];
+}> =>
+  api<{
+    requisition: BloodRequisitionRecord;
+    transfusions: TransfusionRecord[];
+  }>('GET', `/api/blood-requisitions/${id}`);
+
+export const updateBloodRequisitionStatus = (
+  id: number,
+  status: BloodRequisitionStatus
+): Promise<BloodRequisitionRecord> =>
+  api<BloodRequisitionRecord>('PATCH', `/api/blood-requisitions/${id}/status`, { status });
+
+export const deleteBloodRequisition = (id: number): Promise<{ success: boolean; message: string }> =>
+  api<{ success: boolean; message: string }>('DELETE', `/api/blood-requisitions/${id}`);
+
+export const activateMtp = (payload: {
+  patientId: number;
+  admissionId?: number | null;
+  otScheduleId?: number | null;
+  triggerReason: MtpTriggerReason;
+  baselineShockIndex?: number | null;
+  baselineEstimatedBloodLossMl?: number;
+}): Promise<MtpActivationRecord> =>
+  api<MtpActivationRecord>('POST', '/api/mtp/activate', payload);
+
+export const getActiveMtps = (): Promise<{ activeMtps: MtpActivationRecord[] }> =>
+  api<{ activeMtps: MtpActivationRecord[] }>('GET', '/api/mtp/active');
+
+export const getMtpDetails = (id: number): Promise<{
+  mtp: MtpActivationRecord;
+  rounds: MtpRoundRecord[];
+  transfusions: TransfusionRecord[];
+}> =>
+  api<{
+    mtp: MtpActivationRecord;
+    rounds: MtpRoundRecord[];
+    transfusions: TransfusionRecord[];
+  }>('GET', `/api/mtp/${id}`);
+
+export const addMtpRound = (
+  id: number,
+  payload: {
+    roundNumber: number;
+    roundStartTime: string;
+    prbcIssued?: number;
+    prbcTransfused?: number;
+    ffpIssued?: number;
+    ffpTransfused?: number;
+    plateletsIssued?: number;
+    plateletsTransfused?: number;
+    cryoIssued?: number;
+    cryoTransfused?: number;
+    tempCelsius?: number | null;
+    heartRate?: number | null;
+    bloodPressureSys?: number | null;
+    bloodPressureDia?: number | null;
+    spo2?: number | null;
+    hbGDl?: number | null;
+    plateletsKUl?: number | null;
+    inr?: number | null;
+    fibrinogenMgDl?: number | null;
+    ionizedCalciumMmolL?: number | null;
+    phAbg?: number | null;
+    lactateMmolL?: number | null;
+    clinicalNotes?: string | null;
+  }
+): Promise<MtpActivationRecord> =>
+  api<MtpActivationRecord>('POST', `/api/mtp/${id}/rounds`, payload);
+
+export const deactivateMtp = (
+  id: number,
+  payload: { outcomeSummary: string; deactivatedByName?: string | null }
+): Promise<MtpActivationRecord> =>
+  api<MtpActivationRecord>('POST', `/api/mtp/${id}/deactivate`, payload);
+
+export const getTransfusions = (params?: {
+  patientId?: number;
+  status?: string;
+}): Promise<{ transfusions: TransfusionRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.status) q.append('status', params.status);
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ transfusions: TransfusionRecord[] }>('GET', `/api/transfusions${queryStr}`);
+};
+
+export const logTransfusion = (payload: {
+  requisitionId?: number | null;
+  patientId: number;
+  mtpId?: number | null;
+  unitNumber: string;
+  componentType: BloodComponentType;
+  unitBloodGroup: BloodGroupAbo;
+  startTime: string;
+  twoNurseVerifier1: string;
+  twoNurseVerifier2: string;
+  preVitalsTemp?: number | null;
+  preVitalsHr?: number | null;
+  preVitalsBp?: string | null;
+  vitals15mTemp?: number | null;
+  vitals15mHr?: number | null;
+  vitals15mBp?: string | null;
+}): Promise<TransfusionRecord> =>
+  api<TransfusionRecord>('POST', '/api/transfusions', payload);
+
+export const reportTransfusionReaction = (
+  id: number,
+  payload: {
+    reactionType: string;
+    reactionDetails: string;
+    actionTaken: string;
+    endTime?: string | null;
+    postVitalsTemp?: number | null;
+    postVitalsHr?: number | null;
+    postVitalsBp?: string | null;
+  }
+): Promise<TransfusionRecord> =>
+  api<TransfusionRecord>('POST', `/api/transfusions/${id}/reaction`, payload);
+
+export const getPatientBloodBankHistory = (patientId: number): Promise<{
+  requisitions: BloodRequisitionRecord[];
+  mtpActivations: MtpActivationRecord[];
+  transfusions: TransfusionRecord[];
+}> =>
+  api<{
+    requisitions: BloodRequisitionRecord[];
+    mtpActivations: MtpActivationRecord[];
+    transfusions: TransfusionRecord[];
+  }>('GET', `/api/patients/${patientId}/blood-bank`);
+
+export const auditMtpPrint = (id: number): Promise<{ success: boolean }> =>
+  api<{ success: boolean }>('POST', `/api/mtp/${id}/audit-print`, {});
+
+

@@ -1387,6 +1387,107 @@ async function seed() {
     `).run(otSchedId, anitaId, now, now, now);
   }
 
+  // --- SERIES 11B: Blood Bank Requisition & Massive Transfusion Protocol (MTP) ---
+  const bloodReqRes = db.prepare(`
+    INSERT OR IGNORE INTO blood_requisitions (
+      patient_id, admission_id, ot_schedule_id, requisition_number,
+      blood_group_abo, urgency, clinical_indication,
+      prbc_units, ffp_units, platelet_units, cryoprecipitate_units, whole_blood_units,
+      special_requirements, status, requesting_doctor_id, requesting_doctor_name,
+      notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, ?, 'REQ-2026-0001',
+      'B_POS', 'URGENT_WITHIN_2HR', 'Elective LSCS High-Risk Standby (Prior uterine scar)',
+      2, 2, 0, 0, 0,
+      'Leukodepleted', 'CROSSMATCHED', ?, 'Dr. Ananya Rao, MD (OBGYN)',
+      'Crossmatch complete. Two units PRBC reserved in OT blood bank refrigerator.', ?, ?
+    )
+  `).run(anitaId, otSchedId || null, docId, now, now);
+
+  const reqId = Number(bloodReqRes.lastInsertRowid);
+
+  // MTP Activation demo for acute atonic PPH
+  const mtpRes = db.prepare(`
+    INSERT OR IGNORE INTO massive_transfusion_activations (
+      patient_id, admission_id, ot_schedule_id, mtp_code,
+      activation_time, activated_by_id, activated_by_name,
+      trigger_reason, baseline_shock_index, baseline_estimated_blood_loss_ml,
+      current_pack_round, total_prbc_transfused, total_ffp_transfused,
+      total_platelets_transfused, total_cryo_transfused, txa_given,
+      calcium_gluconate_given, deactivation_time, deactivated_by_name, outcome_summary,
+      status, created_at, updated_at
+    ) VALUES (
+      ?, NULL, ?, 'MTP-2026-0001',
+      ?, ?, 'Dr. Ananya Rao',
+      'PPH_ATONY', 1.35, 1800,
+      2, 6, 6, 1, 10, 1, 1, ?, 'Dr. Ananya Rao',
+      'Intractable atonic PPH managed with B-Lynch compression suture, intrauterine balloon tamponade, and balanced 1:1:1 component hemotherapy. Transferred to ICU stable.',
+      'DEACTIVATED', ?, ?
+    )
+  `).run(sunitaId, otSchedId || null, `${todayStr}T04:15:00`, docId, `${todayStr}T06:30:00`, now, now);
+
+  const mtpDemoId = Number(mtpRes.lastInsertRowid);
+  if (mtpDemoId > 0) {
+    // Round 1
+    db.prepare(`
+      INSERT OR IGNORE INTO mtp_flowsheet_rounds (
+        mtp_id, round_number, round_start_time,
+        prbc_issued, prbc_transfused, ffp_issued, ffp_transfused,
+        platelets_issued, platelets_transfused, cryo_issued, cryo_transfused,
+        temp_celsius, heart_rate, blood_pressure_sys, blood_pressure_dia, spo2,
+        hb_g_dl, platelets_k_ul, inr, fibrinogen_mg_dl, ionized_calcium_mmol_l,
+        ph_abg, lactate_mmol_l, clinical_notes, recorded_by_name, created_at
+      ) VALUES (
+        ?, 1, '04:20',
+        4, 4, 4, 4, 0, 0, 0, 0,
+        35.8, 128, 86, 52, 95,
+        6.4, 82, 1.6, 140, 0.98,
+        7.22, 4.8, 'MTP initiated. Pack 1 transfused with rapid infuser. TXA 1g IV bolus administered.', 'Sister Rekha RN', ?
+      )
+    `).run(mtpDemoId, now);
+
+    // Round 2
+    db.prepare(`
+      INSERT OR IGNORE INTO mtp_flowsheet_rounds (
+        mtp_id, round_number, round_start_time,
+        prbc_issued, prbc_transfused, ffp_issued, ffp_transfused,
+        platelets_issued, platelets_transfused, cryo_issued, cryo_transfused,
+        temp_celsius, heart_rate, blood_pressure_sys, blood_pressure_dia, spo2,
+        hb_g_dl, platelets_k_ul, inr, fibrinogen_mg_dl, ionized_calcium_mmol_l,
+        ph_abg, lactate_mmol_l, clinical_notes, recorded_by_name, created_at
+      ) VALUES (
+        ?, 2, '05:05',
+        2, 2, 2, 2, 1, 1, 10, 10,
+        36.5, 96, 108, 68, 99,
+        8.8, 95, 1.25, 230, 1.15,
+        7.36, 2.1, 'Pack 2 completed with 10 units Cryoprecipitate and 10% Calcium Gluconate 10mL. Uterine hemostasis secured.', 'Sister Rekha RN', ?
+      )
+    `).run(mtpDemoId, now);
+  }
+
+  // Transfusion administration
+  db.prepare(`
+    INSERT OR IGNORE INTO blood_transfusion_administrations (
+      requisition_id, patient_id, mtp_id, unit_number,
+      component_type, unit_blood_group, start_time, end_time,
+      two_nurse_verifier_1, two_nurse_verifier_2,
+      pre_vitals_temp, pre_vitals_hr, pre_vitals_bp,
+      vitals_15m_temp, vitals_15m_hr, vitals_15m_bp,
+      post_vitals_temp, post_vitals_hr, post_vitals_bp,
+      adverse_reaction_observed, reaction_type, reaction_details, action_taken,
+      transfusion_status, created_at, updated_at
+    ) VALUES (
+      ?, ?, NULL, 'PRBC-2026-8802',
+      'PRBC', 'B_POS', '09:15', '11:00',
+      'Sister Prema RN', 'Sister Mary RN',
+      36.6, 80, '120/78',
+      36.8, 82, '118/76',
+      36.7, 78, '122/80',
+      0, NULL, NULL, NULL,
+      'COMPLETED', ?, ?
+    )
+  `).run(reqId || null, anitaId, now, now);
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

@@ -56,6 +56,8 @@ import { TeleconsultationsPage } from './pages/TeleconsultationsPage';
 import { TeleconsultationPrint } from './pages/TeleconsultationPrint';
 import { OtSchedulerPage } from './pages/OtSchedulerPage';
 import { OtSchedulePrint } from './pages/OtSchedulePrint';
+import { BloodBankPage } from './pages/BloodBankPage';
+import { MtpFlowsheetPrint } from './pages/MtpFlowsheetPrint';
 import { DeliveryWardPage } from './pages/DeliveryWardPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditPage } from './pages/AuditPage';
@@ -128,6 +130,7 @@ function Shell() {
     ...(can('patient:read_clinical') ? [{ to: '/ward-board', label: 'Ward Board', icon: '📊', end: false }] : []),
     ...(can('patient:read_clinical') ? [{ to: '/teleconsultations', label: 'Teleconsult', icon: '📹', end: false }] : []),
     ...(can('patient:read_clinical') ? [{ to: '/ot-schedule', label: 'OT Schedule', icon: '🔪', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/blood-bank', label: 'Blood Bank', icon: '🩸', end: false }] : []),
     ...(can('ipd:read_basic') || can('station:read') ? [{ to: '/delivery-ward', label: 'Delivery ward', icon: '👶', end: false }] : []),
     ...(can('billing:read') ? [{ to: '/billing', label: 'Billing', icon: '💳', end: false }] : []),
     ...(can('settings:manage') ? [{ to: '/settings', label: 'Clinic', icon: '🏥', end: false }] : []),
@@ -206,6 +209,8 @@ function Shell() {
           <Route path="/teleconsultations/:id/print" element={can('patient:read_clinical') ? <TeleconsultationPrint /> : <Navigate to="/teleconsultations" replace />} />
           <Route path="/ot-schedule" element={can('patient:read_clinical') ? <OtSchedulerPage /> : <Navigate to="/" replace />} />
           <Route path="/ot-schedule/:id/print" element={can('patient:read_clinical') ? <OtSchedulePrint /> : <Navigate to="/ot-schedule" replace />} />
+          <Route path="/blood-bank" element={can('patient:read_clinical') ? <BloodBankPage /> : <Navigate to="/" replace />} />
+          <Route path="/mtp/:id/print" element={can('patient:read_clinical') ? <MtpFlowsheetPrint /> : <Navigate to="/blood-bank" replace />} />
           <Route path="/delivery-ward" element={can('ipd:read_basic') || can('station:read') ? <DeliveryWardPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id" element={can('visit:read') ? <VisitPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id/print" element={can('visit:read') ? <PrescriptionPrint /> : <Navigate to="/" replace />} />

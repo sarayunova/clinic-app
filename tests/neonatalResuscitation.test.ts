@@ -32,31 +32,6 @@ async function login(username: string, password = PW) {
   return r.setCookie!.split(';')[0]!;
 }
 
-beforeEach(async () => {
-  db = openDb(':memory:');
-  app = await buildApp({ db, cfg, secureCookies: false });
-  const setup = await call('POST', '/api/setup', undefined, { username: 'dr.deshmukh', fullName: 'Dr. Anita Deshmukh', password: PW });
-  doctor = setup.setCookie!.split(';')[0]!;
-  for (const [username, role] of [['nurse_sneha', 'nurse'], ['desk_rohit', 'attender']] as const) {
-    await call('POST', '/api/users', doctor, { username, fullName: username, role, password: 'temporary-pass-1' });
-    const first = await login(username, 'temporary-pass-1');
-    await call('POST', '/api/auth/change-password', first, { currentPassword: 'temporary-pass-1', newPassword: PW });
-  }
-  nurse = await login('nurse_sneha');
-  desk = await login('desk_rohit');
-
-  motherId = (await call('POST', '/api/patients', doctor, {
-    fullName: 'Pooja Verma',
-    dateOfBirth: '1998-05-14',
-    phone: '9821098765',
-    lastMenstrualPeriod: '2026-02-10',
-    gravida: 1,
-    para: 0,
-    living: 0,
-    abortions: 0,
-  })).body.patient.id;
-});
-
 describe('Neonatal Scoring & Clinical Decision Engine', () => {
   it('accurately evaluates APGAR score cutoffs (Normal vs Moderate vs Severe Depression)', () => {
     // Normal / Reassuring infant (Score 9: pink body/blue hands, normal HR, tone, reflex, cry)
@@ -268,6 +243,31 @@ describe('Neonatal Scoring & Clinical Decision Engine', () => {
 });
 
 describe('Neonatal Resuscitation & Serial NEW-S REST API Integration', () => {
+  beforeEach(async () => {
+    db = openDb(':memory:');
+    app = await buildApp({ db, cfg, secureCookies: false });
+    const setup = await call('POST', '/api/setup', undefined, { username: 'dr.deshmukh', fullName: 'Dr. Anita Deshmukh', password: PW });
+    doctor = setup.setCookie!.split(';')[0]!;
+    for (const [username, role] of [['nurse_sneha', 'nurse'], ['desk_rohit', 'attender']] as const) {
+      await call('POST', '/api/users', doctor, { username, fullName: username, role, password: 'temporary-pass-1' });
+      const first = await login(username, 'temporary-pass-1');
+      await call('POST', '/api/auth/change-password', first, { currentPassword: 'temporary-pass-1', newPassword: PW });
+    }
+    nurse = await login('nurse_sneha');
+    desk = await login('desk_rohit');
+
+    motherId = (await call('POST', '/api/patients', doctor, {
+      fullName: 'Pooja Verma',
+      dateOfBirth: '1998-05-14',
+      phone: '9821098765',
+      lastMenstrualPeriod: '2026-02-10',
+      gravida: 1,
+      para: 0,
+      living: 0,
+      abortions: 0,
+    })).body.patient.id;
+  });
+
   it('creates a neonatal resuscitation record, logs serial NEW-S bedside observation, and retrieves enriched details', async () => {
     // 1. Doctor creates a resuscitation episode for the newborn
     const createRes = await call('POST', `/api/patients/${motherId}/neonatal-resuscitations`, doctor, {

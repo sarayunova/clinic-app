@@ -29,31 +29,6 @@ async function login(username: string, password = PW) {
   return r.setCookie!.split(';')[0]!;
 }
 
-beforeEach(async () => {
-  db = openDb(':memory:');
-  app = await buildApp({ db, cfg, secureCookies: false });
-  const setup = await call('POST', '/api/setup', undefined, { username: 'dr.sharma', fullName: 'Dr Sharma', password: PW });
-  doctor = setup.setCookie!.split(';')[0]!;
-  for (const [username, role] of [['nurse_mary', 'nurse'], ['desk_raj', 'attender']] as const) {
-    await call('POST', '/api/users', doctor, { username, fullName: username, role, password: 'temporary-pass-1' });
-    const first = await login(username, 'temporary-pass-1');
-    await call('POST', '/api/auth/change-password', first, { currentPassword: 'temporary-pass-1', newPassword: PW });
-  }
-  nurse = await login('nurse_mary');
-  desk = await login('desk_raj');
-
-  motherId = (await call('POST', '/api/patients', doctor, {
-    fullName: 'Meera Nambiar',
-    dateOfBirth: '1994-06-14',
-    phone: '9845012345',
-    lastMenstrualPeriod: '2026-03-01',
-    gravida: 1,
-    para: 0,
-    living: 0,
-    abortions: 0,
-  })).body.patient.id;
-});
-
 describe('Antenatal Medication Safety Rules & Teratogen Engine', () => {
   it('correctly matches generic and common brand names in knowledge base', () => {
     expect(findMedicationSafetyRule('Telmisartan 40mg')?.id).toBe('ace-inhibitors-arbs');
@@ -132,6 +107,31 @@ describe('Antenatal Medication Safety Rules & Teratogen Engine', () => {
 });
 
 describe('Antenatal Medication Exposures API', () => {
+  beforeEach(async () => {
+    db = openDb(':memory:');
+    app = await buildApp({ db, cfg, secureCookies: false });
+    const setup = await call('POST', '/api/setup', undefined, { username: 'dr.sharma', fullName: 'Dr Sharma', password: PW });
+    doctor = setup.setCookie!.split(';')[0]!;
+    for (const [username, role] of [['nurse_mary', 'nurse'], ['desk_raj', 'attender']] as const) {
+      await call('POST', '/api/users', doctor, { username, fullName: username, role, password: 'temporary-pass-1' });
+      const first = await login(username, 'temporary-pass-1');
+      await call('POST', '/api/auth/change-password', first, { currentPassword: 'temporary-pass-1', newPassword: PW });
+    }
+    nurse = await login('nurse_mary');
+    desk = await login('desk_raj');
+
+    motherId = (await call('POST', '/api/patients', doctor, {
+      fullName: 'Meera Nambiar',
+      dateOfBirth: '1994-06-14',
+      phone: '9845012345',
+      lastMenstrualPeriod: '2026-03-01',
+      gravida: 1,
+      para: 0,
+      living: 0,
+      abortions: 0,
+    })).body.patient.id;
+  });
+
   it('records, retrieves, and deletes a maternal teratogenic exposure event', async () => {
     // Initial fetch
     const getInit = await call('GET', `/api/patients/${motherId}/medication-exposures`, doctor);
