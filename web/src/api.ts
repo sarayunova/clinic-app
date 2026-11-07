@@ -2681,3 +2681,65 @@ export interface GeneticScreeningRecord {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface FetalDopplerAssessment {
+  id: number;
+  patientId: number;
+  ultrasoundReportId: number | null;
+  assessmentDate: string;
+  assessmentTime: string | null;
+  gestationalAgeWeeks: number;
+  gestationalAgeDays: number;
+
+  estimatedFetalWeightG: number | null;
+  efwPercentile: number | null;
+  abdominalCircumferenceMm: number | null;
+  acPercentile: number | null;
+
+  uaPi: number;
+  uaRi: number | null;
+  uaSdRatio: number | null;
+  uaEndDiastolicFlow: 'normal_positive' | 'reduced' | 'aedf_absent' | 'redf_reversed';
+  uaPiCentile: number;
+  uaPiStatus: 'normal' | 'elevated_above_95th';
+
+  mcaPi: number;
+  mcaRi: number | null;
+  mcaPsvCmS: number | null;
+  mcaPsvMom: number | null;
+  mcaPiCentile: number;
+  mcaBrainSparing: 'none' | 'vasodilation_below_5th';
+  fetalAnemiaRisk: 'none' | 'mild' | 'moderate_to_severe';
+
+  cprRatio: number;
+  cprCentile: number;
+  cprStatus: 'normal' | 'brain_sparing_redistribution';
+
+  utaLeftPi: number | null;
+  utaRightPi: number | null;
+  utaMeanPi: number | null;
+  utaMeanPiCentile: number | null;
+  utaNotching: 'none' | 'unilateral' | 'bilateral';
+
+  dvPiv: number | null;
+  dvPivCentile: number | null;
+  dvAWave: 'positive' | 'absent' | 'reversed' | 'not_performed';
+  dvStatus: 'normal' | 'elevated_above_95th' | 'reversed_a_wave' | 'not_performed';
+
+  fgrClassification: 'aga' | 'sga' | 'early_fgr' | 'late_fgr';
+  barcelonaStage: 'stage_0' | 'stage_1' | 'stage_2' | 'stage_3' | 'stage_4';
+  monitoringFrequencyRecommendation: string;
+  deliveryTimingRecommendation: string;
+  steroidsIndicated: boolean;
+  mgso4NeuroprotectionIndicated: boolean;
+
+  clinicalNotes: string | null;
+  performedBy: string | null;
+  reviewedBy: number;
+  reviewedByName: string | null;
+
+  createdBy: number;
+  updatedBy: number;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -103,6 +103,10 @@ export const ACTION_LABELS: Record<string, string> = {
   'genetic.screening_update': 'Updated genetic screening & lab/invasive results',
   'genetic.screening_delete': 'Deleted genetic screening record',
   'genetic.screening_print': 'Printed genetic screening & counseling report',
+  'doppler.assessment_create': 'Recorded fetal Doppler velocimetry & CPR assessment',
+  'doppler.assessment_update': 'Updated fetal Doppler velocimetry assessment',
+  'doppler.assessment_delete': 'Deleted fetal Doppler assessment',
+  'doppler.assessment_print': 'Printed fetal Doppler hemodynamic report',
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

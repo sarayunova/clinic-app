@@ -797,6 +797,73 @@ async function seed() {
     )
   `).run(sunitaId, docId, docId, docId, now, now);
 
+  // 4. Fetal Doppler Velocimetry & CPR Assessments
+  // Anita Sharma (P-1001) - Normal Reassuring Doppler at 32 weeks
+  db.prepare(`
+    INSERT OR IGNORE INTO fetal_doppler_assessments (
+      patient_id, assessment_date, assessment_time, gestational_age_weeks, gestational_age_days,
+      estimated_fetal_weight_g, efw_percentile, abdominal_circumference_mm, ac_percentile,
+      ua_pi, ua_ri, ua_sd_ratio, ua_end_diastolic_flow, ua_pi_centile, ua_pi_status,
+      mca_pi, mca_ri, mca_psv_cm_s, mca_psv_mom, mca_pi_centile, mca_brain_sparing, fetal_anemia_risk,
+      cpr_ratio, cpr_centile, cpr_status,
+      uta_left_pi, uta_right_pi, uta_mean_pi, uta_mean_pi_centile, uta_notching,
+      dv_piv, dv_piv_centile, dv_a_wave, dv_status,
+      fgr_classification, barcelona_stage,
+      monitoring_frequency_recommendation, delivery_timing_recommendation,
+      steroids_indicated, mgso4_neuroprotection_indicated,
+      clinical_notes, performed_by, reviewed_by,
+      created_by, updated_by, created_at, updated_at
+    ) VALUES (
+      ?, '2026-11-04', '10:15', 32, 0,
+      1920, 52.0, 280.0, 65.0,
+      0.95, 0.61, 2.58, 'normal_positive', 48.0, 'normal',
+      2.05, 0.76, 44.0, 1.00, 55.0, 'none', 'none',
+      2.16, 55.0, 'normal',
+      0.72, 0.68, 0.70, 50.0, 'none',
+      0.50, 48.0, 'positive', 'normal',
+      'aga', 'stage_0',
+      'Routine antenatal surveillance every 2–3 weeks.',
+      'Expectant management; deliver at 39–40 weeks.',
+      0, 0,
+      'Reassuring fetal hemodynamics. Symmetrical AGA growth with normal umbilical artery impedance and healthy CPR.',
+      'Dr. K. Sarayu Rao', ?,
+      ?, ?, ?, ?
+    )
+  `).run(anitaId, docId, docId, docId, now, now);
+
+  // Sunita Rao (P-1004) - Stage I Late FGR with Brain-Sparing Redistribution (CPR 0.79)
+  db.prepare(`
+    INSERT OR IGNORE INTO fetal_doppler_assessments (
+      patient_id, assessment_date, assessment_time, gestational_age_weeks, gestational_age_days,
+      estimated_fetal_weight_g, efw_percentile, abdominal_circumference_mm, ac_percentile,
+      ua_pi, ua_ri, ua_sd_ratio, ua_end_diastolic_flow, ua_pi_centile, ua_pi_status,
+      mca_pi, mca_ri, mca_psv_cm_s, mca_psv_mom, mca_pi_centile, mca_brain_sparing, fetal_anemia_risk,
+      cpr_ratio, cpr_centile, cpr_status,
+      uta_left_pi, uta_right_pi, uta_mean_pi, uta_mean_pi_centile, uta_notching,
+      dv_piv, dv_piv_centile, dv_a_wave, dv_status,
+      fgr_classification, barcelona_stage,
+      monitoring_frequency_recommendation, delivery_timing_recommendation,
+      steroids_indicated, mgso4_neuroprotection_indicated,
+      clinical_notes, performed_by, reviewed_by,
+      created_by, updated_by, created_at, updated_at
+    ) VALUES (
+      ?, '2026-11-02', '11:45', 34, 0,
+      1780, 8.0, 270.0, 7.0,
+      1.42, 0.74, 3.85, 'normal_positive', 96.0, 'elevated_above_95th',
+      1.12, 0.58, 48.5, 0.99, 3.0, 'vasodilation_below_5th', 'none',
+      0.79, 2.0, 'brain_sparing_redistribution',
+      1.15, 1.01, 1.08, 97.0, 'unilateral',
+      0.65, 78.0, 'positive', 'normal',
+      'late_fgr', 'stage_1',
+      'Weekly Doppler velocimetry (UA PI, MCA PI, CPR) and Biophysical Profile (BPP).',
+      'Induction of labor at 37 weeks (trial of vaginal delivery with continuous intrapartum CTG).',
+      0, 0,
+      'Late-onset FGR with cerebral vasodilation (brain-sparing reflex on CPR < 1.0). High resistance in umbilical artery. Plan close weekly surveillance.',
+      'Dr. K. Sarayu Rao', ?,
+      ?, ?, ?, ?
+    )
+  `).run(sunitaId, docId, docId, docId, now, now);
+
   // Book today's outpatient appointments for the active queue
   const todayStr = new Date().toISOString().slice(0, 10);
   const appts = [
