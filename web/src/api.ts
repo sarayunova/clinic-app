@@ -2300,3 +2300,57 @@ export interface CtgEpisode {
 export interface CtgEpisodesResponse {
   episodes: CtgEpisode[];
 }
+
+// ---------- Pediatric WHO Growth Standards & Developmental Milestones ----------
+
+export interface PediatricGrowthRecord {
+  id: number;
+  patient_id: number;
+  recorded_date: string;
+  age_months: number;
+  sex: 'male' | 'female';
+  weight_kg?: number | null;
+  height_length_cm?: number | null;
+  head_circumference_cm?: number | null;
+  bmi?: number | null;
+  weight_for_age_z?: number | null;
+  weight_for_age_status?: 'normal' | 'underweight' | 'severe_underweight' | 'overweight' | null;
+  height_for_age_z?: number | null;
+  height_for_age_status?: 'normal' | 'stunting' | 'severe_stunting' | 'tall' | null;
+  weight_for_height_z?: number | null;
+  weight_for_height_status?: 'normal' | 'wasting' | 'severe_acute_malnutrition' | 'overweight' | 'obese' | null;
+  hc_for_age_z?: number | null;
+  hc_for_age_status?: 'normal' | 'microcephaly' | 'severe_microcephaly' | 'macrocephaly' | null;
+  clinical_notes?: string | null;
+  recorded_by?: number | null;
+  recorded_by_name?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PediatricMilestoneItem {
+  key: string;
+  title: string;
+  domain: 'gross_motor' | 'fine_motor_adaptive' | 'language_hearing' | 'personal_social';
+  expectedAgeMonths: number;
+  upperLimitAgeMonths: number;
+  description: string;
+  status: 'achieved' | 'emerging' | 'delayed' | 'not_tested';
+  achievedDate?: string | null;
+  ageAchievedMonths?: number | null;
+  isRedFlag: boolean;
+  notes?: string | null;
+  recordedByName?: string | null;
+  updatedAt?: string | null;
+}
+
+export interface PediatricGrowthResponse {
+  records: PediatricGrowthRecord[];
+}
+
+export interface PediatricMilestonesResponse {
+  currentAgeMonths: number;
+  milestones: PediatricMilestoneItem[];
+  redFlags: string[];
+  delayCount: number;
+}

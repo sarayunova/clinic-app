@@ -29,6 +29,7 @@ import { FolliculometryTracker } from '../components/FolliculometryTracker';
 import { ErasReedaManager } from '../components/ErasReedaManager';
 import { GestationalDiabetesTracker } from '../components/GestationalDiabetesTracker';
 import { CardiotocographyTracker } from '../components/CardiotocographyTracker';
+import { PediatricGrowthTracker } from '../components/PediatricGrowthTracker';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -139,7 +140,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'pediatric' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'pediatric' | 'pediatric_growth' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -532,6 +533,13 @@ export function PatientPage() {
                     </button>
                     <button
                       type="button"
+                      className={`btn small ${viewMode === 'pediatric_growth' ? 'primary' : ''}`}
+                      onClick={() => setViewMode('pediatric_growth')}
+                    >
+                      🧒 WHO Growth &amp; Milestones
+                    </button>
+                    <button
+                      type="button"
                       className={`btn small ${viewMode === 'neonatal_resus' ? 'primary' : ''}`}
                       onClick={() => setViewMode('neonatal_resus')}
                     >
@@ -672,6 +680,11 @@ export function PatientPage() {
             <PediatricTracker
               patientId={patient!.id}
               dateOfBirth={patient!.dateOfBirth as string | null | undefined}
+            />
+          ) : isPediatric && viewMode === 'pediatric_growth' ? (
+            <PediatricGrowthTracker
+              patientId={patient!.id}
+              patientDob={patient!.dateOfBirth as string | null | undefined}
             />
           ) : viewMode === 'ultrasound' ? (
             <UltrasoundTracker

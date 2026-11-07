@@ -459,12 +459,84 @@ async function seed() {
     `).run(meeraId, bedL1.id, docId, now, now);
   }
 
+  // --- PATIENT 6: Master Aarav Patel (1-Year-Old Pediatric WHO Growth & Milestones) ---
+  const aaravId = ensurePatient({
+    patientNumber: 'P-1006',
+    fullName: 'Master Aarav Patel',
+    phone: '9845011005',
+    dateOfBirth: '2025-11-01',
+    estimatedAgeYears: 1,
+    gravida: 0,
+    para: 0,
+    living: 0,
+    abortions: 0,
+    allergyStatus: 'none',
+    medicalHistory: 'Term male infant delivered normal vaginal. Fully immunized to date. Exclusive breastfeeding x 6 months.',
+  });
+
+  // Longitudinal Growth Measurements across 12 months
+  const aaravGrowth = [
+    { d: '2025-11-01', m: 0, w: 3.3, h: 50.0, hc: 34.5, wz: 0.0, hz: 0.0, hcz: 0.0, notes: 'Birth anthropometry. Normal AGA.' },
+    { d: '2026-02-01', m: 3, w: 6.4, h: 61.5, hc: 40.5, wz: 0.0, hz: 0.05, hcz: 0.0, notes: '3-month checkup. Smiling, head control improving.' },
+    { d: '2026-05-01', m: 6, w: 7.9, h: 67.5, hc: 43.3, wz: 0.0, hz: -0.05, hcz: 0.0, notes: '6-month checkup. Complementary feeding started (khichdi, mashed banana).' },
+    { d: '2026-08-01', m: 9, w: 8.9, h: 72.0, hc: 45.0, wz: 0.0, hz: -0.1, hcz: 0.0, notes: '9-month checkup. Sitting independently, babbling.' },
+    { d: '2026-11-01', m: 12, w: 9.7, h: 75.8, hc: 46.2, wz: 0.1, hz: 0.05, hcz: 0.05, notes: '1-year well-baby checkup. Cruising, mature pincer grasp, waving bye-bye.' },
+  ];
+
+  for (const g of aaravGrowth) {
+    db.prepare(`
+      INSERT OR IGNORE INTO pediatric_growth_records (
+        patient_id, recorded_date, age_months, sex, weight_kg, height_length_cm,
+        head_circumference_cm, bmi, weight_for_age_z, weight_for_age_status,
+        height_for_age_z, height_for_age_status, weight_for_height_z,
+        weight_for_height_status, hc_for_age_z, hc_for_age_status,
+        clinical_notes, recorded_by, created_at, updated_at
+      ) VALUES (
+        ?, ?, ?, 'male', ?, ?,
+        ?, 16.9, ?, 'normal',
+        ?, 'normal', 0.0,
+        'normal', ?, 'normal',
+        ?, ?, ?, ?
+      )
+    `).run(
+      aaravId, g.d, g.m, g.w, g.h,
+      g.hc, g.wz, g.hz, g.hcz,
+      g.notes, docId, now, now
+    );
+  }
+
+  // Milestones evaluated for Aarav
+  const aaravMilestones = [
+    { k: 'neck_holding_3m', t: 'Complete Neck Holding', d: 'gross_motor', exp: 3, up: 5, st: 'achieved', dt: '2026-01-28', age: 2.9 },
+    { k: 'rolls_over_5m', t: 'Rolls Over (Back to Tummy)', d: 'gross_motor', exp: 5, up: 7, st: 'achieved', dt: '2026-03-25', age: 4.8 },
+    { k: 'sits_without_support_6m', t: 'Sits Without Support', d: 'gross_motor', exp: 7, up: 9, st: 'achieved', dt: '2026-05-20', age: 6.6 },
+    { k: 'stands_with_support_9m', t: 'Stands Holding On (Cruising)', d: 'gross_motor', exp: 9, up: 12, st: 'achieved', dt: '2026-08-10', age: 9.3 },
+    { k: 'social_smile_2m', t: 'Social Smile in Response', d: 'fine_motor_adaptive', exp: 2, up: 3, st: 'achieved', dt: '2025-12-24', age: 1.8 },
+    { k: 'pincer_grasp_9m', t: 'Mature Pincer Grasp (Thumb-Index)', d: 'fine_motor_adaptive', exp: 9.5, up: 12, st: 'achieved', dt: '2026-08-15', age: 9.5 },
+    { k: 'cooing_laughing_3m', t: 'Cooing & Laughs Aloud', d: 'language_hearing', exp: 3.5, up: 6, st: 'achieved', dt: '2026-02-15', age: 3.5 },
+    { k: 'babbling_monosyllables_6m', t: 'Monosyllabic Babbling (da, ma)', d: 'language_hearing', exp: 6.5, up: 9, st: 'achieved', dt: '2026-05-15', age: 6.5 },
+    { k: 'first_meaningful_words_12m', t: 'First Meaningful Words (1-2 Words)', d: 'language_hearing', exp: 12, up: 15, st: 'achieved', dt: '2026-10-28', age: 11.9 },
+    { k: 'waves_bye_bye_9m', t: 'Waves Bye-Bye & Plays Peek-a-boo', d: 'personal_social', exp: 9.5, up: 12, st: 'achieved', dt: '2026-08-20', age: 9.7 },
+  ];
+
+  for (const ms of aaravMilestones) {
+    db.prepare(`
+      INSERT OR IGNORE INTO pediatric_milestone_evaluations (
+        patient_id, milestone_key, milestone_title, domain,
+        expected_age_months, upper_limit_age_months, status,
+        achieved_date, age_achieved_months, is_red_flag, notes,
+        recorded_by, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'Achieved on schedule.', ?, ?, ?)
+    `).run(aaravId, ms.k, ms.t, ms.d, ms.exp, ms.up, ms.st, ms.dt, ms.age, docId, now, now);
+  }
+
   // Book today's outpatient appointments for the active queue
   const todayStr = new Date().toISOString().slice(0, 10);
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },
     { pid: poojaId, time: '10:15:00', reason: 'Folliculometry TVS & Trigger Decision', status: 'in_consultation' },
     { pid: sunitaId, time: '11:00:00', reason: 'Post-Cesarean ERAS Wound Check', status: 'waiting' },
+    { pid: aaravId, time: '11:45:00', reason: '1-Year Well-Baby Checkup & Growth Assessment', status: 'waiting' },
   ];
 
   for (const ap of appts) {
