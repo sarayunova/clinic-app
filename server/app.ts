@@ -48,6 +48,7 @@ import { registerErasReedaRoutes } from './routes/erasReeda.js';
 import { registerGestationalDiabetesRoutes } from './routes/gestationalDiabetes.js';
 import { registerCardiotocographyRoutes } from './routes/cardiotocography.js';
 import { registerPediatricGrowthRoutes } from './routes/pediatricGrowth.js';
+import { registerCervicalScreeningRoutes } from './routes/cervicalScreening.js';
 import type { LoadedTls } from './tls.js';
 
 declare module 'fastify' {
@@ -199,6 +200,7 @@ export async function buildApp(ctx: Omit<Ctx, 'throttle'> & { throttle?: LoginTh
   registerGestationalDiabetesRoutes(app, full);
   registerCardiotocographyRoutes(app, full);
   registerPediatricGrowthRoutes(app, full);
+  registerCervicalScreeningRoutes(app, full);
 
   app.get('/api/health', async () => ({ ok: true }));
   return app;

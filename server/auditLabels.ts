@@ -81,6 +81,12 @@ export const ACTION_LABELS: Record<string, string> = {
   'partograph.outcome': 'Recorded labor delivery outcome',
   'partograph.update': 'Updated labor partograph details',
   'partograph.print': 'Printed WHO partograph sheet',
+  'cervical.screening_create': 'Recorded cervical screening & colposcopy',
+  'cervical.screening_update': 'Updated cervical screening & colposcopy',
+  'cervical.screening_delete': 'Deleted cervical screening record',
+  'cervical.biopsy_add': 'Recorded cervical biopsy specimen',
+  'cervical.biopsy_update': 'Updated cervical biopsy histopathology',
+  'cervical.print': 'Printed colposcopy & cervical screening report',
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

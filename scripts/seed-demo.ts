@@ -530,6 +530,77 @@ async function seed() {
     `).run(aaravId, ms.k, ms.t, ms.d, ms.exp, ms.up, ms.st, ms.dt, ms.age, docId, now, now);
   }
 
+  // --- Cervical Cancer Screening & Colposcopy Records ---
+  // 1. Sunita Rao (P-1004): Abnormal Cotest (HSIL + HPV 16) with Colposcopy, Swede Score 8/10, Biopsies (CIN 3/CIN 2)
+  const sunitaScreeningRes = db.prepare(`
+    INSERT OR IGNORE INTO cervical_screening_records (
+      patient_id, screening_date, screening_type, indication,
+      pap_performed, pap_sample_type, pap_adequacy, pap_result, pap_infections, pap_lab_name, pap_report_number,
+      hpv_performed, hpv_test_type, hpv_overall_result, hpv_16_positive, hpv_18_positive, hpv_45_positive, hpv_other_high_risk_positive,
+      colposcopy_performed, colposcopy_date, examiner_name, cervix_visibility, transformation_zone_type, squamocolumnar_junction_visible,
+      swede_acetowhitening, swede_margins, swede_vessels, swede_lesion_size, swede_iodine_staining, swede_score_total, swede_interpretation,
+      reid_margin, reid_color, reid_vessels, reid_iodine, reid_score_total, reid_interpretation,
+      lesion_quadrants, endocervical_curettage_done,
+      biopsy_taken, biopsy_type, biopsy_sites, biopsy_result, histopathology_number,
+      management_recommendation, next_recall_months, clinical_notes, status,
+      created_by, updated_by, created_at, updated_at
+    ) VALUES (
+      ?, '2026-10-15', 'co_test', 'routine_screening',
+      1, 'liquid_based', 'satisfactory_with_ec_tz', 'hsil', '[]', 'Metropolis Path Lab', 'CYT-2026-8812',
+      1, 'pcr', 'positive', 1, 0, 0, 1,
+      1, '2026-10-22', 'Dr. Demo Sharma', 'fully_visible', 'type_1', 'completely_visible',
+      2, 2, 1, 1, 2, 8, 'high_probability_cin2_3_cancer',
+      2, 2, 1, 2, 7, 'Likely High-Grade Lesion (CIN 2–3)',
+      '["12_oclock", "1_oclock", "6_oclock"]', 0,
+      1, 'punch_biopsy', '12 oclock and 6 oclock anterior and posterior lips', 'cin_2_moderate', 'HP-2026-4401',
+      'Cervical Excisional Procedure (LEEP / LLETZ) Indicated', 3,
+      'Dense acetowhite epithelium with coarse punctation at 12 oclock and rolled peeling borders. Directed punch biopsies taken at 12 and 6 oclock. Advised therapeutic LEEP.', 'completed',
+      ?, ?, ?, ?
+    )
+  `).run(sunitaId, docId, docId, now, now);
+
+  const sunitaScreeningId = Number(sunitaScreeningRes.lastInsertRowid) || 1;
+
+  db.prepare(`
+    INSERT OR IGNORE INTO cervical_biopsies (
+      screening_id, patient_id, site_location, clock_position, specimen_label,
+      histopathology_result, pathologist_notes, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    sunitaScreeningId, sunitaId, "12 o'clock anterior lip", 12, 'BX-A',
+    'cin_3_cis', 'High-grade squamous intraepithelial lesion (CIN 3 / severe dysplasia) involving endocervical crypts with clear margins.',
+    now, now
+  );
+
+  db.prepare(`
+    INSERT OR IGNORE INTO cervical_biopsies (
+      screening_id, patient_id, site_location, clock_position, specimen_label,
+      histopathology_result, pathologist_notes, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    sunitaScreeningId, sunitaId, "6 o'clock posterior lip", 6, 'BX-B',
+    'cin_2', 'Moderate squamous intraepithelial dysplasia (CIN 2) with prominent koilocytosis.',
+    now, now
+  );
+
+  // 2. Anita Sharma (P-1001): Normal Well-Woman Cotest
+  db.prepare(`
+    INSERT OR IGNORE INTO cervical_screening_records (
+      patient_id, screening_date, screening_type, indication,
+      pap_performed, pap_sample_type, pap_adequacy, pap_result, pap_infections, pap_lab_name, pap_report_number,
+      hpv_performed, hpv_test_type, hpv_overall_result, hpv_16_positive, hpv_18_positive, hpv_45_positive, hpv_other_high_risk_positive,
+      colposcopy_performed, management_recommendation, next_recall_months, clinical_notes, status,
+      created_by, updated_by, created_at, updated_at
+    ) VALUES (
+      ?, '2025-08-10', 'co_test', 'routine_screening',
+      1, 'liquid_based', 'satisfactory_with_ec_tz', 'nilm', '[]', 'Dr Lal PathLabs', 'LAL-9921',
+      1, 'pcr', 'negative', 0, 0, 0, 0,
+      0, 'Routine Cervical Cancer Screening (Cotesting in 5 Years or Cytology Smear in 3 Years)', 60,
+      'Normal cervix. Squamous and endocervical cells present. Reassuring results.', 'completed',
+      ?, ?, ?, ?
+    )
+  `).run(anitaId, docId, docId, now, now);
+
   // Book today's outpatient appointments for the active queue
   const todayStr = new Date().toISOString().slice(0, 10);
   const appts = [

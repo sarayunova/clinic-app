@@ -2354,3 +2354,104 @@ export interface PediatricMilestonesResponse {
   redFlags: string[];
   delayCount: number;
 }
+
+export interface CervicalBiopsy {
+  id: number;
+  screening_id: number;
+  patient_id: number;
+  site_location: string;
+  clock_position: number | null;
+  specimen_label: string | null;
+  histopathology_result: string;
+  pathologist_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CervicalScreeningRecord {
+  id: number;
+  patient_id: number;
+  screening_date: string;
+  screening_type: string;
+  indication: string;
+
+  pap_performed: number;
+  pap_sample_type: string | null;
+  pap_adequacy: string | null;
+  pap_result: string | null;
+  pap_infections: string[];
+  pap_lab_name: string | null;
+  pap_report_number: string | null;
+
+  hpv_performed: number;
+  hpv_test_type: string | null;
+  hpv_overall_result: string | null;
+  hpv_16_positive: number;
+  hpv_18_positive: number;
+  hpv_45_positive: number;
+  hpv_other_high_risk_positive: number;
+  hpv_viral_load: string | null;
+
+  colposcopy_performed: number;
+  colposcopy_date: string | null;
+  examiner_name: string | null;
+  cervix_visibility: string | null;
+  transformation_zone_type: string | null;
+  squamocolumnar_junction_visible: string | null;
+
+  swede_acetowhitening: number | null;
+  swede_margins: number | null;
+  swede_vessels: number | null;
+  swede_lesion_size: number | null;
+  swede_iodine_staining: number | null;
+  swede_score_total: number | null;
+  swede_interpretation: string | null;
+
+  reid_margin: number | null;
+  reid_color: number | null;
+  reid_vessels: number | null;
+  reid_iodine: number | null;
+  reid_score_total: number | null;
+  reid_interpretation: string | null;
+
+  lesion_quadrants: string[];
+  endocervical_curettage_done: number;
+
+  biopsy_taken: number;
+  biopsy_type: string | null;
+  biopsy_sites: string | null;
+  biopsy_result: string | null;
+  histopathology_number: string | null;
+
+  management_recommendation: string;
+  next_recall_months: number | null;
+  clinical_notes: string | null;
+  status: string;
+
+  created_by_name?: string | null;
+  created_at: string;
+  updated_at: string;
+
+  biopsies: CervicalBiopsy[];
+}
+
+export interface CervicalScreeningListResponse {
+  records: CervicalScreeningRecord[];
+}
+
+export interface CervicalScreeningDetailResponse {
+  record: CervicalScreeningRecord;
+  patient: {
+    id: number;
+    full_name: string;
+    date_of_birth: string | null;
+    last_menstrual_period: string | null;
+  };
+  isPregnant: boolean;
+  bethesdaMeta: {
+    grade: string;
+    title: string;
+    shortCode: string;
+    description: string;
+  };
+}

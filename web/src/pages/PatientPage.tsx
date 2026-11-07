@@ -30,6 +30,7 @@ import { ErasReedaManager } from '../components/ErasReedaManager';
 import { GestationalDiabetesTracker } from '../components/GestationalDiabetesTracker';
 import { CardiotocographyTracker } from '../components/CardiotocographyTracker';
 import { PediatricGrowthTracker } from '../components/PediatricGrowthTracker';
+import { CervicalScreeningTracker } from '../components/CervicalScreeningTracker';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -140,7 +141,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'pediatric' | 'pediatric_growth' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'pediatric' | 'pediatric_growth' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -577,6 +578,13 @@ export function PatientPage() {
                     >
                       🔬 Infertility &amp; Folliculometry
                     </button>
+                    <button
+                      type="button"
+                      className={`btn small ${viewMode === 'cervical_screening' ? 'primary' : ''}`}
+                      onClick={() => setViewMode('cervical_screening')}
+                    >
+                      🔬 Cervical &amp; Colposcopy
+                    </button>
                   </>
                 )}
                 <button
@@ -674,6 +682,8 @@ export function PatientPage() {
             <GestationalDiabetesTracker patientId={patient!.id} />
           ) : viewMode === 'ctg' ? (
             <CardiotocographyTracker patientId={patient!.id} />
+          ) : viewMode === 'cervical_screening' ? (
+            <CervicalScreeningTracker patientId={patient!.id} />
           ) : viewMode === 'eras_reeda' ? (
             <ErasReedaManager patientId={patient!.id} />
           ) : isPediatric && viewMode === 'pediatric' ? (
