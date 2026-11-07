@@ -559,6 +559,8 @@ export interface ClinicSettings {
   email?: string;
   website?: string;
   doctorQualifications?: string;
+  pndtRegistrationNo?: string;
+  pndtMachineDetails?: string;
   headerLayout?: 'centered' | 'split' | 'modern';
   footerText?: string;
   showLogoOnPrint?: string;
@@ -2521,4 +2523,84 @@ export interface IucdInsertionRecord {
   created_at: string;
   updated_at: string;
   followups: IucdFollowup[];
+}
+
+export interface PndtFormFRecord {
+  id: number;
+  formFNumber: string;
+  patientId: number;
+  ultrasoundReportId: number | null;
+  visitId: number | null;
+  scanDate: string;
+  scanTime: string | null;
+  clinicPndtRegNo: string;
+  doctorId: number | null;
+  doctorName: string;
+  doctorRegNo: string;
+  machineModelSerial: string;
+
+  patientName: string;
+  patientAge: number;
+  husbandOrFatherName: string;
+  fullAddress: string;
+  contactPhone: string | null;
+  numLivingMaleChildren: number;
+  maleChildrenAges: string | null;
+  numLivingFemaleChildren: number;
+  femaleChildrenAges: string | null;
+  totalLivingChildren: number;
+  lmp: string | null;
+  gestationalAgeWeeks: number;
+  gestationalAgeDays: number;
+
+  referralType: 'self_referred' | 'doctor_referred';
+  referringDoctorName: string | null;
+  referringDoctorRegNo: string | null;
+  referringClinicAddress: string | null;
+  referralSlipDate: string | null;
+  selfReferralReason: string | null;
+
+  indicationCodes: string[];
+  otherIndicationDetail: string | null;
+  invasiveProcedureDone: boolean;
+  invasiveProcedureDetails: string | null;
+
+  pregnantWomanDeclarationSigned: boolean;
+  pregnantWomanDeclarationTime: string;
+  pregnantWomanSignatureName: string;
+  doctorDeclarationSigned: boolean;
+  doctorDeclarationTime: string;
+  doctorDeclarationName: string;
+
+  fetalNumber: 'single' | 'twins' | 'triplets' | 'multiple';
+  cardiacActivity: 'present' | 'absent' | 'not_applicable';
+  congenitalAnomalyDetected: boolean;
+  congenitalAnomalyDetails: string | null;
+  scanResultSummary: string | null;
+
+  createdBy: number;
+  updatedBy: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MonthlyPndtReturnSummary {
+  month: string;
+  totalScans: number;
+  referralBreakdown: {
+    selfReferred: number;
+    doctorReferred: number;
+  };
+  parityDistribution: {
+    zeroChildren: number;
+    oneChildMale: number;
+    oneChildFemale: number;
+    twoChildrenTwoMales: number;
+    twoChildrenTwoFemales: number;
+    twoChildrenOneMaleOneFemale: number;
+    threeOrMoreChildren: number;
+  };
+  anomalyCount: number;
+  invasiveProceduresCount: number;
+  indicationBreakdown: { code: string; label: string; count: number }[];
 }

@@ -32,6 +32,7 @@ import { CardiotocographyTracker } from '../components/CardiotocographyTracker';
 import { PediatricGrowthTracker } from '../components/PediatricGrowthTracker';
 import { CervicalScreeningTracker } from '../components/CervicalScreeningTracker';
 import { ContraceptionTracker } from '../components/ContraceptionTracker';
+import { PndtFormFTracker } from '../components/PndtFormFTracker';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -142,7 +143,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pediatric' | 'pediatric_growth' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'pediatric' | 'pediatric_growth' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -604,6 +605,13 @@ export function PatientPage() {
                 </button>
                 <button
                   type="button"
+                  className={`btn small ${viewMode === 'pndt' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('pndt')}
+                >
+                  ⚖️ PC-PNDT Form &lsquo;F&rsquo;
+                </button>
+                <button
+                  type="button"
                   className={`btn small ${viewMode === 'lab' ? 'primary' : ''}`}
                   onClick={() => setViewMode('lab')}
                 >
@@ -694,6 +702,8 @@ export function PatientPage() {
             <CervicalScreeningTracker patientId={patient!.id} />
           ) : viewMode === 'contraception' ? (
             <ContraceptionTracker patientId={patient!.id} />
+          ) : viewMode === 'pndt' ? (
+            <PndtFormFTracker patient={patient!} />
           ) : viewMode === 'eras_reeda' ? (
             <ErasReedaManager patientId={patient!.id} />
           ) : isPediatric && viewMode === 'pediatric' ? (

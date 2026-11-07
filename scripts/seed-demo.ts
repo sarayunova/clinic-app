@@ -652,6 +652,86 @@ async function seed() {
     )
   `).run(sunitaIucdId, sunitaId, docId, now, now);
 
+  // --- STATUTORY PC-PNDT ACT SETTINGS & FORM 'F' SEEDING ---
+  const clinicSettings = [
+    ['clinicName', "Dr. Rao's Maternity, Fetal Medicine & Surgical Centre"],
+    ['clinicTagline', 'Centre for Advanced Obstetrics & Prenatal Diagnosis'],
+    ['doctorName', 'Dr. K. Sarayu Rao'],
+    ['doctorQualifications', 'MBBS, MS (OBGYN), DNB, FMAS, Fellow in Fetal Medicine'],
+    ['registrationNo', 'MMC-2012/04/0892'],
+    ['pndtRegistrationNo', 'MH/PNDT/2021/045'],
+    ['pndtMachineDetails', 'GE Voluson E8 Expert 4D, S/N: US-GE-89241'],
+    ['address', 'Plot 42, Bhandarkar Road, Deccan Gymkhana, Pune, Maharashtra - 411004'],
+    ['phone', '+91 98220 12345'],
+    ['email', 'care@drraoclinic.com'],
+    ['website', 'www.drraoclinic.com'],
+  ];
+
+  for (const [k, v] of clinicSettings) {
+    db.prepare(`
+      INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+    `).run(k, v, now);
+  }
+
+  // 1. Anita Sharma (P-1001) Form F: Growth & Doppler Scan at 32 weeks
+  db.prepare(`
+    INSERT OR IGNORE INTO pndt_form_f_records (
+      form_f_number, patient_id, scan_date, scan_time, clinic_pndt_reg_no,
+      doctor_id, doctor_name, doctor_reg_no, machine_model_serial,
+      patient_name, patient_age, husband_or_father_name, full_address, contact_phone,
+      num_living_male_children, male_children_ages, num_living_female_children, female_children_ages, total_living_children,
+      lmp, gestational_age_weeks, gestational_age_days,
+      referral_type, referring_doctor_name, referring_doctor_reg_no, referring_clinic_address, referral_slip_date, self_referral_reason,
+      indication_codes, other_indication_detail, invasive_procedure_done, invasive_procedure_details,
+      pregnant_woman_declaration_signed, pregnant_woman_declaration_time, pregnant_woman_signature_name,
+      doctor_declaration_signed, doctor_declaration_time, doctor_declaration_name,
+      fetal_number, cardiac_activity, congenital_anomaly_detected, congenital_anomaly_details, scan_result_summary,
+      created_by, updated_by, created_at, updated_at
+    ) VALUES (
+      'PNDT-202611-0001', ?, '2026-11-04', '10:15', 'MH/PNDT/2021/045',
+      ?, 'Dr. K. Sarayu Rao', 'MMC-2012/04/0892', 'GE Voluson E8 Expert 4D, S/N: US-GE-89241',
+      'Anita Sharma', 28, 'Rajesh Sharma', 'Flat 402, Shivajinagar, Pune, Maharashtra', '9845011001',
+      1, '3 yrs', 0, NULL, 1,
+      '2026-03-25', 32, 0,
+      'self_referred', NULL, NULL, NULL, NULL, 'Third trimester routine antenatal growth and Doppler surveillance',
+      '["FETAL_GROWTH_FGR","AMNIOTIC_FLUID_LIQUOR","FETAL_DOPPLER"]', NULL, 0, NULL,
+      1, '2026-11-04 10:10', 'Anita Sharma',
+      1, '2026-11-04 10:15', 'Dr. K. Sarayu Rao',
+      'single', 'present', 0, NULL, 'Single live intrauterine gestation at 32 weeks with AGA growth and normal Doppler hemodynamics (CPR 1.56).',
+      ?, ?, ?, ?
+    )
+  `).run(anitaId, docId, docId, docId, now, now);
+
+  // 2. Sunita Rao (P-1004) Form F: Mid-Trimester Anomaly Scan
+  db.prepare(`
+    INSERT OR IGNORE INTO pndt_form_f_records (
+      form_f_number, patient_id, scan_date, scan_time, clinic_pndt_reg_no,
+      doctor_id, doctor_name, doctor_reg_no, machine_model_serial,
+      patient_name, patient_age, husband_or_father_name, full_address, contact_phone,
+      num_living_male_children, male_children_ages, num_living_female_children, female_children_ages, total_living_children,
+      lmp, gestational_age_weeks, gestational_age_days,
+      referral_type, referring_doctor_name, referring_doctor_reg_no, referring_clinic_address, referral_slip_date, self_referral_reason,
+      indication_codes, other_indication_detail, invasive_procedure_done, invasive_procedure_details,
+      pregnant_woman_declaration_signed, pregnant_woman_declaration_time, pregnant_woman_signature_name,
+      doctor_declaration_signed, doctor_declaration_time, doctor_declaration_name,
+      fetal_number, cardiac_activity, congenital_anomaly_detected, congenital_anomaly_details, scan_result_summary,
+      created_by, updated_by, created_at, updated_at
+    ) VALUES (
+      'PNDT-202611-0002', ?, '2026-11-02', '11:30', 'MH/PNDT/2021/045',
+      ?, 'Dr. K. Sarayu Rao', 'MMC-2012/04/0892', 'GE Voluson E8 Expert 4D, S/N: US-GE-89241',
+      'Sunita Rao', 32, 'Ramesh Rao', 'Plot 18, Kothrud, Pune, Maharashtra', '9845011004',
+      0, NULL, 2, '2, 5 yrs', 2,
+      '2026-06-15', 20, 2,
+      'doctor_referred', 'Dr. V. K. Joshi', 'MMC-45812', 'Joshi Polyclinic, Karve Road, Pune', '2026-10-30', NULL,
+      '["ANOMALY_DETECTION","GA_ESTIMATION"]', NULL, 0, NULL,
+      1, '2026-11-02 11:25', 'Sunita Rao',
+      1, '2026-11-02 11:30', 'Dr. K. Sarayu Rao',
+      'single', 'present', 0, NULL, 'Normal targeted level-2 fetal anatomy survey. No congenital structural defect observed.',
+      ?, ?, ?, ?
+    )
+  `).run(sunitaId, docId, docId, docId, now, now);
+
   // Book today's outpatient appointments for the active queue
   const todayStr = new Date().toISOString().slice(0, 10);
   const appts = [

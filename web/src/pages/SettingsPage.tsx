@@ -323,6 +323,31 @@ export function SettingsPage() {
                 maxLength={150}
               />
             </Field>
+
+            <h3 style={{ fontSize: '1rem', marginTop: '1rem', marginBottom: '0.25rem', color: '#0f4c81' }}>
+              Statutory PC-PNDT Act Ultrasound Center Registration
+            </h3>
+            <p className="muted small">
+              Configured registration and equipment details will automatically populate statutory PC-PNDT Form &lsquo;F&rsquo; and monthly returns submitted to the District Appropriate Authority.
+            </p>
+
+            <Field label="PC-PNDT Registration Number (Center / Genetic Clinic)">
+              <input
+                value={f.pndtRegistrationNo || ''}
+                onChange={(e) => setF({ ...f, pndtRegistrationNo: e.target.value })}
+                placeholder="e.g. MH/PNDT/2021/045 or DL/PNDT/2019/112"
+                maxLength={150}
+              />
+            </Field>
+
+            <Field label="Ultrasound Machine Particulars (Make, Model &amp; Serial Number)">
+              <input
+                value={f.pndtMachineDetails || ''}
+                onChange={(e) => setF({ ...f, pndtMachineDetails: e.target.value })}
+                placeholder="e.g. GE Voluson E8 Expert 4D, S/N: US-GE-89241"
+                maxLength={300}
+              />
+            </Field>
           </div>
         )}
 

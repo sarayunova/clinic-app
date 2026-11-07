@@ -94,6 +94,11 @@ export const ACTION_LABELS: Record<string, string> = {
   'iucd.insertion_delete': 'Deleted IUCD insertion record',
   'iucd.followup_create': 'Recorded IUCD follow-up thread check',
   'iucd.print': 'Printed contraceptive & IUCD card',
+  'pndt.form_f_create': 'Generated statutory PC-PNDT Form F',
+  'pndt.form_f_update': 'Updated statutory PC-PNDT Form F',
+  'pndt.form_f_delete': 'Deleted statutory PC-PNDT Form F',
+  'pndt.form_f_print': 'Printed statutory PC-PNDT Form F',
+  'pndt.monthly_return_export': 'Exported statutory PC-PNDT monthly return',
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

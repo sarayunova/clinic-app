@@ -36,6 +36,7 @@ import { CardiotocographyPrint } from './pages/CardiotocographyPrint';
 import { PediatricGrowthPrint } from './pages/PediatricGrowthPrint';
 import { CervicalScreeningPrint } from './pages/CervicalScreeningPrint';
 import { IucdPrint } from './pages/IucdPrint';
+import { PndtFormFPrint } from './pages/PndtFormFPrint';
 import { DeliveryWardPage } from './pages/DeliveryWardPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditPage } from './pages/AuditPage';
@@ -163,6 +164,7 @@ function Shell() {
           <Route path="/patients/:id/pediatric/growth/print" element={can('patient:read_clinical') ? <PediatricGrowthPrint /> : <Navigate to="/patients" replace />} />
           <Route path="/patients/:patientId/cervical-screenings/:id/print" element={can('patient:read_clinical') ? <CervicalScreeningPrint /> : <Navigate to="/patients" replace />} />
           <Route path="/patients/:patientId/contraception/iucd/:id/print" element={can('patient:read_clinical') ? <IucdPrint /> : <Navigate to="/patients" replace />} />
+          <Route path="/patients/:patientId/pndt/:id/print" element={can('patient:read_clinical') ? <PndtFormFPrint /> : <Navigate to="/patients" replace />} />
           <Route path="/delivery-ward" element={can('ipd:read_basic') || can('station:read') ? <DeliveryWardPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id" element={can('visit:read') ? <VisitPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id/print" element={can('visit:read') ? <PrescriptionPrint /> : <Navigate to="/" replace />} />
