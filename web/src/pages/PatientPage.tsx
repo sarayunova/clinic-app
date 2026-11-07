@@ -40,6 +40,9 @@ import { MultipleGestationTracker } from '../components/MultipleGestationTracker
 import { InductionTracker } from '../components/InductionTracker';
 import { PerinatalLossTracker } from '../components/PerinatalLossTracker';
 import { ArtCycleTracker } from '../components/ArtCycleTracker';
+import { EndometriosisTracker } from '../components/EndometriosisTracker';
+import { UrogynecologyTracker } from '../components/UrogynecologyTracker';
+import { GynOncologyTracker } from '../components/GynOncologyTracker';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -150,7 +153,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'pediatric' | 'pediatric_growth' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'pediatric' | 'pediatric_growth' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -668,6 +671,27 @@ export function PatientPage() {
                 </button>
                 <button
                   type="button"
+                  className={`btn small ${viewMode === 'endometriosis' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('endometriosis')}
+                >
+                  🎗️ Endometriosis (#Enzian)
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'urogynecology' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('urogynecology')}
+                >
+                  🌸 Urogynecology &amp; POP-Q
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'gyn_oncology' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('gyn_oncology')}
+                >
+                  🔬 Gyn-Oncology &amp; RMI
+                </button>
+                <button
+                  type="button"
                   className={`btn small ${viewMode === 'lab' ? 'primary' : ''}`}
                   onClick={() => setViewMode('lab')}
                 >
@@ -774,6 +798,12 @@ export function PatientPage() {
             <PerinatalLossTracker patient={patient!} />
           ) : viewMode === 'art_cycles' ? (
             <ArtCycleTracker patient={patient!} />
+          ) : viewMode === 'endometriosis' ? (
+            <EndometriosisTracker patient={patient!} />
+          ) : viewMode === 'urogynecology' ? (
+            <UrogynecologyTracker patient={patient!} />
+          ) : viewMode === 'gyn_oncology' ? (
+            <GynOncologyTracker patient={patient!} />
           ) : viewMode === 'eras_reeda' ? (
             <ErasReedaManager patientId={patient!.id} />
           ) : isPediatric && viewMode === 'pediatric' ? (

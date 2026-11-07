@@ -3209,3 +3209,223 @@ export const calculateArtKinetics = (input: any): Promise<any> =>
 
 export const parseGardnerBlastocystGrade = (gradeCode: string): Promise<any> =>
   api<any>('POST', '/api/art/parse-gardner-grade', { gradeCode });
+
+// ---------- Series 8A: Endometriosis & DIE (#Enzian & rASRM) ----------
+
+export interface EndometriosisEpisode {
+  id: number;
+  patientId: number;
+  admissionId?: number | null;
+  assessmentDate: string;
+  indication: 'chronic_pelvic_pain' | 'dysmenorrhea' | 'deep_dyspareunia' | 'infertility_workup' | 'adnexal_mass_endometrioma' | 'surgical_follow_up';
+  surgicalApproach: 'laparoscopy' | 'laparotomy' | 'robotic' | 'clinical_imaging_only';
+
+  vasDysmenorrhea: number;
+  vasDyspareunia: number;
+  vasDyschezia: number;
+  vasDysuria: number;
+  vasChronicPelvicPain: number;
+
+  rasrmPeritonealSuperficialPts: number;
+  rasrmPeritonealDeepPts: number;
+  rasrmOvaryRightSuperficialPts: number;
+  rasrmOvaryRightDeepPts: number;
+  rasrmOvaryLeftSuperficialPts: number;
+  rasrmOvaryLeftDeepPts: number;
+  rasrmAdhesionsOvaryRightPts: number;
+  rasrmAdhesionsOvaryLeftPts: number;
+  rasrmAdhesionsTubeRightPts: number;
+  rasrmAdhesionsTubeLeftPts: number;
+  pouchOfDouglasObliteration: 'none' | 'partial_4pts' | 'complete_40pts';
+  rasrmTotalScore: number;
+  rasrmStage: 'stage_1_minimal' | 'stage_2_mild' | 'stage_3_moderate' | 'stage_4_severe';
+
+  enzianPeritoneum?: string | null;
+  enzianOvaryLeft?: string | null;
+  enzianOvaryRight?: string | null;
+  enzianTubeLeft?: string | null;
+  enzianTubeRight?: string | null;
+  enzianCompartmentA?: string | null;
+  enzianCompartmentB?: string | null;
+  enzianCompartmentC?: string | null;
+  enzianExtragenitalF?: string | null;
+  enzianAdenomyosisFa: boolean;
+  enzianCompositeCode: string;
+
+  medicalManagementRegimen?: string | null;
+  surgicalProcedurePerformed?: string | null;
+  fertilitySparing: boolean;
+  postOpHormonalSuppression?: string | null;
+  clinicalNotes?: string | null;
+
+  leadSurgeon?: string | null;
+  reviewedBy: number;
+  reviewedByName?: string | null;
+  createdBy: number;
+  createdByName?: string | null;
+  updatedBy: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const getEndometriosisEpisodes = (patientId: number): Promise<EndometriosisEpisode[]> =>
+  api<EndometriosisEpisode[]>('GET', `/api/patients/${patientId}/endometriosis`);
+
+export const getEndometriosisEpisode = (id: number): Promise<EndometriosisEpisode> =>
+  api<EndometriosisEpisode>('GET', `/api/endometriosis/${id}`);
+
+export const createEndometriosisEpisode = (payload: Partial<EndometriosisEpisode>): Promise<EndometriosisEpisode> =>
+  api<EndometriosisEpisode>('POST', '/api/endometriosis', payload);
+
+export const updateEndometriosisEpisode = (id: number, payload: Partial<EndometriosisEpisode>): Promise<EndometriosisEpisode> =>
+  api<EndometriosisEpisode>('PUT', `/api/endometriosis/${id}`, payload);
+
+export const deleteEndometriosisEpisode = (id: number): Promise<{ ok: boolean; deletedId: number }> =>
+  api<{ ok: boolean; deletedId: number }>('DELETE', `/api/endometriosis/${id}`);
+
+export const auditPrintEndometriosis = (id: number): Promise<{ ok: boolean }> =>
+  api<{ ok: boolean }>('POST', `/api/endometriosis/${id}/audit-print`);
+
+export const calculateEndometriosis = (payload: any): Promise<any> =>
+  api<any>('POST', '/api/endometriosis/calculate', payload);
+
+// ---------- Series 8B: Urogynecology & POP-Q Registry ----------
+
+export interface UrogynecologyEpisode {
+  id: number;
+  patientId: number;
+  admissionId?: number | null;
+  assessmentDate: string;
+  parity?: string | null;
+  menopausalStatus: 'premenopausal' | 'perimenopausal' | 'postmenopausal';
+
+  popqAaCm: number;
+  popqBaCm: number;
+  popqCCm: number;
+  popqGhCm: number;
+  popqPbCm: number;
+  popqTvlCm: number;
+  popqApCm: number;
+  popqBpCm: number;
+  popqDCm?: number | null;
+
+  popqStage: 'stage_0' | 'stage_1' | 'stage_2' | 'stage_3' | 'stage_4';
+  leadingCompartment: 'anterior_cystocele' | 'apical_uterine_vault' | 'posterior_rectocele' | 'multicompartment' | 'none';
+  leadingEdgeDistanceCm: number;
+
+  urinaryIncontinenceType: 'none' | 'stress_sui' | 'urge_uui' | 'mixed_mui' | 'overflow';
+  padCountPerDay: number;
+  bladderDiaryDayFrequency?: number | null;
+  bladderDiaryNocturia?: number | null;
+  leakEpisodes24h?: number | null;
+  botherScoreIciqSf?: number | null;
+
+  pessaryManagement: 'none' | 'fitted_ring' | 'fitted_gellhorn' | 'fitted_cube' | 'pessary_declined' | 'pessary_failed';
+  pessarySizeMm?: number | null;
+  pessaryChangeIntervalWeeks?: number | null;
+  pelvicFloorPhysiotherapy: boolean;
+  surgicalProcedurePlanned?: string | null;
+  clinicalNotes?: string | null;
+
+  performedBy?: string | null;
+  reviewedBy: number;
+  reviewedByName?: string | null;
+  createdBy: number;
+  createdByName?: string | null;
+  updatedBy: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const getUrogynEpisodes = (patientId: number): Promise<UrogynecologyEpisode[]> =>
+  api<UrogynecologyEpisode[]>('GET', `/api/patients/${patientId}/urogynecology`);
+
+export const getUrogynEpisode = (id: number): Promise<UrogynecologyEpisode> =>
+  api<UrogynecologyEpisode>('GET', `/api/urogynecology/${id}`);
+
+export const createUrogynEpisode = (payload: Partial<UrogynecologyEpisode>): Promise<UrogynecologyEpisode> =>
+  api<UrogynecologyEpisode>('POST', '/api/urogynecology', payload);
+
+export const updateUrogynEpisode = (id: number, payload: Partial<UrogynecologyEpisode>): Promise<UrogynecologyEpisode> =>
+  api<UrogynecologyEpisode>('PUT', `/api/urogynecology/${id}`, payload);
+
+export const deleteUrogynEpisode = (id: number): Promise<{ ok: boolean; deletedId: number }> =>
+  api<{ ok: boolean; deletedId: number }>('DELETE', `/api/urogynecology/${id}`);
+
+export const auditPrintUrogyn = (id: number): Promise<{ ok: boolean }> =>
+  api<{ ok: boolean }>('POST', `/api/urogynecology/${id}/audit-print`);
+
+export const calculatePopq = (payload: any): Promise<any> =>
+  api<any>('POST', '/api/urogynecology/calculate-popq', payload);
+
+// ---------- Series 8C: Gynecological Oncology (IOTA & RMI) ----------
+
+export interface GynOncologyEpisode {
+  id: number;
+  patientId: number;
+  admissionId?: number | null;
+  assessmentDate: string;
+  clinicalIndication: 'adnexal_mass' | 'postmenopausal_bleeding' | 'cervical_neoplasia_suspected' | 'endometrial_thickening' | 'abnormal_uterine_bleeding';
+  menopausalStatus: 'premenopausal' | 'postmenopausal';
+
+  ca125LevelUml?: number | null;
+  he4PmolL?: number | null;
+  romaScorePercent?: number | null;
+
+  lesionMaxDiameterMm?: number | null;
+  proportionSolidTissuePercent?: number | null;
+  papillaryProjectionsCount: number;
+  acousticShadowsPresent: boolean;
+  ascitesPresent: boolean;
+  bilateralLesions: boolean;
+  multilocularCysts: boolean;
+  colorDopplerScore?: number | null;
+
+  iotaSimpleRulesCategory: 'benign' | 'malignant' | 'inconclusive';
+  iotaPredictedMalignancyRiskPct?: number | null;
+  rmiScore: number;
+  rmiRiskTier: 'low_risk_le_25' | 'intermediate_risk_26_200' | 'high_risk_gt_200';
+
+  endometrialThicknessMm?: number | null;
+  endometrialBiopsyDone: boolean;
+  endometrialHistology?: string | null;
+
+  cervicalLesionVisible: boolean;
+  figoClinicalStage?: string | null;
+
+  multidisciplinaryTumorBoardStatus: 'not_required_benign' | 'pending_board_review' | 'discussed_approved';
+  managementPlan?: string | null;
+  surgicalStagingDetails?: string | null;
+  clinicalNotes?: string | null;
+
+  gynOncologistName?: string | null;
+  reviewedBy: number;
+  reviewedByName?: string | null;
+  createdBy: number;
+  createdByName?: string | null;
+  updatedBy: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const getGynOncologyEpisodes = (patientId: number): Promise<GynOncologyEpisode[]> =>
+  api<GynOncologyEpisode[]>('GET', `/api/patients/${patientId}/gyn-oncology`);
+
+export const getGynOncologyEpisode = (id: number): Promise<GynOncologyEpisode> =>
+  api<GynOncologyEpisode>('GET', `/api/gyn-oncology/${id}`);
+
+export const createGynOncologyEpisode = (payload: Partial<GynOncologyEpisode>): Promise<GynOncologyEpisode> =>
+  api<GynOncologyEpisode>('POST', '/api/gyn-oncology', payload);
+
+export const updateGynOncologyEpisode = (id: number, payload: Partial<GynOncologyEpisode>): Promise<GynOncologyEpisode> =>
+  api<GynOncologyEpisode>('PUT', `/api/gyn-oncology/${id}`, payload);
+
+export const deleteGynOncologyEpisode = (id: number): Promise<{ ok: boolean; deletedId: number }> =>
+  api<{ ok: boolean; deletedId: number }>('DELETE', `/api/gyn-oncology/${id}`);
+
+export const auditPrintGynOncology = (id: number): Promise<{ ok: boolean }> =>
+  api<{ ok: boolean }>('POST', `/api/gyn-oncology/${id}/audit-print`);
+
+export const calculateGynOncologyRmi = (payload: any): Promise<any> =>
+  api<any>('POST', '/api/gyn-oncology/calculate-rmi', payload);
+

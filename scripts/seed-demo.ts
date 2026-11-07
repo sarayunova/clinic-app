@@ -1068,6 +1068,111 @@ async function seed() {
     )
   `).run(poojaId, docId, docId, docId, now, now);
 
+  // ============================================================================
+  // Series 8 Seeds: Endometriosis Staging, POP-Q Urogynecology & Gyn Oncology
+  // ============================================================================
+
+  console.log('Seeding Series 8: Endometriosis #Enzian, Urogynecology POP-Q & Gyn Oncology...');
+
+  // 8A: Endometriosis Staging Episode (Pooja Sharma - DIE with rASRM Stage III & #Enzian)
+  db.prepare(`
+    INSERT INTO endometriosis_episodes (
+      patient_id, assessment_date, assessment_type,
+      vas_dysmenorrhea, vas_dyspareunia, vas_dyschezia, vas_dysuria, vas_chronic_pelvic_pain,
+      rasrm_peritoneal_superficial_pts, rasrm_peritoneal_deep_pts,
+      rasrm_ovary_right_superficial_pts, rasrm_ovary_right_deep_pts,
+      rasrm_ovary_left_superficial_pts, rasrm_ovary_left_deep_pts,
+      rasrm_adhesions_ovary_right_pts, rasrm_adhesions_ovary_left_pts,
+      rasrm_adhesions_tube_right_pts, rasrm_adhesions_tube_left_pts,
+      rasrm_pouch_of_douglas_obliteration, rasrm_total_score, rasrm_stage,
+      enzian_peritoneum, enzian_ovary_left, enzian_ovary_right,
+      enzian_tube_left, enzian_tube_right,
+      enzian_compartment_a, enzian_compartment_b, enzian_compartment_c,
+      enzian_extragenital_f, enzian_adenomyosis_fa, enzian_composite_code,
+      medical_management_regimen, surgical_procedure_performed, fertility_sparing,
+      post_op_hormonal_suppression, clinical_notes, lead_surgeon,
+      reviewed_by, created_by, updated_by, created_at, updated_at
+    ) VALUES (
+      ?, '2026-02-15', 'laparoscopic_surgical',
+      7, 6, 3, 1, 4,
+      2, 4,
+      0, 0,
+      2, 16,
+      0, 4,
+      0, 4,
+      'partial_4pts', 36, 'stage_3_moderate',
+      'P1', 'O2', null,
+      'T1', null,
+      'A1', 'B2', 'C1',
+      'FA', 1, 'P1, O0/2, T0/1, A1, B2, C1, FA',
+      'Dienogest 2 mg daily orally with calcium and Vitamin D3 supplementation',
+      'Laparoscopic excision of DIE nodules in RV septum and left uterosacral ligament, left ovarian cystectomy, and left ureterolysis',
+      1, 'GnRH agonist 3.75 mg monthly depot x 3 months followed by Dienogest',
+      'Complete macroscopic clearance achieved without bowel resection. Left ureter preserved with clear margins.',
+      'Dr. Demo Sharma',
+      ?, ?, ?, ?, ?
+    )
+  `).run(poojaId, docId, docId, docId, now, now);
+
+  // 8B: Urogynecology & POP-Q Episode (Sunita Rao - Postmenopausal Pelvic Prolapse)
+  db.prepare(`
+    INSERT INTO urogynecology_episodes (
+      patient_id, assessment_date, parity, menopausal_status,
+      popq_aa_cm, popq_ba_cm, popq_c_cm, popq_gh_cm, popq_pb_cm, popq_tvl_cm,
+      popq_ap_cm, popq_bp_cm, popq_d_cm,
+      popq_stage, leading_compartment, leading_edge_distance_cm,
+      urinary_incontinence_type, pad_count_per_day,
+      bladder_diary_day_frequency, bladder_diary_nocturia, leak_episodes_24h,
+      bother_score_iciq_sf, pessary_management, pessary_size_mm,
+      pessary_change_interval_weeks, pelvic_floor_physiotherapy,
+      surgical_procedure_planned, clinical_notes, performed_by,
+      reviewed_by, created_by, updated_by, created_at, updated_at
+    ) VALUES (
+      ?, '2026-03-02', 'P3+0', 'postmenopausal',
+      1.0, 3.0, -1.0, 4.5, 2.5, 9.0,
+      -2.0, -1.0, -5.0,
+      'stage_3', 'anterior_cystocele', 3.0,
+      'mixed_mui', 2,
+      8, 3, 3,
+      14, 'fitted_ring', 70,
+      12, 1,
+      'Anterior Colporrhaphy + Midurethral Transobturator Tape (TOT)',
+      'Stage III anterior prolapse (cystocele) with mixed urinary incontinence. Size 70mm ring pessary successfully fitted.',
+      'Dr. Demo Sharma',
+      ?, ?, ?, ?, ?
+    )
+  `).run(sunitaId, docId, docId, docId, now, now);
+
+  // 8C: Gynecological Oncology Episode (Sunita Rao - Adnexal Mass with RMI & IOTA)
+  db.prepare(`
+    INSERT INTO gyn_oncology_episodes (
+      patient_id, assessment_date, clinical_indication, menopausal_status,
+      ca125_level_u_ml, he4_pmol_l, roma_score_percent,
+      lesion_max_diameter_mm, proportion_solid_tissue_percent, papillary_projections_count,
+      acoustic_shadows_present, ascites_present, bilateral_lesions, multilocular_cysts,
+      color_doppler_score, iota_simple_rules_category, iota_predicted_malignancy_risk_pct,
+      rmi_score, rmi_risk_tier, endometrial_thickness_mm, endometrial_biopsy_done,
+      endometrial_histology, cervical_lesion_visible, figo_clinical_stage,
+      multidisciplinary_tumor_board_status, management_plan, surgical_staging_details,
+      clinical_notes, gyn_oncologist_name,
+      reviewed_by, created_by, updated_by, created_at, updated_at
+    ) VALUES (
+      ?, '2026-04-18', 'adnexal_mass', 'postmenopausal',
+      185.0, 95.0, 42.5,
+      68.0, 35.0, 2,
+      0, 1, 1, 1,
+      3, 'malignant', 85.0,
+      1665.0, 'high_risk_gt_200', 6.5, 1,
+      'Atrophic endometrium, negative for hyperplasia or malignancy', 0, 'Suspected FIGO Stage IC2',
+      'discussed_approved',
+      'Urgent multidisciplinary tumor board review. Approved for primary staging laparotomy and cytoreduction.',
+      'Total abdominal hysterectomy, bilateral salpingo-oophorectomy, infragastric omentectomy, peritoneal biopsies, and pelvic lymph node sampling.',
+      'Ascites identified with bilateral multilocular-solid adnexal masses. High-risk RMI (>200) mandates gynecologic oncology clearance.',
+      'Consultant Gynecological Oncologist',
+      ?, ?, ?, ?, ?
+    )
+  `).run(sunitaId, docId, docId, docId, now, now);
+
   // Book today's outpatient appointments for the active queue
   const todayStr = new Date().toISOString().slice(0, 10);
   const appts = [
