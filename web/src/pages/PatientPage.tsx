@@ -50,6 +50,9 @@ import { AbdmProfileTab } from '../components/AbdmProfileTab';
 import { PacClearanceTab } from '../components/PacClearanceTab';
 import { PatientBloodBankTab } from '../components/PatientBloodBankTab';
 import { PediatricRenalTab } from '../components/PediatricRenalTab';
+import { AmsTab } from '../components/AmsTab';
+import { Mgso4ResuscitationTab } from '../components/Mgso4ResuscitationTab';
+import { PalsEmergencyCard } from '../components/PalsEmergencyCard';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -160,7 +163,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'abdm' | 'pediatric' | 'pediatric_growth' | 'pediatric_renal' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'pac' | 'blood_bank' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'abdm' | 'pediatric' | 'pediatric_growth' | 'pediatric_renal' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'pac' | 'blood_bank' | 'risk' | 'postnatal' | 'maternity_admission' | 'ams' | 'mgso4' | 'pews_pals' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -224,6 +227,11 @@ export function PatientPage() {
 
   useEffect(() => {
     if (!patient) return;
+    const tabParam = new URLSearchParams(window.location.search).get('tab');
+    if (tabParam && ['ams', 'mgso4', 'pews_pals', 'pediatric_renal'].includes(tabParam)) {
+      setViewMode(tabParam as any);
+      return;
+    }
     const isMat = Boolean(patient.lastMenstrualPeriod || patient.gravida != null);
     const isPed =
       (patient.ageYears != null && patient.ageYears <= 18) ||
@@ -785,6 +793,27 @@ export function PatientPage() {
                 </button>
                 <button
                   type="button"
+                  className={`btn small ${viewMode === 'ams' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('ams')}
+                >
+                  💊 AMS &amp; AWaRe
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'mgso4' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('mgso4')}
+                >
+                  ⚡ MgSO₄ HDU
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'pews_pals' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('pews_pals')}
+                >
+                  🧸 PEWS &amp; Broselow
+                </button>
+                <button
+                  type="button"
                   className={`btn small ${viewMode === 'list' ? 'primary' : ''}`}
                   onClick={() => setViewMode('list')}
                 >
@@ -922,6 +951,22 @@ export function PatientPage() {
             <OperativeNotesList
               patientId={patient!.id}
               patientName={patient!.fullName}
+            />
+          ) : viewMode === 'ams' ? (
+            <AmsTab
+              patientId={patient!.id}
+              patientName={patient!.fullName}
+            />
+          ) : viewMode === 'mgso4' ? (
+            <Mgso4ResuscitationTab
+              patientId={patient!.id}
+              patientName={patient!.fullName}
+            />
+          ) : viewMode === 'pews_pals' ? (
+            <PalsEmergencyCard
+              patientId={patient!.id}
+              patientName={patient!.fullName}
+              patientAgeYears={patient!.ageYears || undefined}
             />
           ) : (
             <>

@@ -1559,6 +1559,134 @@ async function seed() {
     )
   `).run(pdSessionId, docId, now);
 
+  console.log('Seeding Series 12: Antimicrobial Stewardship (AMS), Obstetric HDU MgSO4, and Pediatric PALS/PEWS...');
+
+  // 1. Series 12A: Antimicrobial Stewardship (AMS) Prescriptions & Isolates
+  const amsPrescRes = db.prepare(`
+    INSERT OR IGNORE INTO ams_prescriptions (
+      patient_id, admission_id, prescribed_by_id, prescribed_datetime, drug_name, aware_tier,
+      route, dosage, frequency, indication, suspected_focus, baseline_wbc, baseline_crp_mg_l,
+      baseline_procalcitonin_ng_ml, cultures_sent, culture_specimen_types, planned_duration_days, status, created_at
+    ) VALUES (
+      ?, NULL, ?, '2026-11-05T09:00:00', 'Ampicillin', 'access',
+      'iv', '100 mg/kg/dose', 'q8h', 'empiric_early_onset_sepsis', 'Neonatal Sepsis / Bloodstream',
+      18500, 28.4, 1.85, 1, '["blood","urine"]', 7, 'de_escalated', ?
+    )
+  `).run(babyId, docId, now);
+
+  const existingAmsPresc = db.prepare('SELECT id FROM ams_prescriptions WHERE patient_id = ? AND drug_name = ?').get(babyId, 'Ampicillin') as { id: number } | undefined;
+  const amsPrescId = existingAmsPresc ? existingAmsPresc.id : Number(amsPrescRes.lastInsertRowid);
+
+  // 48-72h Timeout Review logged
+  db.prepare(`
+    INSERT OR IGNORE INTO ams_timeout_reviews (
+      ams_prescription_id, patient_id, reviewed_by_id, review_datetime, hours_since_initiation,
+      timeout_action, culture_result_summary, clinical_response, justification_notes, new_antimicrobial_regimen, created_at
+    ) VALUES (
+      ?, ?, ?, '2026-11-07T10:00:00', 49.0,
+      'de_escalate', 'pathogen_isolated_sensitivities_available', 'improving_afebrile',
+      'Blood culture grew Enterococcus faecalis sensitive to Ampicillin. Discontinue empiric Gentamicin coverage.',
+      'Continue Ampicillin IV monotherapy for 7 total days', ?
+    )
+  `).run(amsPrescId, babyId, docId, now);
+
+  // Microbiology Culture Isolate
+  db.prepare(`
+    INSERT OR IGNORE INTO ams_microbiology_isolates (
+      patient_id, ams_prescription_id, collection_datetime, specimen_type, pathogen_isolated,
+      colony_count_cfu_ml, sensitivities_json, multidrug_resistant, reported_at, created_at
+    ) VALUES (
+      ?, ?, '2026-11-05T09:30:00', 'blood', 'Enterococcus faecalis',
+      '>10^5 CFU/mL',
+      '{"Ampicillin":"S","Gentamicin":"R","Vancomycin":"S","Linezolid":"S","Teicoplanin":"S"}',
+      0, '2026-11-07T08:30:00', ?
+    )
+  `).run(babyId, amsPrescId, now);
+
+  // Klebsiella isolate for Antibiogram diversity
+  db.prepare(`
+    INSERT OR IGNORE INTO ams_microbiology_isolates (
+      patient_id, ams_prescription_id, collection_datetime, specimen_type, pathogen_isolated,
+      colony_count_cfu_ml, sensitivities_json, multidrug_resistant, reported_at, created_at
+    ) VALUES (
+      ?, NULL, '2026-11-04T14:00:00', 'urine', 'Klebsiella pneumoniae',
+      '>10^5 CFU/mL',
+      '{"Ampicillin":"R","Cefotaxime":"R","Ceftriaxone":"R","Piperacillin-Tazobactam":"S","Meropenem":"S","Amikacin":"S","Colistin":"S"}',
+      1, '2026-11-06T11:00:00', ?
+    )
+  `).run(aaravId, now);
+
+  // 2. Series 12B: Obstetric HDU MgSO4 Resuscitation Protocol for Sunita Rao
+  const mgso4Res = db.prepare(`
+    INSERT OR IGNORE INTO mgso4_resuscitation_protocols (
+      patient_id, protocol_code, regimen_type, indication, initiation_datetime,
+      prescribed_by_id, loading_dose_given, loading_dose_details, maintenance_rate_g_per_h,
+      recurrent_seizure_bolus_given, status, created_at
+    ) VALUES (
+      ?, 'MG-20261107-ZUSPAN-01', 'zuspan_iv', 'severe_preeclampsia_impending', '2026-11-07T06:00:00',
+      ?, 1, '4g IV bolus in 100 mL NS over 20 min', 1.0,
+      0, 'active', ?
+    )
+  `).run(sunitaId, docId, now);
+
+  const existingMg = db.prepare('SELECT id FROM mgso4_resuscitation_protocols WHERE protocol_code = ?').get('MG-20261107-ZUSPAN-01') as { id: number } | undefined;
+  const mgso4Id = existingMg ? existingMg.id : Number(mgso4Res.lastInsertRowid);
+
+  // 4 Hourly checks logged
+  const flowsheetEntries = [
+    { hr: 1, time: '2026-11-07T07:00:00', dtr: 'normal_2_plus', rr: 18, uop: 45, bpS: 154, bpD: 98, hrB: 88, spo2: 99, mg: 5.2, act: 'continue_regimen' },
+    { hr: 2, time: '2026-11-07T08:00:00', dtr: 'normal_2_plus', rr: 17, uop: 42, bpS: 150, bpD: 96, hrB: 84, spo2: 98, mg: 5.6, act: 'continue_regimen' },
+    { hr: 3, time: '2026-11-07T09:00:00', dtr: 'normal_2_plus', rr: 16, uop: 38, bpS: 146, bpD: 92, hrB: 82, spo2: 98, mg: null, act: 'continue_regimen' },
+    { hr: 4, time: '2026-11-07T10:00:00', dtr: 'normal_2_plus', rr: 18, uop: 40, bpS: 142, bpD: 90, hrB: 80, spo2: 99, mg: 5.8, act: 'continue_regimen' },
+  ];
+
+  for (const f of flowsheetEntries) {
+    db.prepare(`
+      INSERT OR IGNORE INTO mgso4_hourly_flowsheet_logs (
+        protocol_id, observation_datetime, hour_number, patellar_reflex, respiratory_rate_bpm,
+        urine_output_last_hour_ml, blood_pressure_sys, blood_pressure_dia, heart_rate_bpm,
+        spo2_percent, serum_magnesium_mg_dl, toxicity_warning_triggered, action_taken,
+        nurse_id, notes, created_at
+      ) VALUES (
+        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?,
+        ?, ?, 0, ?,
+        ?, 'Reflexes normal, clear breath sounds, good urine output', ?
+      )
+    `).run(mgso4Id, f.time, f.hr, f.dtr, f.rr, f.uop, f.bpS, f.bpD, f.hrB, f.spo2, f.mg, f.act, nurseId, now);
+  }
+
+  // 3. Series 12C: Pediatric PALS, PEWS & Broselow Emergency for Master Aarav Patel
+  db.prepare(`
+    INSERT OR IGNORE INTO pews_observations (
+      patient_id, observation_datetime, behavior_score, cardiovascular_score, respiratory_score,
+      persistent_vomiting_postop, total_pews_score, risk_level, heart_rate_bpm, respiratory_rate_bpm,
+      crt_seconds, spo2_percent, temperature_celsius, fio2_percent, escalation_triggered, assessed_by_id,
+      clinical_notes, created_at
+    ) VALUES (
+      ?, '2026-11-07T08:30:00', 1, 1, 1,
+      0, 3, 'moderate_3_4', 128, 32,
+      2, 97.0, 38.2, 21.0, 1, ?,
+      'Moderate respiratory distress with viral bronchiolitis. Increased vitals frequency to hourly.', ?
+    )
+  `).run(aaravId, nurseId, now);
+
+  // Broselow Resuscitation Event (Purple Zone)
+  db.prepare(`
+    INSERT OR IGNORE INTO broselow_resuscitation_events (
+      patient_id, event_code, event_datetime, event_type, measured_length_cm,
+      estimated_weight_kg, broselow_color_zone, ett_cuffed_size, ett_depth_cm,
+      defib_joules_initial, epinephrine_iv_dose_ml, fluid_bolus_ml,
+      team_leader_id, outcome, clinical_summary, created_at
+    ) VALUES (
+      ?, 'CODE-20261107-PALS-01', '2026-11-07T09:15:00', 'status_epilepticus', 78.0,
+      10.5, 'purple', 4.0, 12.0,
+      22, 1.05, 210,
+      ?, 'stabilized_transferred_picu',
+      'Prolonged febrile seizure lasting >15 min. Midazolam 1.5 mg IV given, 210 mL NS bolus. Seizure aborted. Airway maintained on high-flow nasal cannula. Transferred to PICU.', ?
+    )
+  `).run(aaravId, docId, now);
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

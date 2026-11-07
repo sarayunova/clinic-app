@@ -60,6 +60,11 @@ import { BloodBankPage } from './pages/BloodBankPage';
 import { MtpFlowsheetPrint } from './pages/MtpFlowsheetPrint';
 import { PediatricRenalPage } from './pages/PediatricRenalPage';
 import { PdFlowsheetPrint } from './pages/PdFlowsheetPrint';
+import { AmsPage } from './pages/AmsPage';
+import { ObstetricHduPage } from './pages/ObstetricHduPage';
+import { Mgso4FlowsheetPrint } from './pages/Mgso4FlowsheetPrint';
+import { PalsEmergencyPage } from './pages/PalsEmergencyPage';
+import { PalsCodeSheetPrint } from './pages/PalsCodeSheetPrint';
 import { DeliveryWardPage } from './pages/DeliveryWardPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditPage } from './pages/AuditPage';
@@ -134,6 +139,9 @@ function Shell() {
     ...(can('patient:read_clinical') ? [{ to: '/ot-schedule', label: 'OT Schedule', icon: '🔪', end: false }] : []),
     ...(can('patient:read_clinical') ? [{ to: '/blood-bank', label: 'Blood Bank', icon: '🩸', end: false }] : []),
     ...(can('patient:read_clinical') ? [{ to: '/pediatric-renal', label: 'Renal & PD', icon: '💧', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/ams', label: 'AMS & Antibiogram', icon: '🧫', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/obstetric-hdu', label: 'Obstetric HDU', icon: '🤰', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/pals-emergency', label: 'PALS Emergency', icon: '🚨', end: false }] : []),
     ...(can('ipd:read_basic') || can('station:read') ? [{ to: '/delivery-ward', label: 'Delivery ward', icon: '👶', end: false }] : []),
     ...(can('billing:read') ? [{ to: '/billing', label: 'Billing', icon: '💳', end: false }] : []),
     ...(can('settings:manage') ? [{ to: '/settings', label: 'Clinic', icon: '🏥', end: false }] : []),
@@ -216,6 +224,11 @@ function Shell() {
           <Route path="/mtp/:id/print" element={can('patient:read_clinical') ? <MtpFlowsheetPrint /> : <Navigate to="/blood-bank" replace />} />
           <Route path="/pediatric-renal" element={can('patient:read_clinical') ? <PediatricRenalPage /> : <Navigate to="/" replace />} />
           <Route path="/pediatric-renal/:id/print" element={can('patient:read_clinical') ? <PdFlowsheetPrint /> : <Navigate to="/pediatric-renal" replace />} />
+          <Route path="/ams" element={can('patient:read_clinical') ? <AmsPage /> : <Navigate to="/" replace />} />
+          <Route path="/obstetric-hdu" element={can('patient:read_clinical') ? <ObstetricHduPage /> : <Navigate to="/" replace />} />
+          <Route path="/mgso4/:id/print" element={can('patient:read_clinical') ? <Mgso4FlowsheetPrint /> : <Navigate to="/obstetric-hdu" replace />} />
+          <Route path="/pals-emergency" element={can('patient:read_clinical') ? <PalsEmergencyPage /> : <Navigate to="/" replace />} />
+          <Route path="/pals/:id/print" element={can('patient:read_clinical') ? <PalsCodeSheetPrint /> : <Navigate to="/pals-emergency" replace />} />
           <Route path="/delivery-ward" element={can('ipd:read_basic') || can('station:read') ? <DeliveryWardPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id" element={can('visit:read') ? <VisitPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id/print" element={can('visit:read') ? <PrescriptionPrint /> : <Navigate to="/" replace />} />

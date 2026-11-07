@@ -4743,5 +4743,451 @@ export const getPediatricRenalDashboard = (): Promise<{
 export const auditPdPrint = (id: number): Promise<{ success: boolean }> =>
   api<{ success: boolean }>('POST', `/api/pediatric-renal/pd-sessions/${id}/print`, {});
 
+// ==========================================
+// SERIES 12A: ANTIMICROBIAL STEWARDSHIP & ANTIBIOGRAM
+// ==========================================
+
+export interface AmsPrescriptionRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  prescribed_by_id: number;
+  prescribed_datetime: string;
+  drug_name: string;
+  aware_tier: 'access' | 'watch' | 'reserve';
+  route: 'iv' | 'oral' | 'im' | 'ip';
+  dosage: string;
+  frequency: string;
+  indication: string;
+  suspected_focus: string | null;
+  baseline_wbc: number | null;
+  baseline_crp_mg_l: number | null;
+  baseline_procalcitonin_ng_ml: number | null;
+  cultures_sent: number;
+  culture_specimen_types: string | null;
+  planned_duration_days: number;
+  status: 'active' | 'de_escalated' | 'switched_oral' | 'completed' | 'discontinued';
+  restricted_approval_by_id: number | null;
+  restricted_approval_notes: string | null;
+  patient_name?: string;
+  patient_uhid?: string;
+  patient_dob?: string;
+  prescribed_by_name?: string;
+  approved_by_name?: string;
+  timeout_reviews_count?: number;
+  created_at: string;
+}
+
+export interface AmsTimeoutReviewRecord {
+  id: number;
+  ams_prescription_id: number;
+  patient_id: number;
+  reviewed_by_id: number;
+  review_datetime: string;
+  hours_since_initiation: number;
+  timeout_action: 'de_escalate' | 'targeted_switch' | 'discontinue' | 'continue_unchanged' | 'iv_to_oral_switch';
+  culture_result_summary: 'pathogen_isolated_sensitivities_available' | 'no_growth_sterile' | 'contaminant_suspected' | 'culture_pending';
+  clinical_response: 'improving_afebrile' | 'stable_persistent_markers' | 'deteriorating_septic_shock';
+  justification_notes: string;
+  new_antimicrobial_regimen: string | null;
+  reviewed_by_name?: string;
+  created_at: string;
+}
+
+export interface AmsIsolateRecord {
+  id: number;
+  patient_id: number;
+  ams_prescription_id: number | null;
+  collection_datetime: string;
+  specimen_type: 'blood' | 'csf' | 'urine' | 'eta_respiratory' | 'peritoneal_fluid' | 'wound_pus' | 'other';
+  pathogen_isolated: string;
+  colony_count_cfu_ml: string | null;
+  sensitivities_json: string;
+  multidrug_resistant: number;
+  reported_at: string;
+  patient_name?: string;
+  patient_uhid?: string;
+  created_at: string;
+}
+
+export const getAmsPrescriptions = (params?: {
+  patientId?: number;
+  status?: string;
+  awareTier?: string;
+}): Promise<{ prescriptions: AmsPrescriptionRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.status) q.append('status', params.status);
+  if (params?.awareTier) q.append('awareTier', params.awareTier);
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ prescriptions: AmsPrescriptionRecord[] }>('GET', `/api/ams/prescriptions${queryStr}`);
+};
+
+export const createAmsPrescription = (payload: {
+  patientId: number;
+  admissionId?: number | null;
+  prescribedDatetime: string;
+  drugName: string;
+  route?: 'iv' | 'oral' | 'im' | 'ip';
+  dosage: string;
+  frequency: string;
+  indication: string;
+  suspectedFocus?: string | null;
+  baselineWbc?: number | null;
+  baselineCrpMgL?: number | null;
+  baselineProcalcitoninNgMl?: number | null;
+  culturesSent?: boolean;
+  cultureSpecimenTypes?: string[];
+  plannedDurationDays?: number;
+  restrictedApprovalNotes?: string | null;
+}): Promise<{ prescription: AmsPrescriptionRecord }> =>
+  api<{ prescription: AmsPrescriptionRecord }>('POST', '/api/ams/prescriptions', payload);
+
+export const getAmsPrescription = (
+  id: number
+): Promise<{
+  prescription: AmsPrescriptionRecord;
+  reviews: AmsTimeoutReviewRecord[];
+  isolates: AmsIsolateRecord[];
+}> =>
+  api<{
+    prescription: AmsPrescriptionRecord;
+    reviews: AmsTimeoutReviewRecord[];
+    isolates: AmsIsolateRecord[];
+  }>('GET', `/api/ams/prescriptions/${id}`);
+
+export const updateAmsPrescriptionStatus = (
+  id: number,
+  payload: { status: string }
+): Promise<{ prescription: AmsPrescriptionRecord }> =>
+  api<{ prescription: AmsPrescriptionRecord }>('PUT', `/api/ams/prescriptions/${id}/status`, payload);
+
+export const logAmsTimeoutReview = (
+  prescriptionId: number,
+  payload: {
+    reviewDatetime: string;
+    timeoutAction: string;
+    cultureResultSummary: string;
+    clinicalResponse: string;
+    justificationNotes: string;
+    newAntimicrobialRegimen?: string | null;
+  }
+): Promise<{ timeoutReview: AmsTimeoutReviewRecord }> =>
+  api<{ timeoutReview: AmsTimeoutReviewRecord }>(
+    'POST',
+    `/api/ams/prescriptions/${prescriptionId}/timeout`,
+    payload
+  );
+
+export const recordAmsIsolate = (payload: {
+  patientId: number;
+  amsPrescriptionId?: number | null;
+  collectionDatetime: string;
+  specimenType: string;
+  pathogenIsolated: string;
+  colonyCountCfuMl?: string | null;
+  sensitivities: Record<string, string>;
+  multidrugResistant?: boolean;
+  reportedAt: string;
+}): Promise<{ isolate: AmsIsolateRecord }> =>
+  api<{ isolate: AmsIsolateRecord }>('POST', '/api/ams/isolates', payload);
+
+export const getAmsIsolates = (params?: {
+  patientId?: number;
+}): Promise<{ isolates: AmsIsolateRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ isolates: AmsIsolateRecord[] }>('GET', `/api/ams/isolates${queryStr}`);
+};
+
+export const getAmsAntibiogram = (): Promise<{
+  antibiogram: Array<{
+    pathogen: string;
+    totalIsolates: number;
+    drugs: Record<
+      string,
+      {
+        testedCount: number;
+        susceptibleCount: number;
+        susceptibilityPct: number;
+      }
+    >;
+  }>;
+  totalIsolatesCount: number;
+}> => api('GET', '/api/ams/antibiogram');
+
+export const getAmsDashboard = (): Promise<{
+  activePrescriptions: AmsPrescriptionRecord[];
+  recentIsolates: AmsIsolateRecord[];
+}> => api('GET', '/api/ams/dashboard');
+
+// ==========================================
+// SERIES 12B: OBSTETRIC HDU & MGSO4 PROTOCOL
+// ==========================================
+
+export interface Mgso4ProtocolRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  protocol_code: string;
+  regimen_type: 'zuspan_iv' | 'pritchard_im' | 'neuroprotection_preterm';
+  indication:
+    | 'severe_preeclampsia_impending'
+    | 'antepartum_eclampsia'
+    | 'intrapartum_eclampsia'
+    | 'postpartum_eclampsia'
+    | 'fetal_neuroprotection_lt32w';
+  initiation_datetime: string;
+  prescribed_by_id: number;
+  loading_dose_given: number;
+  loading_dose_details: string;
+  maintenance_rate_g_per_h: number;
+  recurrent_seizure_bolus_given: number;
+  status: 'active' | 'completed_24h' | 'held_toxicity' | 'aborted';
+  termination_datetime: string | null;
+  termination_reason: string | null;
+  antidote_calcium_gluconate_given: number;
+  antidote_datetime: string | null;
+  antidote_indication: string | null;
+  patient_name?: string;
+  patient_uhid?: string;
+  patient_dob?: string;
+  prescribed_by_name?: string;
+  hours_logged?: number;
+  created_at: string;
+}
+
+export interface Mgso4FlowsheetRecord {
+  id: number;
+  protocol_id: number;
+  observation_datetime: string;
+  hour_number: number;
+  patellar_reflex: 'absent_0' | 'sluggish_1_plus' | 'normal_2_plus' | 'brisk_3_plus' | 'hyperactive_clonus_4_plus';
+  respiratory_rate_bpm: number;
+  urine_output_last_hour_ml: number;
+  blood_pressure_sys: number;
+  blood_pressure_dia: number;
+  heart_rate_bpm: number;
+  spo2_percent: number;
+  serum_magnesium_mg_dl: number | null;
+  fetal_heart_rate_bpm: number | null;
+  toxicity_warning_triggered: number;
+  action_taken: 'continue_regimen' | 'hold_dose_recheck' | 'infusion_rate_reduced' | 'stopped_antidote_given';
+  antihypertensive_given: string | null;
+  nurse_id: number;
+  nurse_name?: string;
+  notes: string | null;
+  created_at: string;
+}
+
+export const getMgso4Protocols = (params?: {
+  patientId?: number;
+  status?: string;
+}): Promise<{ protocols: Mgso4ProtocolRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.status) q.append('status', params.status);
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ protocols: Mgso4ProtocolRecord[] }>('GET', `/api/mgso4/protocols${queryStr}`);
+};
+
+export const createMgso4Protocol = (payload: {
+  patientId: number;
+  admissionId?: number | null;
+  regimenType: 'zuspan_iv' | 'pritchard_im' | 'neuroprotection_preterm';
+  indication: string;
+  initiationDatetime: string;
+  loadingDoseDetails: string;
+  maintenanceRateGPerH?: number;
+}): Promise<{ protocol: Mgso4ProtocolRecord }> =>
+  api<{ protocol: Mgso4ProtocolRecord }>('POST', '/api/mgso4/protocols', payload);
+
+export const getMgso4Protocol = (
+  id: number
+): Promise<{ protocol: Mgso4ProtocolRecord; flowsheet: Mgso4FlowsheetRecord[] }> =>
+  api<{ protocol: Mgso4ProtocolRecord; flowsheet: Mgso4FlowsheetRecord[] }>(
+    'GET',
+    `/api/mgso4/protocols/${id}`
+  );
+
+export const updateMgso4ProtocolStatus = (
+  id: number,
+  payload: { status: string; terminationReason?: string }
+): Promise<{ protocol: Mgso4ProtocolRecord }> =>
+  api<{ protocol: Mgso4ProtocolRecord }>('PUT', `/api/mgso4/protocols/${id}/status`, payload);
+
+export const logMgso4Flowsheet = (
+  protocolId: number,
+  payload: {
+    observationDatetime: string;
+    hourNumber: number;
+    patellarReflex: string;
+    respiratoryRateBpm: number;
+    urineOutputLastHourMl: number;
+    bloodPressureSys: number;
+    bloodPressureDia: number;
+    heartRateBpm: number;
+    spo2Percent?: number;
+    serumMagnesiumMgDl?: number | null;
+    fetalHeartRateBpm?: number | null;
+    actionTaken: string;
+    antihypertensiveGiven?: string | null;
+    notes?: string | null;
+  }
+): Promise<{ flowsheetEntry: Mgso4FlowsheetRecord }> =>
+  api<{ flowsheetEntry: Mgso4FlowsheetRecord }>(
+    'POST',
+    `/api/mgso4/protocols/${protocolId}/flowsheet`,
+    payload
+  );
+
+export const triggerMgso4Antidote = (
+  protocolId: number,
+  payload: { antidoteIndication: string }
+): Promise<{ success: boolean; message: string }> =>
+  api<{ success: boolean; message: string }>(
+    'POST',
+    `/api/mgso4/protocols/${protocolId}/antidote`,
+    payload
+  );
+
+export const getMgso4Dashboard = (): Promise<{ activeProtocols: Mgso4ProtocolRecord[] }> =>
+  api('GET', '/api/mgso4/dashboard');
+
+export const auditMgso4Print = (id: number): Promise<{ success: boolean }> =>
+  api<{ success: boolean }>('POST', `/api/mgso4/protocols/${id}/print`, {});
+
+// ==========================================
+// SERIES 12C: PALS, PEWS & BROSELOW EMERGENCY
+// ==========================================
+
+export interface PewsObservationRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  observation_datetime: string;
+  behavior_score: number;
+  cardiovascular_score: number;
+  respiratory_score: number;
+  persistent_vomiting_postop: number;
+  total_pews_score: number;
+  risk_level: 'low_0_2' | 'moderate_3_4' | 'critical_5_plus';
+  heart_rate_bpm: number;
+  respiratory_rate_bpm: number;
+  crt_seconds: number;
+  spo2_percent: number;
+  temperature_celsius: number | null;
+  fio2_percent: number;
+  escalation_triggered: number;
+  assessed_by_id: number;
+  assessed_by_name?: string;
+  patient_name?: string;
+  patient_uhid?: string;
+  clinical_notes: string | null;
+  created_at: string;
+}
+
+export interface BroselowEventRecord {
+  id: number;
+  patient_id: number;
+  event_code: string;
+  event_datetime: string;
+  event_type:
+    | 'cardiac_arrest_code_blue'
+    | 'status_epilepticus'
+    | 'anaphylaxis'
+    | 'severe_septic_shock'
+    | 'acute_respiratory_failure'
+    | 'other';
+  measured_length_cm: number;
+  estimated_weight_kg: number;
+  broselow_color_zone: string;
+  ett_cuffed_size: number;
+  ett_depth_cm: number;
+  defib_joules_initial: number;
+  epinephrine_iv_dose_ml: number;
+  fluid_bolus_ml: number;
+  team_leader_id: number;
+  team_leader_name?: string;
+  patient_name?: string;
+  patient_uhid?: string;
+  outcome: 'rosc_achieved' | 'stabilized_transferred_picu' | 'ongoing_cpr' | 'expired';
+  clinical_summary: string | null;
+  created_at: string;
+}
+
+export const getPewsObservations = (params?: {
+  patientId?: number;
+  limit?: number;
+}): Promise<{ observations: PewsObservationRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.limit) q.append('limit', String(params.limit));
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ observations: PewsObservationRecord[] }>('GET', `/api/pals/pews${queryStr}`);
+};
+
+export const recordPewsObservation = (payload: {
+  patientId: number;
+  admissionId?: number | null;
+  observationDatetime: string;
+  behaviorScore: number;
+  cardiovascularScore: number;
+  respiratoryScore: number;
+  persistentVomitingPostop?: boolean;
+  heartRateBpm: number;
+  respiratoryRateBpm: number;
+  crtSeconds: number;
+  spo2Percent: number;
+  temperatureCelsius?: number | null;
+  fio2Percent?: number;
+  clinicalNotes?: string | null;
+}): Promise<{ observation: PewsObservationRecord; calculation: any }> =>
+  api<{ observation: PewsObservationRecord; calculation: any }>('POST', '/api/pals/pews', payload);
+
+export const lookupBroselow = (params: {
+  lengthCm?: number;
+  weightKg?: number;
+}): Promise<{ zone: any }> => {
+  const q = new URLSearchParams();
+  if (params.lengthCm) q.append('lengthCm', String(params.lengthCm));
+  if (params.weightKg) q.append('weightKg', String(params.weightKg));
+  return api<{ zone: any }>('GET', `/api/pals/broselow?${q.toString()}`);
+};
+
+export const getBroselowEvents = (params?: {
+  patientId?: number;
+}): Promise<{ events: BroselowEventRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ events: BroselowEventRecord[] }>('GET', `/api/pals/broselow-events${queryStr}`);
+};
+
+export const recordBroselowEvent = (payload: {
+  patientId: number;
+  eventDatetime: string;
+  eventType: string;
+  measuredLengthCm: number;
+  outcome: string;
+  clinicalSummary?: string | null;
+}): Promise<{ event: BroselowEventRecord; zone: any }> =>
+  api<{ event: BroselowEventRecord; zone: any }>('POST', '/api/pals/broselow-events', payload);
+
+export const getBroselowEvent = (
+  id: number
+): Promise<{ event: BroselowEventRecord }> =>
+  api<{ event: BroselowEventRecord }>('GET', `/api/pals/broselow-events/${id}`);
+
+export const auditPalsPrint = (id: number): Promise<{ success: boolean }> =>
+  api<{ success: boolean }>('POST', `/api/pals/broselow-events/${id}/print`, {});
+
+export const getPalsDashboard = (): Promise<{
+  highRiskObservations: PewsObservationRecord[];
+  recentEvents: BroselowEventRecord[];
+}> => api('GET', '/api/pals/dashboard');
+
+
 
 
