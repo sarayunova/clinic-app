@@ -1173,6 +1173,71 @@ async function seed() {
     )
   `).run(sunitaId, docId, docId, docId, now, now);
 
+  // --- SERIES 9A: SNCU (Level-2 NICU) Neonatal Inpatient Tracker ---
+  db.prepare(`
+    INSERT OR IGNORE INTO sncu_admissions (
+      patient_id, admission_datetime, birth_weight_g, gestational_age_weeks, gestational_age_days,
+      admission_indication, respiratory_support, fio2_percent, peep_cm_h2o, flow_rate_l_min,
+      silverman_anderson_score, downes_score, phototherapy_status, kmc_duration_hours_today,
+      temperature_celsius, current_weight_g, total_fluid_goal_ml_kg_day, feeding_mode,
+      feeding_volume_ml, feeding_frequency_hours, iv_fluid_type_rate, daily_weight_gain_g_kg_day,
+      heart_rate_bpm, respiratory_rate_bpm, spo2_percent, capillary_blood_glucose_mg_dl,
+      antibiotic_regimen, clinical_notes, status, attending_pediatrician,
+      reviewed_by, created_by, updated_by, created_at, updated_at
+    ) VALUES (
+      ?, '2026-11-04T12:00:00', 1850, 33, 4,
+      'respiratory_distress', 'bubble_cpap', 30.0, 5.0, 5.0,
+      4, 4, 'single_surface_led', 3.0,
+      36.8, 1810, 110.0, 'og_tube_ebm',
+      15.0, 2, '10% Dextrose with electrolytes 4.0 mL/hr', -20.0,
+      142, 64, 94.0, 68.0,
+      'Inj Ampicillin 50mg/kg q12h + Inj Gentamicin 4mg/kg q24h (Day 3)',
+      'Preterm 33+4 weeks infant with moderate RDS stabilized on Bubble CPAP. Good chest expansion, no grunting on CPAP. Single surface LED phototherapy ongoing.',
+      'admitted', 'Dr. Lingeshwar / Consultant Neonatologist',
+      ?, ?, ?, ?, ?
+    )
+  `).run(babyId, docId, docId, docId, now, now);
+
+  // --- SERIES 9B: Pediatric Vaccinations & Automated Recall Engine ---
+  const initialVaccines = [
+    { key: 'bcg', name: 'BCG', group: 'birth', status: 'given', date: '2025-11-02' },
+    { key: 'opv_0', name: 'OPV 0', group: 'birth', status: 'given', date: '2025-11-02' },
+    { key: 'hepb_0', name: 'Hepatitis B (0)', group: 'birth', status: 'given', date: '2025-11-02' },
+    { key: 'penta_1', name: 'Pentavalent 1', group: '6_weeks', status: 'given', date: '2025-12-14' },
+    { key: 'ipv_1', name: 'IPV 1', group: '6_weeks', status: 'given', date: '2025-12-14' },
+    { key: 'rota_1', name: 'Rotavirus 1', group: '6_weeks', status: 'given', date: '2025-12-14' },
+    { key: 'pcv_1', name: 'PCV 1', group: '6_weeks', status: 'given', date: '2025-12-14' },
+    { key: 'penta_2', name: 'Pentavalent 2', group: '10_weeks', status: 'given', date: '2026-01-15' },
+    { key: 'rota_2', name: 'Rotavirus 2', group: '10_weeks', status: 'given', date: '2026-01-15' },
+    { key: 'pcv_2', name: 'PCV 2', group: '10_weeks', status: 'given', date: '2026-01-15' },
+    { key: 'penta_3', name: 'Pentavalent 3', group: '14_weeks', status: 'given', date: '2026-02-18' },
+    { key: 'ipv_2', name: 'IPV 2', group: '14_weeks', status: 'given', date: '2026-02-18' },
+    { key: 'rota_3', name: 'Rotavirus 3', group: '14_weeks', status: 'given', date: '2026-02-18' },
+    { key: 'mr_1', name: 'MR 1 / MMR 1', group: '9_12_months', status: 'pending', date: null },
+    { key: 'pcv_booster', name: 'PCV Booster', group: '9_12_months', status: 'pending', date: null },
+  ];
+
+  for (const v of initialVaccines) {
+    db.prepare(`
+      INSERT OR IGNORE INTO patient_vaccinations (
+        patient_id, vaccine_key, vaccine_name, milestone_group, target_disease, status, given_date, updated_by, updated_at
+      ) VALUES (?, ?, ?, ?, 'Pediatric Infectious Prevention', ?, ?, ?, ?)
+    `).run(aaravId, v.key, v.name, v.group, v.status, v.date, docId, now);
+  }
+
+  // --- SERIES 9B: Communication Dispatch Logs & WhatsApp Reminders ---
+  db.prepare(`
+    INSERT OR IGNORE INTO communication_dispatch_logs (
+      patient_id, communication_type, trigger_event, recipient_phone,
+      language, message_body, deep_link_url, sent_by, created_at
+    ) VALUES (
+      ?, 'whatsapp_click_to_chat', 'immunization_due', '9845011005',
+      'english', 'Hello Parent of Master Aarav Patel, this is a priority health reminder from LiVi Clinic. Master Aarav is due for MR 1 and PCV Booster vaccines. Please visit or call +91 98765 43210.',
+      'https://wa.me/919845011005?text=Hello%20Parent%20of%20Master%20Aarav',
+      ?, ?
+    )
+  `).run(aaravId, docId, now);
+
   // Book today's outpatient appointments for the active queue
   const todayStr = new Date().toISOString().slice(0, 10);
   const appts = [

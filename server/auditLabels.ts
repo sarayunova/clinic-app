@@ -142,6 +142,12 @@ export const ACTION_LABELS: Record<string, string> = {
   'gyn_oncology.assessment_update': 'Updated gynecological oncology & tumor board review',
   'gyn_oncology.assessment_delete': 'Deleted gynecological oncology assessment record',
   'gyn_oncology.assessment_print': 'Printed gynecological oncology & malignancy triage dossier',
+  'sncu.admission_create': 'Recorded SNCU / Level-2 NICU neonatal inpatient admission',
+  'sncu.admission_update': 'Updated SNCU respiratory support, fluids, or clinical course',
+  'sncu.admission_delete': 'Deleted SNCU admission record',
+  'sncu.admission_print': 'Printed SNCU clinical summary & daily round dossier',
+  'communication.whatsapp_dispatch': 'Dispatched patient WhatsApp reminder / recall message',
+  'communication.qr_passport_print': 'Printed patient emergency medical passport & QR card',
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

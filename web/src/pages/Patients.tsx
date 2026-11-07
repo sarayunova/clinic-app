@@ -79,11 +79,16 @@ export function PatientsPage() {
             Search by name, patient ID, phone substring, partner/spouse name, or locality
           </div>
         </div>
-        {can('patient:write_demographics') && (
-          <Link className="btn primary" to="/patients/new">
-            + Register patient
+        <div className="row" style={{ gap: '0.5rem' }}>
+          <Link className="btn small" to="/immunization-recall" style={{ background: '#059669', color: '#fff', border: 'none' }}>
+            📲 Vaccine Recall
           </Link>
-        )}
+          {can('patient:write_demographics') && (
+            <Link className="btn primary" to="/patients/new">
+              + Register patient
+            </Link>
+          )}
+        </div>
       </header>
 
       {/* Search Input Box */}

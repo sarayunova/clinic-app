@@ -47,6 +47,9 @@ import { ArtCyclePrint } from './pages/ArtCyclePrint';
 import { EndometriosisPrint } from './pages/EndometriosisPrint';
 import { UrogynecologyPrint } from './pages/UrogynecologyPrint';
 import { GynOncologyPrint } from './pages/GynOncologyPrint';
+import { SncuPrint } from './pages/SncuPrint';
+import { EmergencyQrPrint } from './pages/EmergencyQrPrint';
+import { ImmunizationRecallPage } from './pages/ImmunizationRecallPage';
 import { DeliveryWardPage } from './pages/DeliveryWardPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditPage } from './pages/AuditPage';
@@ -151,6 +154,7 @@ function Shell() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/patients" element={<PatientsPage />} />
+          <Route path="/immunization-recall" element={can('patient:read_clinical') ? <ImmunizationRecallPage /> : <Navigate to="/patients" replace />} />
           <Route path="/patients/new" element={<PatientPage />} />
           <Route path="/patients/:id" element={<PatientPage />} />
           <Route path="/patients/:id/summary/print" element={can('patient:read_clinical') ? <ClinicalSummaryPrint /> : <Navigate to="/patients" replace />} />
@@ -185,6 +189,8 @@ function Shell() {
           <Route path="/patients/:patientId/endometriosis/:id/print" element={can('patient:read_clinical') ? <EndometriosisPrint /> : <Navigate to="/patients" replace />} />
           <Route path="/patients/:patientId/urogynecology/:id/print" element={can('patient:read_clinical') ? <UrogynecologyPrint /> : <Navigate to="/patients" replace />} />
           <Route path="/patients/:patientId/gyn-oncology/:id/print" element={can('patient:read_clinical') ? <GynOncologyPrint /> : <Navigate to="/patients" replace />} />
+          <Route path="/patients/:patientId/sncu/:id/print" element={can('patient:read_clinical') ? <SncuPrint /> : <Navigate to="/patients" replace />} />
+          <Route path="/patients/:patientId/emergency-card/print" element={can('patient:read_clinical') ? <EmergencyQrPrint /> : <Navigate to="/patients" replace />} />
           <Route path="/delivery-ward" element={can('ipd:read_basic') || can('station:read') ? <DeliveryWardPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id" element={can('visit:read') ? <VisitPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id/print" element={can('visit:read') ? <PrescriptionPrint /> : <Navigate to="/" replace />} />

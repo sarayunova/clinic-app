@@ -61,6 +61,8 @@ import { registerArtCycleRoutes } from './routes/artCycles.js';
 import { registerEndometriosisRoutes } from './routes/endometriosis.js';
 import { registerUrogynecologyRoutes } from './routes/urogynecology.js';
 import { registerGynOncologyRoutes } from './routes/gynOncology.js';
+import { registerSncuRoutes } from './routes/sncu.js';
+import { registerCommunicationRecallRoutes } from './routes/communicationRecall.js';
 import type { LoadedTls } from './tls.js';
 
 declare module 'fastify' {
@@ -225,6 +227,8 @@ export async function buildApp(ctx: Omit<Ctx, 'throttle'> & { throttle?: LoginTh
   registerEndometriosisRoutes(app, full);
   registerUrogynecologyRoutes(app, full);
   registerGynOncologyRoutes(app, full);
+  registerSncuRoutes(app, full);
+  registerCommunicationRecallRoutes(app, full);
 
   app.get('/api/health', async () => ({ ok: true }));
   return app;

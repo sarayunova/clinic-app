@@ -2,3 +2,5 @@ node_modules
 .devdata
 dist
 *.sqlite*
+data
+*.cbk*

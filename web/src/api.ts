@@ -3429,3 +3429,191 @@ export const auditPrintGynOncology = (id: number): Promise<{ ok: boolean }> =>
 export const calculateGynOncologyRmi = (payload: any): Promise<any> =>
   api<any>('POST', '/api/gyn-oncology/calculate-rmi', payload);
 
+// ---------- 9A: Special Newborn Care Unit (SNCU / Level-2 NICU) ----------
+
+export interface SncuAdmission {
+  id: number;
+  patientId: number;
+  admissionId?: number | null;
+  admissionDatetime: string;
+  birthWeightG: number;
+  gestationalAgeWeeks: number;
+  gestationalAgeDays: number;
+  admissionIndication:
+    | 'prematurity_lbw'
+    | 'respiratory_distress'
+    | 'neonatal_sepsis'
+    | 'hypoglycemia'
+    | 'hyperbilirubinemia_severe'
+    | 'perinatal_asphyxia'
+    | 'feeding_difficulty'
+    | 'congenital_anomaly'
+    | 'other';
+
+  respiratorySupport:
+    | 'room_air'
+    | 'low_flow_nasal_prongs'
+    | 'bubble_cpap'
+    | 'high_flow_nasal_cannula'
+    | 'mechanical_ventilation';
+  fio2Percent?: number | null;
+  peepCmH2o?: number | null;
+  flowRateLMin?: number | null;
+  silvermanAndersonScore?: number | null;
+  downesScore?: number | null;
+
+  phototherapyStatus: 'none' | 'single_surface_led' | 'double_surface_led' | 'biliblanket';
+  kmcDurationHoursToday?: number | null;
+  temperatureCelsius?: number | null;
+
+  currentWeightG?: number | null;
+  totalFluidGoalMlKgDay?: number | null;
+  feedingMode: 'npo_iv_fluids' | 'og_tube_ebm' | 'paladai_ebm' | 'direct_breastfeeding' | 'formula';
+  feedingVolumeMl?: number | null;
+  feedingFrequencyHours: number;
+  ivFluidTypeRate?: string | null;
+  dailyWeightGainGKgDay?: number | null;
+
+  heartRateBpm?: number | null;
+  respiratoryRateBpm?: number | null;
+  spo2Percent?: number | null;
+  capillaryBloodGlucoseMgDl?: number | null;
+  antibioticRegimen?: string | null;
+  clinicalNotes?: string | null;
+
+  status:
+    | 'admitted'
+    | 'transferred_tertiary_nicu'
+    | 'discharged_to_mother'
+    | 'discharged_home'
+    | 'deceased';
+  dischargeDatetime?: string | null;
+  dischargeWeightG?: number | null;
+
+  attendingPediatrician?: string | null;
+  reviewedBy: number;
+  reviewedByName?: string | null;
+  createdBy: number;
+  createdByName?: string | null;
+  updatedBy: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const getSncuAdmissions = (patientId: number): Promise<SncuAdmission[]> =>
+  api<SncuAdmission[]>('GET', `/api/patients/${patientId}/sncu`);
+
+export const getSncuAdmission = (id: number): Promise<SncuAdmission> =>
+  api<SncuAdmission>('GET', `/api/sncu/${id}`);
+
+export const createSncuAdmission = (payload: Partial<SncuAdmission>): Promise<SncuAdmission> =>
+  api<SncuAdmission>('POST', '/api/sncu', payload);
+
+export const updateSncuAdmission = (id: number, payload: Partial<SncuAdmission>): Promise<SncuAdmission> =>
+  api<SncuAdmission>('PUT', `/api/sncu/${id}`, payload);
+
+export const deleteSncuAdmission = (id: number): Promise<{ ok: boolean; deletedId: number }> =>
+  api<{ ok: boolean; deletedId: number }>('DELETE', `/api/sncu/${id}`);
+
+export const auditPrintSncu = (id: number): Promise<{ ok: boolean }> =>
+  api<{ ok: boolean }>('POST', `/api/sncu/${id}/audit-print`);
+
+export const calculateSncuFluidSilverman = (payload: any): Promise<any> =>
+  api<any>('POST', '/api/sncu/calculate-fluid-silverman', payload);
+
+// ---------- 9B: Immunization Recall, Smart Communication & Emergency QR Card ----------
+
+export interface ImmunizationRecallItem {
+  patientId: number;
+  patientNumber: string;
+  fullName: string;
+  dateOfBirth: string;
+  ageWeeks: number;
+  ageDays: number;
+  phone: string;
+  parentName?: string | null;
+  completedCount: number;
+  dueNow: Array<{
+    vaccine: { code: string; name: string; minAgeWeeks: number; maxAgeWeeks: number; labelAge: string; isNationalEssential: boolean };
+    status: 'due_now';
+    daysOverdueOrDue: number;
+  }>;
+  overdue: Array<{
+    vaccine: { code: string; name: string; minAgeWeeks: number; maxAgeWeeks: number; labelAge: string; isNationalEssential: boolean };
+    status: 'overdue';
+    daysOverdueOrDue: number;
+  }>;
+  upcomingNext30d: Array<{
+    vaccine: { code: string; name: string; minAgeWeeks: number; maxAgeWeeks: number; labelAge: string; isNationalEssential: boolean };
+    status: 'upcoming';
+    daysOverdueOrDue: number;
+  }>;
+  englishReminderText: string;
+  hindiReminderText: string;
+  englishWhatsAppLink?: string | null;
+  hindiWhatsAppLink?: string | null;
+}
+
+export interface CommunicationDispatchLog {
+  id: number;
+  patientId: number;
+  communicationType: 'whatsapp_click_to_chat' | 'sms_gateway_draft' | 'emergency_qr_access';
+  triggerEvent: string;
+  recipientPhone: string;
+  language: 'english' | 'hindi';
+  messageBody: string;
+  deepLinkUrl?: string | null;
+  sentBy: number;
+  sentByName?: string | null;
+  createdAt: string;
+}
+
+export interface EmergencyPassportBundle {
+  passportData: {
+    patientId: number;
+    fullName: string;
+    ageYears?: number | null;
+    bloodGroup?: string | null;
+    allergies?: string | null;
+    obstetricSummary?: string | null;
+    highRiskConditions?: string[];
+    edd?: string | null;
+    emergencyContact?: string | null;
+    hospitalName: string;
+    hospitalHelpline: string;
+  };
+  qrPayload: string;
+}
+
+export const getImmunizationRecallList = (): Promise<ImmunizationRecallItem[]> =>
+  api<ImmunizationRecallItem[]>('GET', '/api/immunization/recall-list');
+
+export const getPatientImmunizationStatus = (patientId: number): Promise<any> =>
+  api<any>('GET', `/api/patients/${patientId}/immunization-status`);
+
+export const dispatchWhatsappReminder = (payload: {
+  patientId: number;
+  recipientPhone: string;
+  triggerEvent:
+    | 'immunization_due'
+    | 'antenatal_appointment_reminder'
+    | 'ultrasound_scheduled'
+    | 'abnormal_lab_recall'
+    | 'discharge_instructions'
+    | 'general_followup';
+  language: 'english' | 'hindi';
+  messageBody: string;
+  deepLinkUrl?: string | null;
+}): Promise<{ ok: boolean; dispatchId: number; deepLinkUrl: string }> =>
+  api<{ ok: boolean; dispatchId: number; deepLinkUrl: string }>('POST', '/api/communication/dispatch-whatsapp', payload);
+
+export const getCommunicationDispatchLogs = (patientId: number): Promise<CommunicationDispatchLog[]> =>
+  api<CommunicationDispatchLog[]>('GET', `/api/patients/${patientId}/communication-logs`);
+
+export const getEmergencyPassportData = (patientId: number): Promise<EmergencyPassportBundle> =>
+  api<EmergencyPassportBundle>('GET', `/api/patients/${patientId}/emergency-passport`);
+
+export const auditEmergencyQrCardPrint = (patientId: number): Promise<{ ok: boolean }> =>
+  api<{ ok: boolean }>('POST', '/api/communication/audit-qr-card', { patientId });
+
+
