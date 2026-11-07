@@ -77,6 +77,9 @@ import { PediatricTbiPecarnTab } from '../components/PediatricTbiPecarnTab';
 import { NeonatalPphnTab } from '../components/NeonatalPphnTab';
 import { ObstetricAfeTab } from '../components/ObstetricAfeTab';
 import { PediatricAsthmaStatusTab } from '../components/PediatricAsthmaStatusTab';
+import { NeonatalBpdTab } from '../components/NeonatalBpdTab';
+import { ObstetricAflpTab } from '../components/ObstetricAflpTab';
+import { PediatricPolytraumaTab } from '../components/PediatricPolytraumaTab';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -187,7 +190,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'abdm' | 'pediatric' | 'pediatric_growth' | 'pediatric_renal' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'pac' | 'blood_bank' | 'risk' | 'postnatal' | 'maternity_admission' | 'ams' | 'mgso4' | 'pews_pals' | 'nicu_tpn' | 'maternal_comorbidities' | 'pediatric_allergy' | 'neonatal_hie' | 'maternal_sepsis' | 'pediatric_dka' | 'neonatal_rds' | 'maternal_vte' | 'pediatric_seizures' | 'neonatal_sepsis' | 'obstetric_hypertension' | 'pediatric_septic_shock' | 'neonatal_hypoglycemia' | 'obstetric_pph' | 'pediatric_pards' | 'neonatal_bind' | 'obstetric_icp' | 'pediatric_status_epilepticus' | 'neonatal_nec' | 'obstetric_pas' | 'pediatric_tbi' | 'neonatal_pphn' | 'obstetric_afe' | 'pediatric_asthma_status' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'abdm' | 'pediatric' | 'pediatric_growth' | 'pediatric_renal' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'pac' | 'blood_bank' | 'risk' | 'postnatal' | 'maternity_admission' | 'ams' | 'mgso4' | 'pews_pals' | 'nicu_tpn' | 'maternal_comorbidities' | 'pediatric_allergy' | 'neonatal_hie' | 'maternal_sepsis' | 'pediatric_dka' | 'neonatal_rds' | 'maternal_vte' | 'pediatric_seizures' | 'neonatal_sepsis' | 'obstetric_hypertension' | 'pediatric_septic_shock' | 'neonatal_hypoglycemia' | 'obstetric_pph' | 'pediatric_pards' | 'neonatal_bind' | 'obstetric_icp' | 'pediatric_status_epilepticus' | 'neonatal_nec' | 'obstetric_pas' | 'pediatric_tbi' | 'neonatal_pphn' | 'obstetric_afe' | 'pediatric_asthma_status' | 'neonatal_bpd' | 'obstetric_aflp' | 'pediatric_polytrauma' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -1006,6 +1009,27 @@ export function PatientPage() {
                 </button>
                 <button
                   type="button"
+                  className={`btn small ${viewMode === 'neonatal_bpd' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('neonatal_bpd')}
+                >
+                  🫁 Neonatal BPD (Jensen)
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'obstetric_aflp' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('obstetric_aflp')}
+                >
+                  🩺 Obstetric AFLP (Swansea)
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'pediatric_polytrauma' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('pediatric_polytrauma')}
+                >
+                  🚨 Pediatric Polytrauma (PTS)
+                </button>
+                <button
+                  type="button"
                   className={`btn small ${viewMode === 'list' ? 'primary' : ''}`}
                   onClick={() => setViewMode('list')}
                 >
@@ -1267,6 +1291,21 @@ export function PatientPage() {
           ) : viewMode === 'pediatric_asthma_status' ? (
             <PediatricAsthmaStatusTab
               patientId={patient!.id}
+            />
+          ) : viewMode === 'neonatal_bpd' ? (
+            <NeonatalBpdTab
+              patientId={patient!.id}
+              patientName={patient!.fullName}
+            />
+          ) : viewMode === 'obstetric_aflp' ? (
+            <ObstetricAflpTab
+              patientId={patient!.id}
+              patientName={patient!.fullName}
+            />
+          ) : viewMode === 'pediatric_polytrauma' ? (
+            <PediatricPolytraumaTab
+              patientId={patient!.id}
+              patientName={patient!.fullName}
             />
           ) : (
             <>

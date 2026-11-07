@@ -2838,6 +2838,155 @@ async function seed() {
     }
   }
 
+  // --- SERIES 21A: Neonatal Bronchopulmonary Dysplasia (BPD) & Jensen 2019 Staging ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_bpd_episodes (
+      patient_id, admission_id, episode_code, evaluation_datetime,
+      gestational_age_weeks, birth_weight_grams, current_pma_weeks,
+      respiratory_support_type, cannula_flow_lpm, fio2_percent,
+      jensen_bpd_grade, caffeine_therapy_active, diuretic_therapy_active,
+      postnatal_steroids_active, steroid_regimen, home_oxygen_planned,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'BPD-20261107-101', '2026-11-07T10:00:00',
+      27.0, 890, 36.0,
+      'nasal_cannula_low_flow', 1.0, 25.0,
+      'grade_1', 1, 0,
+      0, NULL, 1,
+      'inpatient_respiratory_care', ?,
+      'Born 27+0w, now 36w PMA. Weaned from CPAP to low-flow nasal cannula 1.0 L/min. Target SpO2 91-95% achieved. Preparing for home oxygen weaning.',
+      ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingBpd = db.prepare('SELECT id FROM neonatal_bpd_episodes WHERE episode_code = ?').get('BPD-20261107-101') as { id: number } | undefined;
+  if (existingBpd) {
+    const bpdLogs = [
+      { pma: 36.0, supp: 'nasal_cannula_low_flow', flow: 1.0, fio2: 25.0, spo2: 93.0, inRange: 1, apnea: 0, wt: 1950, notes: 'Initiated 36w PMA evaluation. Target SpO2 91-95% maintained.' },
+      { pma: 36.2, supp: 'nasal_cannula_low_flow', flow: 0.5, fio2: 21.0, spo2: 94.0, inRange: 1, apnea: 0, wt: 2010, notes: 'Successful reduction to 0.5 L/min at FiO2 21%. Retractions minimal.' },
+    ];
+    for (const bl of bpdLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_bpd_flowsheet_logs (
+          bpd_episode_id, patient_id, log_datetime, pma_weeks,
+          respiratory_support, flow_lpm, fio2_percent, spo2_percent,
+          target_spo2_in_range, apnea_bradycardia_episodes_24h,
+          weight_grams, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-07T12:00:00', ?,
+          ?, ?, ?, ?,
+          ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingBpd.id, babyId, bl.pma, bl.supp, bl.flow, bl.fio2, bl.spo2, bl.inRange, bl.apnea, bl.wt, bl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 21B: Obstetric Acute Fatty Liver of Pregnancy (AFLP) & Swansea Staging ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_aflp_episodes (
+      patient_id, admission_id, episode_code, diagnosis_datetime,
+      gestation_weeks,
+      vomiting_present, abdominal_pain_present, polydipsia_polyuria_present, encephalopathy_present,
+      elevated_bilirubin, hypoglycemia_present, elevated_urate, leukocytosis_present,
+      ascites_or_bright_liver, elevated_transaminases, elevated_ammonia, renal_impairment,
+      coagulopathy_present, microvesicular_steatosis_biopsy,
+      total_swansea_criteria_met, aflp_confirmed,
+      serum_glucose_mg_dl, serum_bilirubin_total_mg_dl, ast_u_l, alt_u_l,
+      serum_creatinine_mg_dl, pt_seconds, inr,
+      dextrose_infusion_active, delivery_urgency, delivery_performed,
+      lchad_newborn_screening_alert, status, consultant_id,
+      clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'AFLP-20261107-101', '2026-11-07T11:00:00',
+      36.2,
+      1, 1, 0, 0,
+      1, 1, 1, 1,
+      1, 1, 1, 0,
+      1, 0,
+      10, 1,
+      52.0, 2.4, 220.0, 198.0,
+      1.4, 16.5, 1.4,
+      1, 'immediate_emergent_delivery', 0,
+      1, 'active_critical_resuscitation', ?,
+      'Primigravida at 36w with intractable vomiting, hypoglycemia 52 mg/dL, and coagulopathy. 10/14 Swansea criteria positive. D10W active. Emergent delivery planned.',
+      ?, ?
+    )
+  `).run(anitaId, docId, now, now);
+
+  const existingAflp = db.prepare('SELECT id FROM obstetric_aflp_episodes WHERE episode_code = ?').get('AFLP-20261107-101') as { id: number } | undefined;
+  if (existingAflp) {
+    const aflpLogs = [
+      { h: 0.0, glu: 52.0, rate: 100.0, conc: 10.0, sbp: 128, dbp: 82, hr: 92, enc: 0, uo: 40.0, notes: 'Hypoglycemia identified on point-of-care test. D10W bolus and 100 mL/hr continuous infusion started.' },
+      { h: 2.0, glu: 78.0, rate: 100.0, conc: 10.0, sbp: 122, dbp: 76, hr: 86, enc: 0, uo: 55.0, notes: 'Blood glucose stabilized at 78 mg/dL. MDT cesarean delivery scheduled in OR 2.' },
+    ];
+    for (const al of aflpLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_aflp_flowsheet_logs (
+          aflp_episode_id, patient_id, log_datetime, hours_from_diagnosis,
+          blood_glucose_mg_dl, dextrose_infusion_rate_ml_hr, dextrose_concentration_percent,
+          sbp_mmhg, dbp_mmhg, hr_bpm, encephalopathy_grade, urine_output_ml_hr,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-07T12:00:00', ?,
+          ?, ?, ?,
+          ?, ?, ?, ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingAflp.id, anitaId, al.h, al.glu, al.rate, al.conc, al.sbp, al.dbp, al.hr, al.enc, al.uo, al.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 21C: Pediatric Polytrauma Resuscitation & Pediatric Trauma Score (PTS) ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_polytrauma_episodes (
+      patient_id, admission_id, episode_code, trauma_datetime,
+      age_months, weight_kg, trauma_mechanism,
+      weight_score, airway_score, systolic_bp_score, cns_score,
+      skeletal_score, cutaneous_score, total_pts_score, pts_mortality_tier,
+      fast_exam_positive, pelvic_binder_placed, txa_administered, txa_dose_mg,
+      pediatric_mtp_activated, prbc_volume_ml, ffp_volume_ml, platelets_volume_ml,
+      initial_gcs, initial_sbp, initial_heart_rate,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'TRAUMA-20261107-101', '2026-11-07T09:30:00',
+      66, 18.5, 'motor_vehicle_collision',
+      1, 1, 1, 1,
+      1, 1, 6, 'critical_high_mortality_le_8',
+      1, 0, 1, 370.0,
+      1, 200.0, 200.0, 200.0,
+      11, 80, 155,
+      'acute_trauma_bay', ?,
+      'Pedestrian vs automobile with closed femur deformity and positive FAST exam (splenic blush). PTS 6 mandates Level 1 trauma resuscitation. TXA & MTP 1:1:1 initiated.',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingTrauma = db.prepare('SELECT id FROM pediatric_polytrauma_episodes WHERE episode_code = ?').get('TRAUMA-20261107-101') as { id: number } | undefined;
+  if (existingTrauma) {
+    const traumaLogs = [
+      { min: 10, gcs: 11, sbp: 80, dbp: 48, hr: 158, rr: 34, spo2: 96.0, temp: 36.5, crys: 370.0, prbc: 0.0, ffp: 0.0, plt: 0.0, uo: 0.8, pupil: 'equal_reactive', notes: 'Initial 20 mL/kg Plasmalyte bolus infused. TXA 370 mg IV given over 10 min.' },
+      { min: 25, gcs: 12, sbp: 94, dbp: 56, hr: 136, rr: 26, spo2: 99.0, temp: 36.7, crys: 370.0, prbc: 200.0, ffp: 200.0, plt: 0.0, uo: 1.4, pupil: 'equal_reactive', notes: 'Blood pressure improved post 1st MTP PRBC+FFP cycle. FAST re-check stable. CT scan arranged.' },
+    ];
+    for (const tl of traumaLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_polytrauma_flowsheet_logs (
+          polytrauma_episode_id, patient_id, log_datetime, minutes_from_arrival,
+          gcs_total, sbp_mmhg, dbp_mmhg, heart_rate_bpm, respiratory_rate,
+          spo2_percent, temperature_celsius, cumulative_crystalloid_ml,
+          cumulative_prbc_ml, cumulative_ffp_ml, cumulative_platelets_ml,
+          urine_output_ml_kg_hr, pupil_status, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-07T09:45:00', ?,
+          ?, ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?, ?
+        )
+      `).run(existingTrauma.id, aaravId, tl.min, tl.gcs, tl.sbp, tl.dbp, tl.hr, tl.rr, tl.spo2, tl.temp, tl.crys, tl.prbc, tl.ffp, tl.plt, tl.uo, tl.pupil, tl.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

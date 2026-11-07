@@ -7635,6 +7635,290 @@ export const deletePediatricAsthmaFlowsheet = (episodeId: number, logId: number)
 export const calculatePediatricAsthma = (payload: any): Promise<any> =>
   api('POST', '/api/pediatric-asthma/calculate', payload);
 
+// ==========================================
+// SERIES 21A: Neonatal Bronchopulmonary Dysplasia (BPD) & Jensen 2019 Staging
+// ==========================================
+
+export interface NeonatalBpdRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  patient_number?: string | null;
+  date_of_birth?: string | null;
+  admission_id?: number | null;
+  episode_code: string;
+  evaluation_datetime: string;
+  gestational_age_weeks: number;
+  birth_weight_grams: number;
+  current_pma_weeks: number;
+  respiratory_support_type: 'none_room_air' | 'nasal_cannula_low_flow' | 'nasal_cannula_high_flow' | 'cpap_nippv' | 'invasive_mechanical_ventilation';
+  cannula_flow_lpm: number;
+  fio2_percent: number;
+  jensen_bpd_grade: 'no_bpd' | 'grade_1' | 'grade_2' | 'grade_3';
+  caffeine_therapy_active: number;
+  diuretic_therapy_active: number;
+  postnatal_steroids_active: number;
+  steroid_regimen?: string | null;
+  home_oxygen_planned: number;
+  status: 'evaluating' | 'inpatient_respiratory_care' | 'weaning_protocol' | 'discharged_home_oxygen' | 'resolved';
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NeonatalBpdFlowsheetRecord {
+  id: number;
+  bpd_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  pma_weeks: number;
+  respiratory_support: string;
+  flow_lpm: number;
+  fio2_percent: number;
+  spo2_percent: number;
+  target_spo2_in_range: number;
+  apnea_bradycardia_episodes_24h: number;
+  diuretic_dose_mg_kg?: number | null;
+  weight_grams?: number | null;
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getNeonatalBpdEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: NeonatalBpdRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: NeonatalBpdRecord[] }>('GET', `/api/neonatal-bpd/episodes${queryStr}`);
+};
+
+export const getNeonatalBpdEpisode = (id: number): Promise<{ episode: NeonatalBpdRecord; logs: NeonatalBpdFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/neonatal-bpd/episodes/${id}`);
+
+export const createNeonatalBpdEpisode = (payload: any): Promise<{ episode: NeonatalBpdRecord }> =>
+  api('POST', '/api/neonatal-bpd/episodes', payload);
+
+export const updateNeonatalBpdEpisode = (id: number, payload: any): Promise<{ episode: NeonatalBpdRecord }> =>
+  api('PATCH', `/api/neonatal-bpd/episodes/${id}`, payload);
+
+export const deleteNeonatalBpdEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-bpd/episodes/${id}`);
+
+export const logNeonatalBpdFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/neonatal-bpd/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteNeonatalBpdFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-bpd/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateNeonatalBpd = (payload: any): Promise<any> =>
+  api('POST', '/api/neonatal-bpd/calculate', payload);
+
+// ==========================================
+// SERIES 21B: Obstetric Acute Fatty Liver of Pregnancy (AFLP) & Swansea Criteria
+// ==========================================
+
+export interface ObstetricAflpRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  patient_number?: string | null;
+  date_of_birth?: string | null;
+  admission_id?: number | null;
+  episode_code: string;
+  diagnosis_datetime: string;
+  gestation_weeks: number;
+  vomiting_present: number;
+  abdominal_pain_present: number;
+  polydipsia_polyuria_present: number;
+  encephalopathy_present: number;
+  elevated_bilirubin: number;
+  hypoglycemia_present: number;
+  elevated_urate: number;
+  leukocytosis_present: number;
+  ascites_or_bright_liver: number;
+  elevated_transaminases: number;
+  elevated_ammonia: number;
+  renal_impairment: number;
+  coagulopathy_present: number;
+  microvesicular_steatosis_biopsy: number;
+  total_swansea_criteria_met: number;
+  aflp_confirmed: number;
+  serum_glucose_mg_dl?: number | null;
+  serum_bilirubin_total_mg_dl?: number | null;
+  ast_u_l?: number | null;
+  alt_u_l?: number | null;
+  serum_creatinine_mg_dl?: number | null;
+  pt_seconds?: number | null;
+  inr?: number | null;
+  dextrose_infusion_active: number;
+  delivery_urgency: 'immediate_emergent_delivery' | 'urgent_stabilize_then_deliver' | 'delivered_postpartum_management';
+  delivery_performed: number;
+  delivery_datetime?: string | null;
+  lchad_newborn_screening_alert: number;
+  status: 'evaluating' | 'active_critical_resuscitation' | 'postpartum_icu_monitoring' | 'hepatic_recovery' | 'resolved';
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ObstetricAflpFlowsheetRecord {
+  id: number;
+  aflp_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_diagnosis: number;
+  blood_glucose_mg_dl: number;
+  dextrose_infusion_rate_ml_hr: number;
+  dextrose_concentration_percent: number;
+  sbp_mmhg?: number | null;
+  dbp_mmhg?: number | null;
+  hr_bpm?: number | null;
+  encephalopathy_grade: number;
+  urine_output_ml_hr?: number | null;
+  platelet_count?: number | null;
+  fibrinogen_mg_dl?: number | null;
+  pt_seconds?: number | null;
+  inr?: number | null;
+  blood_products_administered?: string | null;
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getObstetricAflpEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: ObstetricAflpRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: ObstetricAflpRecord[] }>('GET', `/api/obstetric-aflp/episodes${queryStr}`);
+};
+
+export const getObstetricAflpEpisode = (id: number): Promise<{ episode: ObstetricAflpRecord; logs: ObstetricAflpFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/obstetric-aflp/episodes/${id}`);
+
+export const createObstetricAflpEpisode = (payload: any): Promise<{ episode: ObstetricAflpRecord }> =>
+  api('POST', '/api/obstetric-aflp/episodes', payload);
+
+export const updateObstetricAflpEpisode = (id: number, payload: any): Promise<{ episode: ObstetricAflpRecord }> =>
+  api('PATCH', `/api/obstetric-aflp/episodes/${id}`, payload);
+
+export const deleteObstetricAflpEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-aflp/episodes/${id}`);
+
+export const logObstetricAflpFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/obstetric-aflp/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteObstetricAflpFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-aflp/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const evaluateObstetricAflp = (payload: any): Promise<any> =>
+  api('POST', '/api/obstetric-aflp/evaluate', payload);
+
+// ==========================================
+// SERIES 21C: Pediatric Polytrauma Resuscitation & Pediatric Trauma Score (PTS)
+// ==========================================
+
+export interface PediatricPolytraumaRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  patient_number?: string | null;
+  date_of_birth?: string | null;
+  admission_id?: number | null;
+  episode_code: string;
+  trauma_datetime: string;
+  age_months: number;
+  weight_kg: number;
+  trauma_mechanism: 'motor_vehicle_collision' | 'pedestrian_vs_auto' | 'fall_greater_than_2_meters' | 'bicycle_collision' | 'penetrating_trauma' | 'crush_injury' | 'non_accidental_trauma' | 'other';
+  weight_score: number;
+  airway_score: number;
+  systolic_bp_score: number;
+  cns_score: number;
+  skeletal_score: number;
+  cutaneous_score: number;
+  total_pts_score: number;
+  pts_mortality_tier: 'critical_high_mortality_le_8' | 'moderate_potential_lethal_9_10' | 'minor_low_mortality_11_12';
+  fast_exam_positive: number;
+  pelvic_binder_placed: number;
+  txa_administered: number;
+  txa_dose_mg?: number | null;
+  pediatric_mtp_activated: number;
+  prbc_volume_ml: number;
+  ffp_volume_ml: number;
+  platelets_volume_ml: number;
+  initial_gcs: number;
+  initial_sbp: number;
+  initial_heart_rate: number;
+  status: 'acute_trauma_bay' | 'emergent_or_surgery' | 'picu_damage_control' | 'stepdown_ward' | 'convalescent';
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PediatricPolytraumaFlowsheetRecord {
+  id: number;
+  polytrauma_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  minutes_from_arrival: number;
+  gcs_total: number;
+  sbp_mmhg: number;
+  dbp_mmhg?: number | null;
+  heart_rate_bpm: number;
+  respiratory_rate: number;
+  spo2_percent: number;
+  temperature_celsius: number;
+  cumulative_crystalloid_ml: number;
+  cumulative_prbc_ml: number;
+  cumulative_ffp_ml: number;
+  cumulative_platelets_ml: number;
+  urine_output_ml_kg_hr?: number | null;
+  pupil_status: 'equal_reactive' | 'sluggish_asymmetric' | 'unilateral_dilated_fixed' | 'bilateral_fixed_dilated';
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getPediatricPolytraumaEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: PediatricPolytraumaRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: PediatricPolytraumaRecord[] }>('GET', `/api/pediatric-polytrauma/episodes${queryStr}`);
+};
+
+export const getPediatricPolytraumaEpisode = (id: number): Promise<{ episode: PediatricPolytraumaRecord; logs: PediatricPolytraumaFlowsheetRecord[] }> =>
+  api('GET', `/api/pediatric-polytrauma/episodes/${id}`);
+
+export const createPediatricPolytraumaEpisode = (payload: any): Promise<{ episode: PediatricPolytraumaRecord }> =>
+  api('POST', '/api/pediatric-polytrauma/episodes', payload);
+
+export const updatePediatricPolytraumaEpisode = (id: number, payload: any): Promise<{ episode: PediatricPolytraumaRecord }> =>
+  api('PATCH', `/api/pediatric-polytrauma/episodes/${id}`, payload);
+
+export const deletePediatricPolytraumaEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-polytrauma/episodes/${id}`);
+
+export const logPediatricPolytraumaFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/pediatric-polytrauma/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deletePediatricPolytraumaFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-polytrauma/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculatePediatricPolytraumaPts = (payload: any): Promise<any> =>
+  api('POST', '/api/pediatric-polytrauma/calculate-pts', payload);
+
+
 
 
 
