@@ -864,6 +864,114 @@ async function seed() {
     )
   `).run(sunitaId, docId, docId, docId, now, now);
 
+  // --- 6D: PRE-ECLAMPSIA FIRST-TRIMESTER SCREENING SEED ---
+  // Sunita Rao (P-1004) - High Risk (1:45) due to prior PE & elevated UtA PI with bilateral notch -> Aspirin 150mg
+  db.prepare(`
+    INSERT OR IGNORE INTO preeclampsia_screenings (
+      patient_id, assessment_date, assessment_time, gestational_age_weeks, gestational_age_days, crl_mm,
+      maternal_age, maternal_weight_kg, maternal_height_cm, bmi,
+      ethnicity, parity, prior_pe_onset_gestation, conception_method, smoking_status,
+      family_history_pe, chronic_hypertension, pregestational_diabetes,
+      systemic_lupus_or_aps, chronic_kidney_disease, interpregnancy_interval_years,
+      sbp_right, dbp_right, sbp_left, dbp_left, mean_arterial_pressure, map_mom,
+      uta_pi_left, uta_pi_right, uta_pi_mean, uta_pi_mom, uta_bilateral_notching,
+      serum_plgf_pg_ml, plgf_mom, serum_pappa_iu_l, pappa_mom,
+      background_risk_ratio, background_risk_numeric,
+      fmf_risk_ratio, fmf_risk_numeric, fmf_risk_category,
+      clinical_risk_category, overall_risk_tier,
+      aspirin_indicated, aspirin_dose_mg, aspirin_timing_rationale,
+      calcium_indicated, calcium_dose_mg, surveillance_interval, repeat_scan_weeks,
+      clinical_notes, performed_by, reviewed_by, created_by, updated_by, created_at, updated_at
+    ) VALUES (
+      ?, '2026-10-15', '10:00', 12, 2, 60.0,
+      31, 72.0, 158.0, 28.8,
+      'south_asian', 'multiparous_prior_pe', 'preterm_34_37', 'spontaneous', 'non_smoker',
+      1, 0, 0,
+      0, 0, 3.5,
+      132, 84, 130, 82, 99.3, 1.15,
+      2.10, 2.25, 2.18, 1.35, 1,
+      18.5, 0.45, 0.85, 0.85,
+      '1:25', 0.04,
+      '1:18', 0.055, 'high_risk',
+      'high_risk', 'high_risk',
+      1, 150, 'Start Aspirin 150 mg PO once daily at bedtime immediately (strictly before 16+0 weeks). Continue uninterrupted until 36+0 weeks gestation.',
+      1, 1500, 'Enhanced antenatal visits: Every 2 weeks until 28 weeks, then weekly until delivery.',
+      'Repeat Uterine Artery Doppler at 20–24 weeks anomaly scan.',
+      'High-risk first-trimester screening. Prescribed Aspirin 150mg bedtime + Calcium 1.5g daily.',
+      'Dr. K. Sarayu Rao', ?, ?, ?, ?, ?
+    )
+  `).run(sunitaId, docId, docId, docId, now, now);
+
+  // --- 6E: MULTIPLE GESTATION SURVEILLANCE SEED ---
+  // Twin pregnancy profile for Anita Sharma (or demo patient)
+  const twinPregRes = db.prepare(`
+    INSERT OR IGNORE INTO multiple_gestation_pregnancies (
+      patient_id, plurality, chorionicity, amnionicity, first_trimester_sign,
+      dividing_membrane_thickness_mm, placental_configuration, conception_method,
+      status, diagnosis_gestation_weeks, baseline_notes,
+      created_by, updated_by, created_at, updated_at
+    ) VALUES (
+      ?, 'twins', 'mcda', 'diamniotic', 't_sign',
+      1.5, 'single_anterior', 'spontaneous',
+      'active', 12, 'Monochorionic diamniotic (MCDA) twin pregnancy confirmed on 1st trimester ultrasound.',
+      ?, ?, ?, ?
+    )
+  `).run(anitaId, docId, docId, now, now);
+
+  const twinPregId = Number(twinPregRes.lastInsertRowid) || 1;
+
+  db.prepare(`
+    INSERT OR IGNORE INTO multiple_gestation_assessments (
+      pregnancy_id, patient_id, assessment_date, assessment_time,
+      gestational_age_weeks, gestational_age_days, fetuses_json,
+      efw_discordance_percent, ac_discordance_percent, dvp_discordance_cm,
+      discordance_severity, larger_fetus_label, smaller_fetus_label,
+      ttts_stage, sfgr_type, taps_stage, cord_entanglement_noted,
+      surveillance_interval_recommendation, delivery_timing_recommendation,
+      delivery_mode_recommendation, corticosteroids_indicated, action_plan,
+      clinical_notes, performed_by, reviewed_by, created_by, updated_by,
+      created_at, updated_at
+    ) VALUES (
+      ?, ?, '2026-11-05', '11:15',
+      24, 0, ?,
+      7.4, 3.0, 0.4,
+      'concordant', 'Twin A', 'Twin B',
+      'none', 'none', 'none', 0,
+      'Fortnightly (every 2 weeks) ultrasound surveillance starting from 16 weeks to screen for TTTS and sFGR.',
+      'Uncomplicated MCDA twins: Planned delivery at 36+0 to 36+6 weeks gestation.',
+      'Trial of vaginal delivery is safe and appropriate, provided Twin A presents cephalic.',
+      0, 'Surveillance: Fortnightly USG | Timing: 36w | Mode: Trial of vaginal delivery',
+      'Concordant growth. Both bladders well filled. Reassuring forward end-diastolic flow in both umbilical arteries.',
+      'Dr. K. Sarayu Rao', ?, ?, ?, ?, ?
+    )
+  `).run(
+    twinPregId,
+    anitaId,
+    JSON.stringify([
+      {
+        label: 'Twin A',
+        presentation: 'cephalic',
+        bpdMm: 60, hcMm: 222, acMm: 200, flMm: 44,
+        efwG: 680, efwPercentile: 50,
+        dvpCm: 4.6, bladderVisualized: true,
+        uaPi: 1.15, uaFlow: 'normal_positive',
+        mcaPi: 1.70, mcaPsvCmS: 28.0, mcaPsvMom: 1.02,
+        dvAWave: 'positive', hydropsPresent: false, demised: false,
+      },
+      {
+        label: 'Twin B',
+        presentation: 'breech',
+        bpdMm: 58, hcMm: 216, acMm: 194, flMm: 42,
+        efwG: 630, efwPercentile: 40,
+        dvpCm: 4.2, bladderVisualized: true,
+        uaPi: 1.18, uaFlow: 'normal_positive',
+        mcaPi: 1.72, mcaPsvCmS: 29.0, mcaPsvMom: 1.05,
+        dvAWave: 'positive', hydropsPresent: false, demised: false,
+      },
+    ]),
+    docId, docId, docId, now, now
+  );
+
   // Book today's outpatient appointments for the active queue
   const todayStr = new Date().toISOString().slice(0, 10);
   const appts = [

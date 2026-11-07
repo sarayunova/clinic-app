@@ -2743,3 +2743,156 @@ export interface FetalDopplerAssessment {
   createdAt: string;
   updatedAt: string;
 }
+
+
+export interface PreeclampsiaScreeningRecord {
+  id: number;
+  patientId: number;
+  visitId: number | null;
+  ultrasoundReportId: number | null;
+  assessmentDate: string;
+  assessmentTime: string | null;
+  gestationalAgeWeeks: number;
+  gestationalAgeDays: number;
+  crlMm: number | null;
+
+  maternalAge: number;
+  maternalWeightKg: number | null;
+  maternalHeightCm: number | null;
+  bmi: number;
+  ethnicity: 'south_asian' | 'caucasian' | 'afro_caribbean' | 'east_asian' | 'other';
+  parity: 'nulliparous' | 'multiparous_no_pe' | 'multiparous_prior_pe';
+  priorPeOnsetGestation: 'early_lt_34' | 'preterm_34_37' | 'term_gt_37' | null;
+  conceptionMethod: 'spontaneous' | 'ivf_art' | 'ovulation_induction';
+  smokingStatus: 'non_smoker' | 'smoker' | 'cessation_early_pregnancy';
+  familyHistoryPe: boolean;
+  chronicHypertension: boolean;
+  pregestationalDiabetes: boolean;
+  systemicLupusOrAps: boolean;
+  chronicKidneyDisease: boolean;
+  interpregnancyIntervalYears: number | null;
+
+  sbpRight: number | null;
+  dbpRight: number | null;
+  sbpLeft: number | null;
+  dbpLeft: number | null;
+  meanArterialPressure: number;
+  mapMom: number;
+
+  utaPiLeft: number | null;
+  utaPiRight: number | null;
+  utaPiMean: number;
+  utaPiMom: number;
+  utaBilateralNotching: boolean;
+
+  serumPlgfPgMl: number | null;
+  plgfMom: number | null;
+  serumPappaIuL: number | null;
+  pappaMom: number | null;
+
+  backgroundRiskRatio: string;
+  backgroundRiskNumeric: number;
+  fmfRiskRatio: string;
+  fmfRiskNumeric: number;
+  fmfRiskCategory: 'high_risk' | 'low_risk';
+  clinicalRiskCategory: 'high_risk' | 'moderate_risk' | 'low_risk';
+  overallRiskTier: 'high_risk' | 'low_risk';
+
+  aspirinIndicated: boolean;
+  aspirinDoseMg: number;
+  aspirinTimingRationale: string;
+  calciumIndicated: boolean;
+  calciumDoseMg: number;
+  surveillanceInterval: string;
+  repeatScanWeeks: string;
+
+  clinicalNotes: string | null;
+  performedBy: string | null;
+  reviewedBy: number;
+  reviewedByName: string | null;
+
+  createdBy: number;
+  updatedBy: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FetusAssessmentItem {
+  label: string;
+  presentation: 'cephalic' | 'breech' | 'transverse' | 'oblique';
+  bpdMm?: number | null;
+  hcMm?: number | null;
+  acMm?: number | null;
+  flMm?: number | null;
+  efwG: number;
+  efwPercentile?: number | null;
+  dvpCm: number;
+  bladderVisualized: boolean;
+  uaPi?: number | null;
+  uaFlow: 'normal_positive' | 'reduced' | 'absent_aedf' | 'reversed_redf' | 'intermittent_absent_reversed';
+  mcaPi?: number | null;
+  mcaPsvCmS?: number | null;
+  mcaPsvMom?: number | null;
+  dvAWave?: 'positive' | 'absent' | 'reversed' | 'not_performed';
+  hydropsPresent?: boolean;
+  demised?: boolean;
+}
+
+export interface MultipleGestationPregnancy {
+  id: number;
+  patientId: number;
+  plurality: 'twins' | 'triplets';
+  chorionicity: 'dcda' | 'mcda' | 'mcma' | 'tcta' | 'dcta' | 'mc';
+  amnionicity: 'diamniotic' | 'monoamniotic' | 'triamniotic';
+  firstTrimesterSign: 'lambda_sign' | 't_sign' | 'no_dividing_membrane' | null;
+  dividingMembraneThicknessMm: number | null;
+  placentalConfiguration: 'two_separate' | 'two_fused' | 'single_anterior' | 'single_posterior' | 'single_fundal' | null;
+  conceptionMethod: 'spontaneous' | 'ivf_et' | 'ovulation_induction';
+  status: 'active' | 'delivered' | 'archived';
+  diagnosisGestationWeeks: number | null;
+  baselineNotes: string | null;
+  createdBy: number;
+  updatedBy: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MultipleGestationAssessment {
+  id: number;
+  pregnancyId: number;
+  patientId: number;
+  ultrasoundReportId: number | null;
+  assessmentDate: string;
+  assessmentTime: string | null;
+  gestationalAgeWeeks: number;
+  gestationalAgeDays: number;
+  fetuses: FetusAssessmentItem[];
+
+  efwDiscordancePercent: number;
+  acDiscordancePercent: number;
+  dvpDiscordanceCm: number;
+  discordanceSeverity: 'concordant' | 'mild_discordance' | 'significant_discordance_gt_20' | 'severe_discordance_gt_25';
+  largerFetusLabel: string | null;
+  smallerFetusLabel: string | null;
+
+  tttsStage: 'none' | 'stage_1' | 'stage_2' | 'stage_3' | 'stage_4' | 'stage_5';
+  sfgrType: 'none' | 'type_1' | 'type_2' | 'type_3';
+  tapsStage: 'none' | 'stage_1' | 'stage_2' | 'stage_3' | 'stage_4' | 'stage_5';
+  cordEntanglementNoted: boolean;
+
+  surveillanceIntervalRecommendation: string;
+  deliveryTimingRecommendation: string;
+  deliveryModeRecommendation: string;
+  corticosteroidsIndicated: boolean;
+  actionPlan: string | null;
+
+  clinicalNotes: string | null;
+  performedBy: string | null;
+  reviewedBy: number;
+  reviewedByName: string | null;
+
+  createdBy: number;
+  updatedBy: number;
+  createdAt: string;
+  updatedAt: string;
+}
