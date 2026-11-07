@@ -99,6 +99,10 @@ export const ACTION_LABELS: Record<string, string> = {
   'pndt.form_f_delete': 'Deleted statutory PC-PNDT Form F',
   'pndt.form_f_print': 'Printed statutory PC-PNDT Form F',
   'pndt.monthly_return_export': 'Exported statutory PC-PNDT monthly return',
+  'genetic.screening_create': 'Recorded antenatal genetic screening & aneuploidy risk',
+  'genetic.screening_update': 'Updated genetic screening & lab/invasive results',
+  'genetic.screening_delete': 'Deleted genetic screening record',
+  'genetic.screening_print': 'Printed genetic screening & counseling report',
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

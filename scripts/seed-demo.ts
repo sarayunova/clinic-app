@@ -732,6 +732,71 @@ async function seed() {
     )
   `).run(sunitaId, docId, docId, docId, now, now);
 
+  // 3. Antenatal Genetic Screening & Aneuploidy Records
+  // Anita Sharma (P-1001) - Low Risk First Trimester Combined Screening
+  db.prepare(`
+    INSERT OR IGNORE INTO genetic_screening_episodes (
+      patient_id, screening_date, screening_type, gestational_age_weeks, gestational_age_days,
+      maternal_age_at_delivery, maternal_weight_kg, pregnancy_type, ivf_pregnancy, diabetes_status, smoker,
+      crl_mm, nt_measured_mm, nt_mom, nasal_bone, tricuspid_regurgitation, ductus_venosus,
+      free_beta_hcg_mom, papp_a_mom,
+      background_t21_risk_ratio, adjusted_t21_risk_ratio, adjusted_t21_risk_numeric,
+      adjusted_t18_risk_ratio, adjusted_t18_risk_numeric,
+      adjusted_t13_risk_ratio, adjusted_t13_risk_numeric,
+      ontd_risk_status, overall_risk_tier,
+      clinical_recommendation, counseling_notes, counseled_by, patient_decision,
+      invasive_procedure_type,
+      created_by, updated_by, created_at, updated_at
+    ) VALUES (
+      ?, '2026-06-25', 'first_trimester_combined', 12, 3,
+      28, 58.5, 'singleton', 0, 0, 0,
+      62.5, 1.45, 0.90, 'present', 'normal', 'positive',
+      1.10, 1.25,
+      '1:1078', '1:4850', 0.000206,
+      '1:12000', 0.000083,
+      '1:35000', 0.000028,
+      'not_applicable', 'low_risk',
+      'LOW RISK: Reassuring first trimester screening. Reassure the patient and proceed with routine antenatal care. Schedule Level-II targeted anomaly ultrasound scan (TIFFA) at 18–20 weeks.',
+      'Pre-test and post-test genetic counseling completed. Patient informed of high negative predictive value and advised routine ANC.',
+      ?, 'routine_care',
+      'none',
+      ?, ?, ?, ?
+    )
+  `).run(anitaId, docId, docId, docId, now, now);
+
+  // Sunita Rao (P-1004) - Cell-Free DNA / NIPT Screening
+  db.prepare(`
+    INSERT OR IGNORE INTO genetic_screening_episodes (
+      patient_id, screening_date, screening_type, gestational_age_weeks, gestational_age_days,
+      maternal_age_at_delivery, maternal_weight_kg, pregnancy_type, ivf_pregnancy, diabetes_status, smoker,
+      background_t21_risk_ratio, adjusted_t21_risk_ratio, adjusted_t21_risk_numeric,
+      adjusted_t18_risk_ratio, adjusted_t18_risk_numeric,
+      adjusted_t13_risk_ratio, adjusted_t13_risk_numeric,
+      ontd_risk_status, overall_risk_tier,
+      nipt_sample_date, nipt_fetal_fraction_percent,
+      nipt_t21_result, nipt_t18_result, nipt_t13_result,
+      nipt_sex_chromosomes, nipt_microdeletions, nipt_lab_name,
+      clinical_recommendation, counseling_notes, counseled_by, patient_decision,
+      invasive_procedure_type,
+      created_by, updated_by, created_at, updated_at
+    ) VALUES (
+      ?, '2026-07-02', 'nipt_cfdna', 14, 1,
+      32, 64.0, 'singleton', 0, 0, 0,
+      '1:780', '1:50000', 0.00002,
+      '1:50000', 0.00001,
+      '1:50000', 0.00001,
+      'not_applicable', 'low_risk',
+      '2026-07-02', 9.4,
+      'low_risk', 'low_risk', 'low_risk',
+      'Consistent with Female (46,XX)', 'No microdeletions detected (22q11.2, 1p36, Angelman)', 'MedGenome Genomics',
+      'LOW-RISK NIPT RESULT: Reassuring cell-free DNA result with detection rate > 99% for Trisomy 21 and > 98% for Trisomy 18. Fetal fraction adequate (9.4%). Continue routine antenatal care and Level-II ultrasound scan at 18–20 weeks.',
+      'Advanced maternal age secondary screening discussed. Low-risk result explained, patient decided for routine Level-II scan.',
+      ?, 'routine_care',
+      'none',
+      ?, ?, ?, ?
+    )
+  `).run(sunitaId, docId, docId, docId, now, now);
+
   // Book today's outpatient appointments for the active queue
   const todayStr = new Date().toISOString().slice(0, 10);
   const appts = [

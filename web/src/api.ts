@@ -2604,3 +2604,80 @@ export interface MonthlyPndtReturnSummary {
   invasiveProceduresCount: number;
   indicationBreakdown: { code: string; label: string; count: number }[];
 }
+
+export interface GeneticScreeningRecord {
+  id: number;
+  patientId: number;
+  visitId: number | null;
+  screeningDate: string;
+  screeningType: 'first_trimester_combined' | 'quadruple_marker' | 'nipt_cfdna' | 'integrated_sequential' | 'invasive_diagnostic';
+  gestationalAgeWeeks: number;
+  gestationalAgeDays: number;
+  maternalAgeAtDelivery: number;
+  maternalWeightKg: number | null;
+  pregnancyType: string;
+  ivfPregnancy: boolean;
+  diabetesStatus: boolean;
+  smoker: boolean;
+
+  crlMm: number | null;
+  ntMeasuredMm: number | null;
+  ntMom: number | null;
+  nasalBone: 'present' | 'absent' | 'hypoplastic' | 'not_visualized' | null;
+  tricuspidRegurgitation: 'normal' | 'regurgitant' | 'not_performed' | null;
+  ductusVenosus: 'positive' | 'reversed' | 'not_performed' | null;
+  freeBetaHcgRaw: number | null;
+  freeBetaHcgMom: number | null;
+  pappARaw: number | null;
+  pappAMom: number | null;
+
+  bpdMm: number | null;
+  afpRaw: number | null;
+  afpMom: number | null;
+  totalHcgRaw: number | null;
+  totalHcgMom: number | null;
+  ue3Raw: number | null;
+  ue3Mom: number | null;
+  inhibinARaw: number | null;
+  inhibinAMom: number | null;
+
+  backgroundT21RiskRatio: string;
+  adjustedT21RiskRatio: string;
+  adjustedT21RiskNumeric: number;
+  adjustedT18RiskRatio: string;
+  adjustedT18RiskNumeric: number;
+  adjustedT13RiskRatio: string;
+  adjustedT13RiskNumeric: number;
+  ontdRiskStatus: 'low_risk' | 'high_risk' | 'not_applicable';
+  overallRiskTier: 'low_risk' | 'intermediate_risk' | 'high_risk' | 'inconclusive';
+
+  niptSampleDate: string | null;
+  niptFetalFractionPercent: number | null;
+  niptT21Result: 'low_risk' | 'high_risk' | 'inconclusive' | null;
+  niptT18Result: 'low_risk' | 'high_risk' | 'inconclusive' | null;
+  niptT13Result: 'low_risk' | 'high_risk' | 'inconclusive' | null;
+  niptSexChromosomes: string | null;
+  niptMicrodeletions: string | null;
+  niptLabName: string | null;
+
+  clinicalRecommendation: string;
+  counselingNotes: string | null;
+  counseledBy: number;
+  counseledByName?: string | null;
+  patientDecision: 'routine_care' | 'opt_for_nipt' | 'opt_for_invasive_diagnostic' | 'declined_further_testing' | 'undecided' | null;
+
+  invasiveProcedureType: 'cvs' | 'amniocentesis' | 'cordocentesis' | 'none' | null;
+  invasiveProcedureDate: string | null;
+  invasivePerformedBy: string | null;
+  invasiveSampleDetails: string | null;
+  antiDGiven: boolean;
+  karyotypeResult: string | null;
+  microarrayCmaResult: string | null;
+  rapidQfpcrResult: string | null;
+  finalGeneticDiagnosis: string | null;
+
+  createdBy: number;
+  updatedBy: number;
+  createdAt: string;
+  updatedAt: string;
+}
