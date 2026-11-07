@@ -2535,6 +2535,161 @@ async function seed() {
     }
   }
 
+  // --- SERIES 19A: Neonatal Necrotizing Enterocolitis (NEC) Bell's Staging ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_nec_episodes (
+      patient_id, admission_id, episode_code, onset_datetime,
+      gestational_age_weeks, birth_weight_grams, current_weight_grams,
+      bell_stage, systemic_signs_json, intestinal_signs_json, radiological_signs_json,
+      abg_ph, base_excess, platelet_count, crp_mg_l, serum_lactate_mmol_l,
+      npo_active, ng_decompression_active, broad_spectrum_antibiotics_active,
+      tpn_support_active, inotrope_support_active, surgical_consult_status,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'NEC-20261107-101', '2026-11-07T07:00:00',
+      29.0, 1180, 1220,
+      'stage_2a_definite_mild',
+      '["temperature_instability", "apnea_bradycardia", "lethargy_hypotonia"]',
+      '["gastric_residuals_bilious", "abdominal_distension", "heme_positive_stool", "erythema_wall"]',
+      '["radiographic_pneumatosis"]',
+      7.29, -5.5, 95000, 36.5, 2.4,
+      1, 1, 1,
+      1, 0, 'consulted_medical_management',
+      'active_medical_management', ?,
+      '29-week preterm infant developed abdominal distension with 45% bilious aspirates and abdominal wall erythema. Radiograph confirmed pathognomonic pneumatosis intestinalis in right lower quadrant. Modified Bell Stage II-A (Definite Mild NEC). Strict NPO initiated for 7-10 days with replogle decompression, triple IV antibiotics (Ampicillin + Gentamicin + Metronidazole), and pediatric surgical team co-management.',
+      ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingNec = db.prepare('SELECT id FROM neonatal_nec_episodes WHERE episode_code = ?').get('NEC-20261107-101') as { id: number } | undefined;
+  if (existingNec) {
+    const necLogs = [
+      { h: 0, girth: 23.5, resVol: 3.5, resChar: 'bilious', sounds: 'hypoactive', wall: 'distended_soft', plt: 95000, ph: 7.29, lac: 2.4, notes: 'Baseline onset findings. Low wall suction replogle tube placed.' },
+      { h: 6, girth: 24.2, resVol: 2.0, resChar: 'bilious', sounds: 'hypoactive', wall: 'erythematous', plt: 92000, ph: 7.31, lac: 2.2, notes: 'Abdominal wall erythematous around periumbilical region. Serial X-ray stable without free air.' },
+      { h: 12, girth: 24.0, resVol: 1.2, resChar: 'curdled_milk', sounds: 'hypoactive', wall: 'distended_soft', plt: 98000, ph: 7.34, lac: 1.8, notes: 'Abdominal erythema lessening. Color and perfusion brisk. Tolerating TPN.' },
+    ];
+    for (const nl of necLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_nec_flowsheet_logs (
+          nec_episode_id, patient_id, log_datetime, hours_from_onset,
+          abdominal_girth_cm, gastric_residual_volume_ml, gastric_residual_character,
+          bowel_sounds, abdominal_wall_appearance, platelet_count, abg_ph, lactate_mmol_l,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-07T08:00:00', ?,
+          ?, ?, ?,
+          ?, ?, ?, ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingNec.id, babyId, nl.h, nl.girth, nl.resVol, nl.resChar, nl.sounds, nl.wall, nl.plt, nl.ph, nl.lac, nl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 19B: Obstetric Placenta Accreta Spectrum (PAS) ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_pas_episodes (
+      patient_id, admission_id, episode_code, evaluation_datetime,
+      gestation_weeks, previous_cesareans_count, placenta_previa_present,
+      prior_uterine_surgeries_json, loss_of_clear_zone, myometrial_thickness_less_1mm,
+      lacunae_grade, subplacental_hypervascularity, bridging_vessels_to_bladder,
+      mri_performed, mri_findings, pas_grade, mdt_members_json,
+      ir_embolization_planned, ureteral_stents_planned, cell_saver_requested,
+      prbc_units_reserved, ffp_units_reserved, platelet_units_reserved,
+      planned_delivery_weeks, planned_delivery_datetime, surgical_approach,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'PAS-20261107-101', '2026-11-07T08:30:00',
+      33.0, 2, 1,
+      '["previous_lscs_2020", "previous_lscs_2023"]', 1, 1,
+      2, 1, 0,
+      1, 'Placenta increta: lower anterior uterine segment thinning <1mm with multiple deep vascular lacunae abutting but not penetrating the outer bladder serosa.',
+      'grade_2_increta', '["Dr. Meera Patel (Lead Obstetrician)", "Dr. Vivek Rao (Senior Obstetric Anesthesiologist)", "Dr. Sarah Smith (NICU Consultant)", "Dr. R. Raman (Urologist standby)"]',
+      1, 1, 1,
+      6, 6, 2,
+      34.5, '2026-11-18T08:30:00', 'planned_cesarean_hysterectomy',
+      'antepartum_planning', ?,
+      '33-week gravida G3P2 with 2 prior cesarean deliveries and anterior complete placenta previa. Targeted ultrasound and pelvic MRI demonstrate PAS Grade 2 (Placenta Increta) with confluent vascular lacunae and myometrial thinning <1mm. MDT conference convened. Planned elective cesarean hysterectomy at 34w4d with preoperative ureteral stenting, IR balloon standby, cell saver, and 6 units PRBC / 6 units FFP crossmatched in OR refrigerator. Antenatal betamethasone planned at 34w0d.',
+      ?, ?
+    )
+  `).run(anitaId, docId, now, now);
+
+  const existingPas = db.prepare('SELECT id FROM obstetric_pas_episodes WHERE episode_code = ?').get('PAS-20261107-101') as { id: number } | undefined;
+  if (existingPas) {
+    const pasLogs = [
+      { gw: 33.0, bleed: 0, ml: 0, sbp: 114, dbp: 72, hr: 78, ctg: 'category_1', hb: 11.4, notes: 'Baseline outpatient MDT surveillance. No vaginal bleeding. Category 1 CTG.' },
+      { gw: 33.5, bleed: 0, ml: 0, sbp: 118, dbp: 74, hr: 80, ctg: 'category_1', hb: 11.2, notes: 'Antenatal clinic review. Vitals stable. Betamethasone first dose scheduled.' },
+    ];
+    for (const pl of pasLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_pas_flowsheet_logs (
+          pas_episode_id, patient_id, log_datetime, gestation_weeks,
+          antenatal_bleeding_episode, vaginal_bleeding_ml, maternal_sbp,
+          maternal_dbp, maternal_hr, ctg_category, hemoglobin_g_dl,
+          crossmatch_units_confirmed, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-07T09:00:00', ?,
+          ?, ?, ?,
+          ?, ?, ?, ?,
+          1, ?, ?, ?
+        )
+      `).run(existingPas.id, anitaId, pl.gw, pl.bleed, pl.ml, pl.sbp, pl.dbp, pl.hr, pl.ctg, pl.hb, pl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 19C: Pediatric Traumatic Brain Injury (TBI) & PECARN ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_tbi_episodes (
+      patient_id, admission_id, episode_code, injury_datetime,
+      age_months, weight_kg, injury_mechanism, age_bracket,
+      gcs_score, altered_mental_status, palpable_skull_fracture,
+      non_frontal_scalp_hematoma, loss_of_consciousness_seconds,
+      acting_abnormal_parent, signs_of_basilar_fracture,
+      vomiting_episodes_count, severe_headache, pecarn_risk_category,
+      ct_performed, ct_findings, raised_icp_suspected,
+      icp_management_tier, hyperosmolar_agent, intubation_status,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'TBI-20261107-101', '2026-11-07T07:30:00',
+      18, 11.5, 'fall_greater_than_threshold', 'under_2_years',
+      14, 1, 0,
+      1, 10,
+      1, 0,
+      1, 0, 'high_risk_ct_indicated',
+      1, 'isolated_linear_fracture', 0,
+      'tier_1_neuroprotective', 'none', 'natural_airway',
+      'acute_ed_eval', ?,
+      '18-month-old infant presenting following fall from balcony (>1.2 meters). Brief loss of consciousness (~10 seconds) with subsequent somnolence, vomiting, and prominent left parietal subgaleal hematoma. GCS 14 (E3 V5 M6) with irritability. PECARN High Risk category indicated emergency non-contrast head CT, which demonstrated a nondisplaced left parietal linear skull fracture without underlying intracranial hemorrhage or midline shift. Admitted to PICU for continuous neurologic observation with 30-degree head-of-bed elevation and normothermia maintenance.',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingTbi = db.prepare('SELECT id FROM pediatric_tbi_episodes WHERE episode_code = ?').get('TBI-20261107-101') as { id: number } | undefined;
+  if (existingTbi) {
+    const tbiLogs = [
+      { min: 30, gcs: 14, e: 3, v: 5, m: 6, react: 'brisk_bilateral', r: 3.0, l: 3.0, hr: 124, sbp: 98, dbp: 60, spo2: 99.0, icp: 12.0, na: 140.0, osm: 288.0, bolus: 'none', notes: 'Arrival in Emergency Department. Somnolent but consolable. Pupils briskly reactive.' },
+      { min: 90, gcs: 15, e: 4, v: 5, m: 6, react: 'brisk_bilateral', r: 3.0, l: 3.0, hr: 110, sbp: 100, dbp: 62, spo2: 100.0, icp: 11.0, na: 141.0, osm: 289.0, bolus: 'none', notes: 'Post-CT scan. CT linear fracture confirmed. Child alert, recognizing parents, drinking sips of clear water.' },
+    ];
+    for (const tl of tbiLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_tbi_flowsheet_logs (
+          tbi_episode_id, patient_id, log_datetime, minutes_from_injury,
+          gcs_total, gcs_eye, gcs_verbal, gcs_motor,
+          pupil_reactivity, pupil_size_right_mm, pupil_size_left_mm,
+          vitals_hr, vitals_sbp, vitals_dbp, vitals_spo2,
+          icp_mmhg, serum_sodium_meq_l, serum_osmolarity_mosm_kg,
+          hyperosmolar_bolus_given, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-07T08:00:00', ?,
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingTbi.id, aaravId, tl.min, tl.gcs, tl.e, tl.v, tl.m, tl.react, tl.r, tl.l, tl.hr, tl.sbp, tl.dbp, tl.spo2, tl.icp, tl.na, tl.osm, tl.bolus, tl.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

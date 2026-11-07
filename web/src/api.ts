@@ -7076,6 +7076,297 @@ export const calculatePediatricStatusEpilepticus = (payload: any): Promise<any> 
 export const getPediatricStatusEpilepticusPrint = (id: number): Promise<any> =>
   api('GET', `/api/pediatric-status-epilepticus/episodes/${id}/print`);
 
+// ==========================================
+// SERIES 19A: Neonatal Necrotizing Enterocolitis (NEC)
+// ==========================================
+
+export interface NeonatalNecRecord {
+  id: number;
+  patient_id: number;
+  admission_id?: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  gestational_age_weeks: number;
+  birth_weight_grams: number;
+  current_weight_grams: number;
+  bell_stage: string;
+  systemic_signs_json: string;
+  intestinal_signs_json: string;
+  radiological_signs_json: string;
+  abg_ph?: number | null;
+  base_excess?: number | null;
+  platelet_count?: number | null;
+  crp_mg_l?: number | null;
+  serum_lactate_mmol_l?: number | null;
+  npo_active: number | boolean;
+  ng_decompression_active: number | boolean;
+  broad_spectrum_antibiotics_active: number | boolean;
+  tpn_support_active: number | boolean;
+  inotrope_support_active: number | boolean;
+  surgical_consult_status: string;
+  status: string;
+  consultant_id: number;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NeonatalNecFlowsheetRecord {
+  id: number;
+  nec_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_onset: number;
+  abdominal_girth_cm?: number | null;
+  gastric_residual_volume_ml?: number | null;
+  gastric_residual_character: string;
+  bowel_sounds: string;
+  abdominal_wall_appearance: string;
+  platelet_count?: number | null;
+  abg_ph?: number | null;
+  lactate_mmol_l?: number | null;
+  notes?: string | null;
+  logged_by_id: number;
+  created_at: string;
+}
+
+export const getNeonatalNecEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: NeonatalNecRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: NeonatalNecRecord[] }>('GET', `/api/neonatal-nec/episodes${queryStr}`);
+};
+
+export const getNeonatalNecEpisode = (id: number): Promise<{ episode: NeonatalNecRecord; logs: NeonatalNecFlowsheetRecord[] }> =>
+  api('GET', `/api/neonatal-nec/episodes/${id}`);
+
+export const createNeonatalNecEpisode = (payload: any): Promise<{ episode: NeonatalNecRecord; evalResult: any }> =>
+  api('POST', '/api/neonatal-nec/episodes', payload);
+
+export const updateNeonatalNecEpisode = (
+  id: number,
+  payload: any
+): Promise<{ episode: NeonatalNecRecord }> =>
+  api('PATCH', `/api/neonatal-nec/episodes/${id}`, payload);
+
+export const deleteNeonatalNecEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-nec/episodes/${id}`);
+
+export const logNeonatalNecFlowsheet = (
+  episodeId: number,
+  payload: any
+): Promise<{ logId: number; abdominalGirthCm?: number }> =>
+  api('POST', `/api/neonatal-nec/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteNeonatalNecFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-nec/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateNeonatalNec = (payload: any): Promise<any> =>
+  api('POST', '/api/neonatal-nec/calculate', payload);
+
+export const getNeonatalNecPrint = (id: number): Promise<any> =>
+  api('GET', `/api/neonatal-nec/episodes/${id}/print`);
+
+// ==========================================
+// SERIES 19B: Obstetric Placenta Accreta Spectrum (PAS)
+// ==========================================
+
+export interface ObstetricPasRecord {
+  id: number;
+  patient_id: number;
+  admission_id?: number | null;
+  episode_code: string;
+  evaluation_datetime: string;
+  gestation_weeks: number;
+  previous_cesareans_count: number;
+  placenta_previa_present: number | boolean;
+  prior_uterine_surgeries_json: string;
+  loss_of_clear_zone: number | boolean;
+  myometrial_thickness_less_1mm: number | boolean;
+  lacunae_grade: number;
+  subplacental_hypervascularity: number | boolean;
+  bridging_vessels_to_bladder: number | boolean;
+  mri_performed: number | boolean;
+  mri_findings?: string | null;
+  pas_grade: string;
+  mdt_members_json: string;
+  ir_embolization_planned: number | boolean;
+  ureteral_stents_planned: number | boolean;
+  cell_saver_requested: number | boolean;
+  prbc_units_reserved: number;
+  ffp_units_reserved: number;
+  platelet_units_reserved: number;
+  planned_delivery_weeks: number;
+  planned_delivery_datetime?: string | null;
+  surgical_approach: string;
+  status: string;
+  consultant_id: number;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ObstetricPasFlowsheetRecord {
+  id: number;
+  pas_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  gestation_weeks: number;
+  antenatal_bleeding_episode: number | boolean;
+  vaginal_bleeding_ml: number;
+  maternal_sbp?: number | null;
+  maternal_dbp?: number | null;
+  maternal_hr?: number | null;
+  ctg_category: string;
+  hemoglobin_g_dl?: number | null;
+  crossmatch_units_confirmed: number | boolean;
+  notes?: string | null;
+  logged_by_id: number;
+  created_at: string;
+}
+
+export const getObstetricPasEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: ObstetricPasRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: ObstetricPasRecord[] }>('GET', `/api/obstetric-pas/episodes${queryStr}`);
+};
+
+export const getObstetricPasEpisode = (id: number): Promise<{ episode: ObstetricPasRecord; logs: ObstetricPasFlowsheetRecord[] }> =>
+  api('GET', `/api/obstetric-pas/episodes/${id}`);
+
+export const createObstetricPasEpisode = (payload: any): Promise<{ episode: ObstetricPasRecord; evalResult: any }> =>
+  api('POST', '/api/obstetric-pas/episodes', payload);
+
+export const updateObstetricPasEpisode = (
+  id: number,
+  payload: any
+): Promise<{ episode: ObstetricPasRecord }> =>
+  api('PATCH', `/api/obstetric-pas/episodes/${id}`, payload);
+
+export const deleteObstetricPasEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-pas/episodes/${id}`);
+
+export const logObstetricPasFlowsheet = (
+  episodeId: number,
+  payload: any
+): Promise<{ logId: number; vaginalBleedingMl: number }> =>
+  api('POST', `/api/obstetric-pas/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteObstetricPasFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-pas/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateObstetricPas = (payload: any): Promise<any> =>
+  api('POST', '/api/obstetric-pas/calculate', payload);
+
+export const getObstetricPasPrint = (id: number): Promise<any> =>
+  api('GET', `/api/obstetric-pas/episodes/${id}/print`);
+
+// ==========================================
+// SERIES 19C: Pediatric Traumatic Brain Injury (TBI) & PECARN
+// ==========================================
+
+export interface PediatricTbiRecord {
+  id: number;
+  patient_id: number;
+  admission_id?: number | null;
+  episode_code: string;
+  injury_datetime: string;
+  age_months: number;
+  weight_kg: number;
+  injury_mechanism: string;
+  age_bracket: string;
+  gcs_score: number;
+  altered_mental_status: number | boolean;
+  palpable_skull_fracture: number | boolean;
+  non_frontal_scalp_hematoma: number | boolean;
+  loss_of_consciousness_seconds: number;
+  acting_abnormal_parent: number | boolean;
+  signs_of_basilar_fracture: number | boolean;
+  vomiting_episodes_count: number;
+  severe_headache: number | boolean;
+  pecarn_risk_category: string;
+  ct_performed: number | boolean;
+  ct_findings: string;
+  raised_icp_suspected: number | boolean;
+  icp_management_tier: string;
+  hyperosmolar_agent: string;
+  intubation_status: string;
+  status: string;
+  consultant_id: number;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PediatricTbiFlowsheetRecord {
+  id: number;
+  tbi_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  minutes_from_injury: number;
+  gcs_total: number;
+  gcs_eye: number;
+  gcs_verbal: number;
+  gcs_motor: number;
+  pupil_reactivity: string;
+  pupil_size_right_mm?: number | null;
+  pupil_size_left_mm?: number | null;
+  vitals_hr?: number | null;
+  vitals_sbp?: number | null;
+  vitals_dbp?: number | null;
+  vitals_spo2?: number | null;
+  icp_mmhg?: number | null;
+  calculated_cpp_mmhg?: number | null;
+  serum_sodium_meq_l?: number | null;
+  serum_osmolarity_mosm_kg?: number | null;
+  hyperosmolar_bolus_given: string;
+  notes?: string | null;
+  logged_by_id: number;
+  created_at: string;
+}
+
+export const getPediatricTbiEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: PediatricTbiRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: PediatricTbiRecord[] }>('GET', `/api/pediatric-tbi/episodes${queryStr}`);
+};
+
+export const getPediatricTbiEpisode = (id: number): Promise<{ episode: PediatricTbiRecord; logs: PediatricTbiFlowsheetRecord[] }> =>
+  api('GET', `/api/pediatric-tbi/episodes/${id}`);
+
+export const createPediatricTbiEpisode = (payload: any): Promise<{ episode: PediatricTbiRecord; evalResult: any }> =>
+  api('POST', '/api/pediatric-tbi/episodes', payload);
+
+export const updatePediatricTbiEpisode = (
+  id: number,
+  payload: any
+): Promise<{ episode: PediatricTbiRecord }> =>
+  api('PATCH', `/api/pediatric-tbi/episodes/${id}`, payload);
+
+export const deletePediatricTbiEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-tbi/episodes/${id}`);
+
+export const logPediatricTbiFlowsheet = (
+  episodeId: number,
+  payload: any
+): Promise<{ logId: number; gcsTotal: number; cpp?: number }> =>
+  api('POST', `/api/pediatric-tbi/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deletePediatricTbiFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-tbi/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculatePediatricTbi = (payload: any): Promise<any> =>
+  api('POST', '/api/pediatric-tbi/calculate', payload);
+
+export const getPediatricTbiPrint = (id: number): Promise<any> =>
+  api('GET', `/api/pediatric-tbi/episodes/${id}/print`);
+
+
 
 
 
