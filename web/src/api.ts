@@ -5188,6 +5188,358 @@ export const getPalsDashboard = (): Promise<{
   recentEvents: BroselowEventRecord[];
 }> => api('GET', '/api/pals/dashboard');
 
+// ==========================================
+// SERIES 13A: NICU LEVEL-3 TPN & ELECTROLYTE COMPOUNDING
+// ==========================================
+
+export interface NicuTpnPrescriptionRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  prescription_code: string;
+  prescription_date: string;
+  day_of_life: number;
+  gestational_age_weeks: number | null;
+  birth_weight_kg: number;
+  current_weight_kg: number;
+  target_total_fluid_ml_per_kg_day: number;
+  enteral_intake_ml_day: number;
+  parenteral_fluid_ml_day: number;
+  dextrose_percent: number;
+  glucose_infusion_rate_gir: number;
+  dextrose_volume_ml: number;
+  amino_acid_solution_type: 'trophamine_6' | 'trophamine_10' | 'primene_10' | 'aminoven_infant_10';
+  amino_acid_g_per_kg_day: number;
+  amino_acid_volume_ml: number;
+  lipid_emulsion_type: 'intralipid_20' | 'smoflipid_20' | 'lipofundin_20';
+  lipid_g_per_kg_day: number;
+  lipid_volume_ml: number;
+  lipid_infusion_hours: number;
+  sodium_meq_per_kg_day: number;
+  potassium_meq_per_kg_day: number;
+  calcium_gluconate_ml_per_kg_day: number;
+  magnesium_sulfate_ml_day: number;
+  phosphate_mmol_per_kg_day: number;
+  heparin_units_per_ml: number;
+  multivitamin_mvi_ml_day: number;
+  total_calories_kcal_day: number;
+  calories_per_kg_day: number;
+  non_protein_calorie_nitrogen_ratio: number;
+  total_osmolarity_mosm_l: number;
+  route_category: 'peripheral' | 'central_line_uvc_picc';
+  status: 'active' | 'compounded' | 'discontinued' | 'completed';
+  prescribed_by_id: number;
+  verified_by_pharmacist_id: number | null;
+  compounded_at: string | null;
+  notes: string | null;
+  created_at: string;
+  patient_name?: string;
+  patient_uhid?: string;
+  patient_dob?: string | null;
+  prescribed_by_name?: string;
+  verified_by_name?: string | null;
+}
+
+export interface NicuTpnLabRecord {
+  id: number;
+  tpn_prescription_id: number;
+  monitoring_datetime: string;
+  blood_glucose_mg_dl: number;
+  serum_sodium_meq_l: number | null;
+  serum_potassium_meq_l: number | null;
+  serum_calcium_mg_dl: number | null;
+  serum_triglycerides_mg_dl: number | null;
+  serum_urea_mg_dl: number | null;
+  serum_creatinine_mg_dl: number | null;
+  direct_bilirubin_mg_dl: number | null;
+  gir_adjusted_flag: number;
+  logged_by_id: number;
+  logged_by_name?: string;
+  notes: string | null;
+  created_at: string;
+}
+
+export const getNicuTpnPrescriptions = (params?: {
+  patientId?: number;
+  status?: string;
+}): Promise<{ prescriptions: NicuTpnPrescriptionRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.status) q.append('status', params.status);
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ prescriptions: NicuTpnPrescriptionRecord[] }>('GET', `/api/nicu-tpn/prescriptions${queryStr}`);
+};
+
+export const createNicuTpnPrescription = (payload: any): Promise<{
+  prescription: NicuTpnPrescriptionRecord;
+  calculation: any;
+}> => api('POST', '/api/nicu-tpn/prescriptions', payload);
+
+export const getNicuTpnPrescription = (
+  id: number
+): Promise<{ prescription: NicuTpnPrescriptionRecord; labs: NicuTpnLabRecord[] }> =>
+  api('GET', `/api/nicu-tpn/prescriptions/${id}`);
+
+export const updateNicuTpnPrescriptionStatus = (
+  id: number,
+  status: 'active' | 'compounded' | 'discontinued' | 'completed'
+): Promise<{ prescription: NicuTpnPrescriptionRecord }> =>
+  api('PUT', `/api/nicu-tpn/prescriptions/${id}/status`, { status });
+
+export const deleteNicuTpnPrescription = (id: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/nicu-tpn/prescriptions/${id}`);
+
+export const logNicuTpnLab = (
+  prescriptionId: number,
+  payload: any
+): Promise<{ lab: NicuTpnLabRecord }> =>
+  api('POST', `/api/nicu-tpn/prescriptions/${prescriptionId}/labs`, payload);
+
+export const deleteNicuTpnLab = (labId: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/nicu-tpn/labs/${labId}`);
+
+export const auditNicuTpnPrint = (id: number): Promise<{ success: boolean }> =>
+  api('POST', `/api/nicu-tpn/prescriptions/${id}/print`, {});
+
+// ==========================================
+// SERIES 13B: HIGH-RISK MATERNAL MEDICAL COMORBIDITIES (CARDIAC & ICP)
+// ==========================================
+
+export interface MaternalCardiacRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  assessment_code: string;
+  assessment_datetime: string;
+  gestational_age_weeks: number | null;
+  cardiac_diagnosis: string;
+  mwho_class: 'mwho_I' | 'mwho_II' | 'mwho_II_III' | 'mwho_III' | 'mwho_IV';
+  prior_cardiac_event: number;
+  prior_arrhythmia: number;
+  nyha_class_baseline: 'I' | 'II' | 'III' | 'IV';
+  left_heart_obstruction: number;
+  reduced_systemic_ventricular_function_ef_lt50: number;
+  high_risk_valve_or_aorta: number;
+  late_pregnancy_presentation: number;
+  carpreg_ii_score: number;
+  predicted_cardiac_event_risk_pct: number;
+  monitoring_plan_antepartum: string | null;
+  delivery_mode_recommendation: string;
+  anesthesia_recommendation: string | null;
+  icu_postpartum_bed_reserved: number;
+  attending_cardiologist_name: string | null;
+  consultant_obgyn_id: number;
+  notes: string | null;
+  created_at: string;
+  patient_name?: string;
+  patient_uhid?: string;
+  patient_dob?: string | null;
+  consultant_obgyn_name?: string;
+}
+
+export interface MaternalIcpRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  observation_datetime: string;
+  gestational_age_weeks: number;
+  pruritus_severity: 'mild_nocturnal_palms_soles' | 'moderate_continuous' | 'severe_intractable_excoriations';
+  total_serum_bile_acids_umol_l: number;
+  icp_severity_tier: 'mild_10_39' | 'moderate_40_99' | 'severe_100_plus';
+  alt_u_l: number | null;
+  ast_u_l: number | null;
+  total_bilirubin_mg_dl: number | null;
+  udca_prescribed_mg_day: number;
+  udca_dose_mg_kg_day: number;
+  recommended_delivery_gestation_weeks: number;
+  fetal_surveillance_interval_days: number;
+  status: 'active_monitoring' | 'delivered' | 'resolved';
+  assessed_by_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  patient_name?: string;
+  patient_uhid?: string;
+  patient_dob?: string | null;
+  assessed_by_name?: string;
+}
+
+export const getMaternalCardiacAssessments = (params?: {
+  patientId?: number;
+}): Promise<{ assessments: MaternalCardiacRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ assessments: MaternalCardiacRecord[] }>('GET', `/api/maternal-comorbidities/cardiac${queryStr}`);
+};
+
+export const createMaternalCardiacAssessment = (payload: any): Promise<{
+  assessment: MaternalCardiacRecord;
+  calculation: any;
+}> => api('POST', '/api/maternal-comorbidities/cardiac', payload);
+
+export const getMaternalCardiacAssessment = (
+  id: number
+): Promise<{ assessment: MaternalCardiacRecord }> =>
+  api('GET', `/api/maternal-comorbidities/cardiac/${id}`);
+
+export const updateMaternalCardiacAssessment = (
+  id: number,
+  payload: any
+): Promise<{ assessment: MaternalCardiacRecord }> =>
+  api('PUT', `/api/maternal-comorbidities/cardiac/${id}`, payload);
+
+export const deleteMaternalCardiacAssessment = (id: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/maternal-comorbidities/cardiac/${id}`);
+
+export const getMaternalIcpEpisodes = (params?: {
+  patientId?: number;
+  status?: string;
+}): Promise<{ surveillance: MaternalIcpRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.status) q.append('status', params.status);
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ surveillance: MaternalIcpRecord[] }>('GET', `/api/maternal-comorbidities/icp${queryStr}`);
+};
+
+export const createMaternalIcpEpisode = (payload: any): Promise<{
+  episode: MaternalIcpRecord;
+  calculation: any;
+}> => api('POST', '/api/maternal-comorbidities/icp', payload);
+
+export const getMaternalIcpEpisode = (
+  id: number
+): Promise<{ episode: MaternalIcpRecord }> =>
+  api('GET', `/api/maternal-comorbidities/icp/${id}`);
+
+export const updateMaternalIcpEpisode = (
+  id: number,
+  payload: any
+): Promise<{ episode: MaternalIcpRecord }> =>
+  api('PUT', `/api/maternal-comorbidities/icp/${id}`, payload);
+
+export const deleteMaternalIcpEpisode = (id: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/maternal-comorbidities/icp/${id}`);
+
+export const auditMaternalComorbiditiesPrint = (
+  type: 'cardiac' | 'icp',
+  id: number
+): Promise<{ success: boolean }> =>
+  api('POST', `/api/maternal-comorbidities/${type}/${id}/print`, {});
+
+// ==========================================
+// SERIES 13C: PEDIATRIC RESPIRATORY (PRAM) & ANAPHYLAXIS EMERGENCY PLAN
+// ==========================================
+
+export interface PediatricPramRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  assessment_code: string;
+  assessment_datetime: string;
+  oxygen_saturation_pct: number;
+  o2_score: number;
+  suprasternal_retractions_score: number;
+  scalene_muscle_contraction_score: number;
+  air_entry_score: number;
+  wheezing_score: number;
+  total_pram_score: number;
+  severity_tier: 'mild_0_3' | 'moderate_4_7' | 'impending_respiratory_failure_8_12';
+  response_to_burst_saba: 'good_response' | 'partial_response' | 'poor_deteriorating';
+  systemic_steroid_given: number;
+  iv_magnesium_given: number;
+  assessed_by_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  patient_name?: string;
+  patient_uhid?: string;
+  patient_dob?: string | null;
+  assessed_by_name?: string;
+}
+
+export interface PediatricAnaphylaxisPlanRecord {
+  id: number;
+  patient_id: number;
+  plan_code: string;
+  diagnosis_date: string;
+  known_allergens: string[];
+  child_weight_kg: number;
+  epinephrine_im_dose_mg: number;
+  epinephrine_im_volume_ml: number;
+  autoinjector_type: 'epipen_jr_0_15mg' | 'epipen_adult_0_30mg' | 'ampoule_syringe_drawn';
+  injection_site: string;
+  antihistamine_prescribed: string | null;
+  steroid_prescribed: string | null;
+  school_health_action_plan_shared: number;
+  emergency_contact_name: string;
+  emergency_contact_phone: string;
+  attending_physician_id: number;
+  clinical_instructions: string | null;
+  created_at: string;
+  patient_name?: string;
+  patient_uhid?: string;
+  patient_dob?: string | null;
+  attending_physician_name?: string;
+}
+
+export const getPediatricPramAssessments = (params?: {
+  patientId?: number;
+}): Promise<{ assessments: PediatricPramRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ assessments: PediatricPramRecord[] }>('GET', `/api/pediatric-allergy/pram${queryStr}`);
+};
+
+export const createPediatricPramAssessment = (payload: any): Promise<{
+  assessment: PediatricPramRecord;
+  calculation: any;
+}> => api('POST', '/api/pediatric-allergy/pram', payload);
+
+export const getPediatricPramAssessment = (
+  id: number
+): Promise<{ assessment: PediatricPramRecord }> =>
+  api('GET', `/api/pediatric-allergy/pram/${id}`);
+
+export const deletePediatricPramAssessment = (id: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/pediatric-allergy/pram/${id}`);
+
+export const getPediatricAnaphylaxisPlans = (params?: {
+  patientId?: number;
+}): Promise<{ plans: PediatricAnaphylaxisPlanRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ plans: PediatricAnaphylaxisPlanRecord[] }>('GET', `/api/pediatric-allergy/anaphylaxis-plans${queryStr}`);
+};
+
+export const createPediatricAnaphylaxisPlan = (payload: any): Promise<{
+  plan: PediatricAnaphylaxisPlanRecord;
+  calculation: any;
+}> => api('POST', '/api/pediatric-allergy/anaphylaxis-plans', payload);
+
+export const getPediatricAnaphylaxisPlan = (
+  id: number
+): Promise<{ plan: PediatricAnaphylaxisPlanRecord }> =>
+  api('GET', `/api/pediatric-allergy/anaphylaxis-plans/${id}`);
+
+export const updatePediatricAnaphylaxisPlan = (
+  id: number,
+  payload: any
+): Promise<{ plan: PediatricAnaphylaxisPlanRecord }> =>
+  api('PUT', `/api/pediatric-allergy/anaphylaxis-plans/${id}`, payload);
+
+export const deletePediatricAnaphylaxisPlan = (id: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/pediatric-allergy/anaphylaxis-plans/${id}`);
+
+export const auditPediatricAllergyPrint = (
+  type: 'pram' | 'anaphylaxis',
+  id: number
+): Promise<{ success: boolean }> =>
+  api('POST', `/api/pediatric-allergy/${type}/${id}/print`, {});
+
+
 
 
 

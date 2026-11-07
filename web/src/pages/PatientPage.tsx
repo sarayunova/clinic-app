@@ -53,6 +53,9 @@ import { PediatricRenalTab } from '../components/PediatricRenalTab';
 import { AmsTab } from '../components/AmsTab';
 import { Mgso4ResuscitationTab } from '../components/Mgso4ResuscitationTab';
 import { PalsEmergencyCard } from '../components/PalsEmergencyCard';
+import { NicuTpnTab } from '../components/NicuTpnTab';
+import { MaternalComorbiditiesTab } from '../components/MaternalComorbiditiesTab';
+import { PediatricAllergyTab } from '../components/PediatricAllergyTab';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -163,7 +166,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'abdm' | 'pediatric' | 'pediatric_growth' | 'pediatric_renal' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'pac' | 'blood_bank' | 'risk' | 'postnatal' | 'maternity_admission' | 'ams' | 'mgso4' | 'pews_pals' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'abdm' | 'pediatric' | 'pediatric_growth' | 'pediatric_renal' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'pac' | 'blood_bank' | 'risk' | 'postnatal' | 'maternity_admission' | 'ams' | 'mgso4' | 'pews_pals' | 'nicu_tpn' | 'maternal_comorbidities' | 'pediatric_allergy' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -228,7 +231,7 @@ export function PatientPage() {
   useEffect(() => {
     if (!patient) return;
     const tabParam = new URLSearchParams(window.location.search).get('tab');
-    if (tabParam && ['ams', 'mgso4', 'pews_pals', 'pediatric_renal'].includes(tabParam)) {
+    if (tabParam && ['ams', 'mgso4', 'pews_pals', 'pediatric_renal', 'nicu_tpn', 'maternal_comorbidities', 'pediatric_allergy'].includes(tabParam)) {
       setViewMode(tabParam as any);
       return;
     }
@@ -814,6 +817,27 @@ export function PatientPage() {
                 </button>
                 <button
                   type="button"
+                  className={`btn small ${viewMode === 'nicu_tpn' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('nicu_tpn')}
+                >
+                  🧪 NICU TPN
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'maternal_comorbidities' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('maternal_comorbidities')}
+                >
+                  🤰 Maternal Comorbidities
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'pediatric_allergy' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('pediatric_allergy')}
+                >
+                  🫁 Asthma PRAM &amp; Allergy
+                </button>
+                <button
+                  type="button"
                   className={`btn small ${viewMode === 'list' ? 'primary' : ''}`}
                   onClick={() => setViewMode('list')}
                 >
@@ -967,6 +991,21 @@ export function PatientPage() {
               patientId={patient!.id}
               patientName={patient!.fullName}
               patientAgeYears={patient!.ageYears || undefined}
+            />
+          ) : viewMode === 'nicu_tpn' ? (
+            <NicuTpnTab
+              patientId={patient!.id}
+              patientName={patient!.fullName}
+            />
+          ) : viewMode === 'maternal_comorbidities' ? (
+            <MaternalComorbiditiesTab
+              patientId={patient!.id}
+              patientName={patient!.fullName}
+            />
+          ) : viewMode === 'pediatric_allergy' ? (
+            <PediatricAllergyTab
+              patientId={patient!.id}
+              patientName={patient!.fullName}
             />
           ) : (
             <>

@@ -1687,6 +1687,126 @@ async function seed() {
     )
   `).run(aaravId, docId, now);
 
+  // =========================================================================
+  // SERIES 13 DEMO DATA: NICU TPN, MATERNAL COMORBIDITIES & PEDIATRIC ALLERGY
+  // =========================================================================
+
+  // 13A: NICU TPN & Electrolyte Infusion Compounding
+  db.prepare(`
+    INSERT OR IGNORE INTO nicu_tpn_prescriptions (
+      patient_id, admission_id, prescription_code, prescription_date, day_of_life,
+      gestational_age_weeks, birth_weight_kg, current_weight_kg, target_total_fluid_ml_per_kg_day,
+      enteral_intake_ml_day, parenteral_fluid_ml_day, dextrose_percent, glucose_infusion_rate_gir,
+      dextrose_volume_ml, amino_acid_solution_type, amino_acid_g_per_kg_day, amino_acid_volume_ml,
+      lipid_emulsion_type, lipid_g_per_kg_day, lipid_volume_ml, lipid_infusion_hours,
+      sodium_meq_per_kg_day, potassium_meq_per_kg_day, calcium_gluconate_ml_per_kg_day,
+      magnesium_sulfate_ml_day, phosphate_mmol_per_kg_day, heparin_units_per_ml,
+      multivitamin_mvi_ml_day, total_calories_kcal_day, calories_per_kg_day,
+      non_protein_calorie_nitrogen_ratio, total_osmolarity_mosm_l, route_category,
+      status, prescribed_by_id, notes, created_at
+    ) VALUES (
+      ?, NULL, 'TPN-20261107-1001', '2026-11-07', 3,
+      29.0, 1.25, 1.20, 120.0,
+      10.0, 134.0, 10.0, 6.2,
+      86.0, 'primene_10', 3.0, 36.0,
+      'smoflipid_20', 2.0, 12.0, 24.0,
+      3.0, 2.0, 2.0,
+      0.2, 1.0, 0.5,
+      1.5, 78.4, 65.3,
+      94.2, 780, 'peripheral',
+      'active', ?, 'ESPGHAN starter TPN protocol; advance lipids to 2.5 g/kg tomorrow if triglycerides < 200 mg/dL.', ?
+    )
+  `).run(babyId, docId, now);
+
+  const existingTpn = db.prepare('SELECT id FROM nicu_tpn_prescriptions WHERE prescription_code = ?').get('TPN-20261107-1001') as { id: number } | undefined;
+  if (existingTpn) {
+    db.prepare(`
+      INSERT OR IGNORE INTO nicu_tpn_lab_monitorings (
+        tpn_prescription_id, monitoring_datetime, blood_glucose_mg_dl, serum_sodium_meq_l,
+        serum_potassium_meq_l, serum_calcium_mg_dl, serum_triglycerides_mg_dl,
+        serum_urea_mg_dl, direct_bilirubin_mg_dl, gir_adjusted_flag, logged_by_id, notes, created_at
+      ) VALUES (
+        ?, '2026-11-07T12:00:00', 82.0, 138.0,
+        4.2, 8.8, 135.0,
+        22.0, 0.8, 0, ?, 'Bedside glucometer within target; triglycerides stable.', ?
+      )
+    `).run(existingTpn.id, nurseId, now);
+  }
+
+  // 13B: High-Risk Maternal Medical Comorbidities
+  // Maternal Cardiac (mWHO II, Fallot) for Sunita
+  db.prepare(`
+    INSERT OR IGNORE INTO maternal_cardiac_assessments (
+      patient_id, admission_id, assessment_code, assessment_datetime, gestational_age_weeks,
+      cardiac_diagnosis, mwho_class, prior_cardiac_event, prior_arrhythmia, nyha_class_baseline,
+      left_heart_obstruction, reduced_systemic_ventricular_function_ef_lt50,
+      high_risk_valve_or_aorta, late_pregnancy_presentation, carpreg_ii_score,
+      predicted_cardiac_event_risk_pct, monitoring_plan_antepartum, delivery_mode_recommendation,
+      anesthesia_recommendation, icu_postpartum_bed_reserved, attending_cardiologist_name,
+      consultant_obgyn_id, notes, created_at
+    ) VALUES (
+      ?, NULL, 'CARDIAC-20261107-2001', '2026-11-07T10:00:00', 28.0,
+      'Repaired Tetralogy of Fallot with moderate pulmonary regurgitation', 'mwho_II', 0, 0, 'I',
+      0, 0,
+      0, 0, 0,
+      5.0, 'Serial echocardiography at 28 and 34 weeks; continuous pulse oximetry during labor.', 'Spontaneous or induced vaginal delivery with early lumbar epidural analgesia and assisted second stage to avoid Valsalva.',
+      'Continuous lumbar epidural analgesia strongly recommended; avoid single-shot spinal.', 1, 'Dr. Rajesh Mehta, DM (Cardiology)',
+      ?, 'Joint cardio-obstetric consultation completed. Patient counseled on red-flag heart failure symptoms.', ?
+    )
+  `).run(sunitaId, docId, now);
+
+  // Maternal ICP Surveillance for Anita
+  db.prepare(`
+    INSERT OR IGNORE INTO maternal_icp_surveillance (
+      patient_id, admission_id, episode_code, observation_datetime, gestational_age_weeks,
+      pruritus_severity, total_serum_bile_acids_umol_l, icp_severity_tier,
+      alt_u_l, ast_u_l, total_bilirubin_mg_dl, udca_prescribed_mg_day,
+      udca_dose_mg_kg_day, recommended_delivery_gestation_weeks,
+      fetal_surveillance_interval_days, status, assessed_by_id, clinical_notes, created_at
+    ) VALUES (
+      ?, NULL, 'ICP-20261107-3001', '2026-11-07T11:30:00', 33.0,
+      'moderate_continuous', 56.0, 'moderate_40_99',
+      88.0, 74.0, 1.2, 900.0,
+      14.0, 37.5,
+      5, 'active_monitoring', ?, 'Initiated UDCA 300 mg TDS with meals. Repeat bile acids in 5 days; planned delivery at 37+4 weeks.', ?
+    )
+  `).run(anitaId, docId, now);
+
+  // 13C: Pediatric Asthma PRAM & Anaphylaxis Action Plan
+  // PRAM Assessment for Aarav
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_pram_assessments (
+      patient_id, admission_id, assessment_code, assessment_datetime, oxygen_saturation_pct,
+      o2_score, suprasternal_retractions_score, scalene_muscle_contraction_score,
+      air_entry_score, wheezing_score, total_pram_score, severity_tier,
+      response_to_burst_saba, systemic_steroid_given, iv_magnesium_given,
+      assessed_by_id, clinical_notes, created_at
+    ) VALUES (
+      ?, NULL, 'PRAM-20261107-4001', '2026-11-07T08:00:00', 93.0,
+      1, 2, 0,
+      1, 2, 6, 'moderate_4_7',
+      'partial_response', 1, 0,
+      ?, 'Moderate asthma exacerbation triggered by viral URI. Burst SABA 3 doses given with oral Prednisolone 20 mg.', ?
+    )
+  `).run(aaravId, docId, now);
+
+  // Anaphylaxis Action Plan for Aarav
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_anaphylaxis_action_plans (
+      patient_id, plan_code, diagnosis_date, known_allergens, child_weight_kg,
+      epinephrine_im_dose_mg, epinephrine_im_volume_ml, autoinjector_type,
+      injection_site, antihistamine_prescribed, steroid_prescribed,
+      school_health_action_plan_shared, emergency_contact_name, emergency_contact_phone,
+      attending_physician_id, clinical_instructions, created_at
+    ) VALUES (
+      ?, 'ANAPH-20261107-5001', '2026-11-07', '["Peanuts","Tree Nuts (Cashew)"]', 18.5,
+      0.18, 0.18, 'epipen_jr_0_15mg',
+      'anterolateral_right_thigh', 'Cetirizine 5 mg syrup', 'Prednisolone 20 mg daily x 3 days',
+      1, 'Pooja Patel (Mother)', '+91 98765 43210',
+      ?, 'EpiPen Jr prescribed. School emergency action plan signed. Instructed caregivers to inject immediately into outer mid-thigh upon accidental allergen exposure.', ?
+    )
+  `).run(aaravId, docId, now);
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

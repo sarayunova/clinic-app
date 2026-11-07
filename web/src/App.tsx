@@ -65,6 +65,12 @@ import { ObstetricHduPage } from './pages/ObstetricHduPage';
 import { Mgso4FlowsheetPrint } from './pages/Mgso4FlowsheetPrint';
 import { PalsEmergencyPage } from './pages/PalsEmergencyPage';
 import { PalsCodeSheetPrint } from './pages/PalsCodeSheetPrint';
+import { NicuTpnPage } from './pages/NicuTpnPage';
+import { NicuTpnOrderPrint } from './pages/NicuTpnOrderPrint';
+import { MaternalComorbiditiesPage } from './pages/MaternalComorbiditiesPage';
+import { MaternalComorbiditiesPrint } from './pages/MaternalComorbiditiesPrint';
+import { PediatricAllergyPage } from './pages/PediatricAllergyPage';
+import { PediatricAllergyPrint } from './pages/PediatricAllergyPrint';
 import { DeliveryWardPage } from './pages/DeliveryWardPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditPage } from './pages/AuditPage';
@@ -142,6 +148,9 @@ function Shell() {
     ...(can('patient:read_clinical') ? [{ to: '/ams', label: 'AMS & Antibiogram', icon: '🧫', end: false }] : []),
     ...(can('patient:read_clinical') ? [{ to: '/obstetric-hdu', label: 'Obstetric HDU', icon: '🤰', end: false }] : []),
     ...(can('patient:read_clinical') ? [{ to: '/pals-emergency', label: 'PALS Emergency', icon: '🚨', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/nicu-tpn', label: 'NICU TPN', icon: '🧪', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/maternal-comorbidities', label: 'Maternal Comorbidities', icon: '🤰', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/pediatric-allergy', label: 'Asthma & Allergy', icon: '🫁', end: false }] : []),
     ...(can('ipd:read_basic') || can('station:read') ? [{ to: '/delivery-ward', label: 'Delivery ward', icon: '👶', end: false }] : []),
     ...(can('billing:read') ? [{ to: '/billing', label: 'Billing', icon: '💳', end: false }] : []),
     ...(can('settings:manage') ? [{ to: '/settings', label: 'Clinic', icon: '🏥', end: false }] : []),
@@ -229,6 +238,12 @@ function Shell() {
           <Route path="/mgso4/:id/print" element={can('patient:read_clinical') ? <Mgso4FlowsheetPrint /> : <Navigate to="/obstetric-hdu" replace />} />
           <Route path="/pals-emergency" element={can('patient:read_clinical') ? <PalsEmergencyPage /> : <Navigate to="/" replace />} />
           <Route path="/pals/:id/print" element={can('patient:read_clinical') ? <PalsCodeSheetPrint /> : <Navigate to="/pals-emergency" replace />} />
+          <Route path="/nicu-tpn" element={can('patient:read_clinical') ? <NicuTpnPage /> : <Navigate to="/" replace />} />
+          <Route path="/nicu-tpn/:id/print" element={can('patient:read_clinical') ? <NicuTpnOrderPrint /> : <Navigate to="/nicu-tpn" replace />} />
+          <Route path="/maternal-comorbidities" element={can('patient:read_clinical') ? <MaternalComorbiditiesPage /> : <Navigate to="/" replace />} />
+          <Route path="/maternal-comorbidities/:type/:id/print" element={can('patient:read_clinical') ? <MaternalComorbiditiesPrint /> : <Navigate to="/maternal-comorbidities" replace />} />
+          <Route path="/pediatric-allergy" element={can('patient:read_clinical') ? <PediatricAllergyPage /> : <Navigate to="/" replace />} />
+          <Route path="/pediatric-allergy/:type/:id/print" element={can('patient:read_clinical') ? <PediatricAllergyPrint /> : <Navigate to="/pediatric-allergy" replace />} />
           <Route path="/delivery-ward" element={can('ipd:read_basic') || can('station:read') ? <DeliveryWardPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id" element={can('visit:read') ? <VisitPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id/print" element={can('visit:read') ? <PrescriptionPrint /> : <Navigate to="/" replace />} />
