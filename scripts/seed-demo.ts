@@ -2690,6 +2690,154 @@ async function seed() {
     }
   }
 
+  // --- SERIES 20A: Neonatal Persistent Pulmonary Hypertension (PPHN) & Inhaled Nitric Oxide (iNO) ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_pphn_episodes (
+      patient_id, admission_id, episode_code, onset_datetime,
+      gestational_age_weeks, birth_weight_grams, primary_etiology,
+      preductal_spo2, postductal_spo2, spo2_gradient,
+      mean_airway_pressure_cmh2o, fio2_percent, pao2_mmhg,
+      calculated_oi, pphn_severity_tier,
+      echo_tr_jet_velocity_m_s, echo_estimated_rvsp_mmhg, echo_shunt_direction,
+      ino_active, ino_dose_ppm, methemoglobin_percent,
+      sildenafil_active, milrinone_active,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'PPHN-20261107-101', '2026-11-07T08:00:00',
+      39.0, 3200, 'meconium_aspiration_syndrome',
+      91.0, 78.0, 13.0,
+      14.5, 100.0, 52.0,
+      27.9, 'severe_oi_25_39',
+      3.8, 65.0, 'right_to_left',
+      1, 20.0, 1.2,
+      0, 0,
+      'active_ino_therapy', ?,
+      'Term infant born through thick meconium with acute hypoxemic respiratory failure. Pre/post-ductal SpO2 gradient 13% with OI 27.9 (Severe PPHN). Bedside echo demonstrates suprasystemic pulmonary pressures (RVSP 65 mmHg, TR jet 3.8 m/s) with pure right-to-left ductal shunting. Initiated iNO 20 ppm on HFOV with arterial line blood gas monitoring.',
+      ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingPphn = db.prepare('SELECT id FROM neonatal_pphn_episodes WHERE episode_code = ?').get('PPHN-20261107-101') as { id: number } | undefined;
+  if (existingPphn) {
+    const pphnLogs = [
+      { h: 0.5, pre: 91.0, post: 78.0, grad: 13.0, map: 14.5, fio2: 100.0, pao2: 52.0, oi: 27.9, ino: 20.0, methb: 1.2, no2: 0.3, bpMap: 48.0, is: 5.0, notes: 'Initiated iNO 20 ppm on HFOV (MAP 14.5 cmH2O). Baseline MetHb 1.2%.' },
+      { h: 2.0, pre: 96.0, post: 93.0, grad: 3.0, map: 13.0, fio2: 60.0, pao2: 88.0, oi: 8.9, ino: 20.0, methb: 1.4, no2: 0.2, bpMap: 52.0, is: 5.0, notes: 'Dramatic positive response to iNO: OI dropped from 27.9 to 8.9. FiO2 successfully weaned to 60%. Ductal gradient resolved to 3%.' },
+    ];
+    for (const pl of pphnLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_pphn_flowsheet_logs (
+          pphn_episode_id, patient_id, log_datetime, hours_from_onset,
+          preductal_spo2, postductal_spo2, spo2_gradient,
+          map_cmh2o, fio2_percent, pao2_mmhg, calculated_oi,
+          ino_dose_ppm, methemoglobin_percent, circuit_no2_ppm,
+          mean_arterial_pressure_mmhg, inotropic_score, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-07T08:30:00', ?,
+          ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?, ?
+        )
+      `).run(existingPphn.id, babyId, pl.h, pl.pre, pl.post, pl.grad, pl.map, pl.fio2, pl.pao2, pl.oi, pl.ino, pl.methb, pl.no2, pl.bpMap, pl.is, pl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 20B: Obstetric Amniotic Fluid Embolism (AFE) Emergency Clark Staging & A-OK Resuscitation ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_afe_episodes (
+      patient_id, admission_id, episode_code, arrest_onset_datetime,
+      gestation_weeks, timing_relation,
+      cardiorespiratory_collapse, overt_dic_present, absence_of_fever, clark_criteria_met,
+      atropine_given, ondansetron_given, ketorolac_given, aok_regimen_complete,
+      fibrinogen_mg_dl, platelet_count, pt_inr,
+      mtp_activated, prbc_transfused_units, ffp_transfused_units, platelets_transfused_units, cryoprecipitate_units,
+      pmcd_performed, pmcd_decision_to_delivery_minutes, ecmo_initiated,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'AFE-20261107-101', '2026-11-07T08:15:00',
+      38.5, 'cesarean_delivery',
+      1, 1, 1, 1,
+      1, 1, 1, 1,
+      88.0, 52000, 2.3,
+      1, 4, 4, 1, 10,
+      1, 3.5, 0,
+      'post_cardiac_arrest_icu', ?,
+      'Catastrophic sudden cardiorespiratory collapse during emergent cesarean delivery meeting all 4 Clark Criteria for Amniotic Fluid Embolism (cardiorespiratory arrest, overt consumptive coagulopathy with fibrinogen 88 mg/dL, onset during delivery, absence of maternal fever). Immediate perimortem cesarean delivery (PMCD) performed with incision-to-delivery 3.5 min. A-OK regimen administered (Atropine 1mg, Ondansetron 8mg, Ketorolac 30mg IV). Massive Transfusion Protocol activated with 10 units cryoprecipitate. ROSC achieved after 6 minutes CPR. Transferred to ICU with arterial line and TEE monitoring.',
+      ?, ?
+    )
+  `).run(sunitaId, docId, now, now);
+
+  const existingAfe = db.prepare('SELECT id FROM obstetric_afe_episodes WHERE episode_code = ?').get('AFE-20261107-101') as { id: number } | undefined;
+  if (existingAfe) {
+    const afeLogs = [
+      { min: 5.0, sbp: 62, dbp: 30, hr: 145, spo2: 78.0, etco2: 12.0, vaso: 'epinephrine', fib: 88.0, plt: 52000, inr: 2.3, qbl: 1800.0, notes: 'CPR in progress, PMCD delivering neonate. Epinephrine bolus given. A-OK triple protocol administered.' },
+      { min: 20.0, sbp: 98, dbp: 58, hr: 108, spo2: 95.0, etco2: 32.0, vaso: 'norepinephrine', fib: 145.0, plt: 85000, inr: 1.5, qbl: 2100.0, notes: 'ROSC confirmed. ETCO2 increased to 32 mmHg. Norepinephrine infusion running. Cryoprecipitate 10 units infused; surgical hemostasis secured.' },
+    ];
+    for (const al of afeLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_afe_flowsheet_logs (
+          afe_episode_id, patient_id, log_datetime, minutes_from_arrest,
+          sbp_mmhg, dbp_mmhg, hr_bpm, spo2_percent, etco2_mmhg,
+          vasopressor_active, fibrinogen_mg_dl, platelet_count, inr,
+          qbl_total_ml, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-07T08:35:00', ?,
+          ?, ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingAfe.id, sunitaId, al.min, al.sbp, al.dbp, al.hr, al.spo2, al.etco2, al.vaso, al.fib, al.plt, al.inr, al.qbl, al.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 20C: Pediatric Status Asthmaticus & Modified Wood's Clinical Asthma Score (M-WCAS) ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_asthma_status_episodes (
+      patient_id, admission_id, episode_code, onset_datetime,
+      age_months, weight_kg, spo2_room_air_percent,
+      wheezing_score, retractions_score, air_entry_score, mental_state_score,
+      total_mwcas_score, severity_tier,
+      tier1_continuous_albuterol, tier1_ipratropium, tier1_systemic_steroids,
+      tier2_iv_magnesium, tier3_iv_terbutaline, tier4_respiratory_support,
+      vbg_ph, vbg_pco2_mmhg,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'ASTHMA-20261107-101', '2026-11-07T08:00:00',
+      18, 11.5, 87.0,
+      2, 2, 2, 2,
+      8, 'severe_impending_failure_7_10',
+      1, 1, 1,
+      1, 1, 'bipap_nippv',
+      7.26, 44.0,
+      'picu_monitoring', ?,
+      '18-month-old male presenting in severe status asthmaticus with impending respiratory failure (M-WCAS score 8/10, room air SpO2 87%, severe retractions, quiet chest with poor air entry, lethargy). VBG demonstrates respiratory acidosis with pseudonormal pCO2 (44 mmHg in a child breathing at 68/min), signaling diaphragmatic exhaustion. Admitted to PICU; initiated Continuous Albuterol 10 mg/hr, IV Dexamethasone 0.6 mg/kg, IV Magnesium Sulfate 50 mg/kg (575 mg) over 30 min, IV Terbutaline loading and infusion (0.4 mcg/kg/min), and BiPAP NIPPV support (IPAP 12, EPAP 6).',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingAsthma = db.prepare('SELECT id FROM pediatric_asthma_status_episodes WHERE episode_code = ?').get('ASTHMA-20261107-101') as { id: number } | undefined;
+  if (existingAsthma) {
+    const asthmaLogs = [
+      { min: 15, rr: 68, hr: 172, spo2: 89.0, fio2: 40.0, mwcas: 8, alb: 10.0, terb: 0.4, bipap: 'IPAP 12 / EPAP 6 cmH2O', ph: 7.26, pco2: 44.0, notes: 'PICU admission. Tier 1-3 escalated. BiPAP applied with immediate relief of accessory muscle retraction.' },
+      { min: 60, rr: 46, hr: 148, spo2: 96.0, fio2: 30.0, mwcas: 4, alb: 10.0, terb: 0.4, bipap: 'IPAP 10 / EPAP 5 cmH2O', ph: 7.35, pco2: 38.0, notes: 'Marked clinical improvement: M-WCAS improved from 8 to 4. Bilateral air entry restored, alert and interacting with mother.' },
+    ];
+    for (const al of asthmaLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_asthma_status_flowsheet_logs (
+          asthma_episode_id, patient_id, log_datetime, minutes_from_triage,
+          respiratory_rate, heart_rate, spo2_percent, fio2_percent,
+          total_mwcas_score, albuterol_rate_mg_hr, terbutaline_rate_mcg_kg_min,
+          bipap_settings, vbg_ph, vbg_pco2_mmhg, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-07T08:45:00', ?,
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?, ?, ?
+        )
+      `).run(existingAsthma.id, aaravId, al.min, al.rr, al.hr, al.spo2, al.fio2, al.mwcas, al.alb, al.terb, al.bipap, al.ph, al.pco2, al.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

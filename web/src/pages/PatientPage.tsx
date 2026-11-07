@@ -74,6 +74,9 @@ import { PediatricStatusEpilepticusTab } from '../components/PediatricStatusEpil
 import { NeonatalNecTab } from '../components/NeonatalNecTab';
 import { ObstetricPasTab } from '../components/ObstetricPasTab';
 import { PediatricTbiPecarnTab } from '../components/PediatricTbiPecarnTab';
+import { NeonatalPphnTab } from '../components/NeonatalPphnTab';
+import { ObstetricAfeTab } from '../components/ObstetricAfeTab';
+import { PediatricAsthmaStatusTab } from '../components/PediatricAsthmaStatusTab';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -184,7 +187,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'abdm' | 'pediatric' | 'pediatric_growth' | 'pediatric_renal' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'pac' | 'blood_bank' | 'risk' | 'postnatal' | 'maternity_admission' | 'ams' | 'mgso4' | 'pews_pals' | 'nicu_tpn' | 'maternal_comorbidities' | 'pediatric_allergy' | 'neonatal_hie' | 'maternal_sepsis' | 'pediatric_dka' | 'neonatal_rds' | 'maternal_vte' | 'pediatric_seizures' | 'neonatal_sepsis' | 'obstetric_hypertension' | 'pediatric_septic_shock' | 'neonatal_hypoglycemia' | 'obstetric_pph' | 'pediatric_pards' | 'neonatal_bind' | 'obstetric_icp' | 'pediatric_status_epilepticus' | 'neonatal_nec' | 'obstetric_pas' | 'pediatric_tbi' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'abdm' | 'pediatric' | 'pediatric_growth' | 'pediatric_renal' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'pac' | 'blood_bank' | 'risk' | 'postnatal' | 'maternity_admission' | 'ams' | 'mgso4' | 'pews_pals' | 'nicu_tpn' | 'maternal_comorbidities' | 'pediatric_allergy' | 'neonatal_hie' | 'maternal_sepsis' | 'pediatric_dka' | 'neonatal_rds' | 'maternal_vte' | 'pediatric_seizures' | 'neonatal_sepsis' | 'obstetric_hypertension' | 'pediatric_septic_shock' | 'neonatal_hypoglycemia' | 'obstetric_pph' | 'pediatric_pards' | 'neonatal_bind' | 'obstetric_icp' | 'pediatric_status_epilepticus' | 'neonatal_nec' | 'obstetric_pas' | 'pediatric_tbi' | 'neonatal_pphn' | 'obstetric_afe' | 'pediatric_asthma_status' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -982,6 +985,27 @@ export function PatientPage() {
                 </button>
                 <button
                   type="button"
+                  className={`btn small ${viewMode === 'neonatal_pphn' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('neonatal_pphn')}
+                >
+                  🫁 Neonatal PPHN & iNO
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'obstetric_afe' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('obstetric_afe')}
+                >
+                  🩸 Obstetric AFE & A-OK
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'pediatric_asthma_status' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('pediatric_asthma_status')}
+                >
+                  🫁 Pediatric Asthma (M-WCAS)
+                </button>
+                <button
+                  type="button"
                   className={`btn small ${viewMode === 'list' ? 'primary' : ''}`}
                   onClick={() => setViewMode('list')}
                 >
@@ -1230,6 +1254,18 @@ export function PatientPage() {
             />
           ) : viewMode === 'pediatric_tbi' ? (
             <PediatricTbiPecarnTab
+              patientId={patient!.id}
+            />
+          ) : viewMode === 'neonatal_pphn' ? (
+            <NeonatalPphnTab
+              patientId={patient!.id}
+            />
+          ) : viewMode === 'obstetric_afe' ? (
+            <ObstetricAfeTab
+              patientId={patient!.id}
+            />
+          ) : viewMode === 'pediatric_asthma_status' ? (
+            <PediatricAsthmaStatusTab
               patientId={patient!.id}
             />
           ) : (

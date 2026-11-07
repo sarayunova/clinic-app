@@ -7366,6 +7366,276 @@ export const calculatePediatricTbi = (payload: any): Promise<any> =>
 export const getPediatricTbiPrint = (id: number): Promise<any> =>
   api('GET', `/api/pediatric-tbi/episodes/${id}/print`);
 
+// ---------- Series 20A: Neonatal PPHN & Inhaled Nitric Oxide ----------
+
+export interface NeonatalPphnRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string;
+  patient_number?: string;
+  date_of_birth?: string;
+  admission_id?: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  gestational_age_weeks: number;
+  birth_weight_grams: number;
+  primary_etiology: string;
+  preductal_spo2: number;
+  postductal_spo2: number;
+  spo2_gradient: number;
+  mean_airway_pressure_cmh2o: number;
+  fio2_percent: number;
+  pao2_mmhg: number;
+  calculated_oi: number;
+  pphn_severity_tier: string;
+  echo_tr_jet_velocity_m_s?: number | null;
+  echo_estimated_rvsp_mmhg?: number | null;
+  echo_shunt_direction: string;
+  ino_active: number | boolean;
+  ino_dose_ppm: number;
+  methemoglobin_percent?: number | null;
+  sildenafil_active: number | boolean;
+  milrinone_active: number | boolean;
+  status: string;
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NeonatalPphnFlowsheetRecord {
+  id: number;
+  pphn_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_onset: number;
+  preductal_spo2: number;
+  postductal_spo2: number;
+  spo2_gradient: number;
+  map_cmh2o: number;
+  fio2_percent: number;
+  pao2_mmhg: number;
+  calculated_oi: number;
+  ino_dose_ppm: number;
+  methemoglobin_percent?: number | null;
+  circuit_no2_ppm?: number | null;
+  mean_arterial_pressure_mmhg?: number | null;
+  inotropic_score?: number | null;
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getNeonatalPphnEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: NeonatalPphnRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: NeonatalPphnRecord[] }>('GET', `/api/neonatal-pphn/episodes${queryStr}`);
+};
+
+export const getNeonatalPphnEpisode = (id: number): Promise<{ episode: NeonatalPphnRecord; logs: NeonatalPphnFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/neonatal-pphn/episodes/${id}`);
+
+export const createNeonatalPphnEpisode = (payload: any): Promise<{ episode: NeonatalPphnRecord }> =>
+  api('POST', '/api/neonatal-pphn/episodes', payload);
+
+export const updateNeonatalPphnEpisode = (id: number, payload: any): Promise<{ episode: NeonatalPphnRecord }> =>
+  api('PATCH', `/api/neonatal-pphn/episodes/${id}`, payload);
+
+export const deleteNeonatalPphnEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-pphn/episodes/${id}`);
+
+export const logNeonatalPphnFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number; calculatedOi: number; spo2Gradient: number }> =>
+  api('POST', `/api/neonatal-pphn/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteNeonatalPphnFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-pphn/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateNeonatalPphn = (payload: any): Promise<any> =>
+  api('POST', '/api/neonatal-pphn/calculate', payload);
+
+// ---------- Series 20B: Obstetric Amniotic Fluid Embolism (AFE) ----------
+
+export interface ObstetricAfeRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string;
+  patient_number?: string;
+  date_of_birth?: string;
+  admission_id?: number | null;
+  episode_code: string;
+  arrest_onset_datetime: string;
+  gestation_weeks: number;
+  timing_relation: string;
+  cardiorespiratory_collapse: number | boolean;
+  overt_dic_present: number | boolean;
+  absence_of_fever: number | boolean;
+  clark_criteria_met: number | boolean;
+  atropine_given: number | boolean;
+  ondansetron_given: number | boolean;
+  ketorolac_given: number | boolean;
+  aok_regimen_complete: number | boolean;
+  fibrinogen_mg_dl?: number | null;
+  platelet_count?: number | null;
+  pt_inr?: number | null;
+  mtp_activated: number | boolean;
+  prbc_transfused_units: number;
+  ffp_transfused_units: number;
+  platelets_transfused_units: number;
+  cryoprecipitate_units: number;
+  pmcd_performed: number | boolean;
+  pmcd_decision_to_delivery_minutes?: number | null;
+  ecmo_initiated: number | boolean;
+  status: string;
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ObstetricAfeFlowsheetRecord {
+  id: number;
+  afe_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  minutes_from_arrest: number;
+  sbp_mmhg?: number | null;
+  dbp_mmhg?: number | null;
+  hr_bpm?: number | null;
+  spo2_percent?: number | null;
+  etco2_mmhg?: number | null;
+  vasopressor_active: string;
+  fibrinogen_mg_dl?: number | null;
+  platelet_count?: number | null;
+  inr?: number | null;
+  qbl_total_ml?: number | null;
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getObstetricAfeEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: ObstetricAfeRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: ObstetricAfeRecord[] }>('GET', `/api/obstetric-afe/episodes${queryStr}`);
+};
+
+export const getObstetricAfeEpisode = (id: number): Promise<{ episode: ObstetricAfeRecord; logs: ObstetricAfeFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/obstetric-afe/episodes/${id}`);
+
+export const createObstetricAfeEpisode = (payload: any): Promise<{ episode: ObstetricAfeRecord }> =>
+  api('POST', '/api/obstetric-afe/episodes', payload);
+
+export const updateObstetricAfeEpisode = (id: number, payload: any): Promise<{ episode: ObstetricAfeRecord }> =>
+  api('PATCH', `/api/obstetric-afe/episodes/${id}`, payload);
+
+export const deleteObstetricAfeEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-afe/episodes/${id}`);
+
+export const logObstetricAfeFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/obstetric-afe/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteObstetricAfeFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-afe/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateObstetricAfe = (payload: any): Promise<any> =>
+  api('POST', '/api/obstetric-afe/calculate', payload);
+
+// ---------- Series 20C: Pediatric Status Asthmaticus & M-WCAS ----------
+
+export interface PediatricAsthmaStatusRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string;
+  patient_number?: string;
+  date_of_birth?: string;
+  admission_id?: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  age_months: number;
+  weight_kg: number;
+  spo2_room_air_percent: number;
+  wheezing_score: number;
+  retractions_score: number;
+  air_entry_score: number;
+  mental_state_score: number;
+  total_mwcas_score: number;
+  severity_tier: string;
+  tier1_continuous_albuterol: number | boolean;
+  tier1_ipratropium: number | boolean;
+  tier1_systemic_steroids: number | boolean;
+  tier2_iv_magnesium: number | boolean;
+  tier3_iv_terbutaline: number | boolean;
+  tier4_respiratory_support: string;
+  vbg_ph?: number | null;
+  vbg_pco2_mmhg?: number | null;
+  status: string;
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PediatricAsthmaStatusFlowsheetRecord {
+  id: number;
+  asthma_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  minutes_from_triage: number;
+  respiratory_rate: number;
+  heart_rate: number;
+  spo2_percent: number;
+  fio2_percent: number;
+  total_mwcas_score: number;
+  albuterol_rate_mg_hr?: number | null;
+  terbutaline_rate_mcg_kg_min?: number | null;
+  bipap_settings?: string | null;
+  vbg_ph?: number | null;
+  vbg_pco2_mmhg?: number | null;
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getPediatricAsthmaEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: PediatricAsthmaStatusRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: PediatricAsthmaStatusRecord[] }>('GET', `/api/pediatric-asthma/episodes${queryStr}`);
+};
+
+export const getPediatricAsthmaEpisode = (id: number): Promise<{ episode: PediatricAsthmaStatusRecord; logs: PediatricAsthmaStatusFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/pediatric-asthma/episodes/${id}`);
+
+export const createPediatricAsthmaEpisode = (payload: any): Promise<{ episode: PediatricAsthmaStatusRecord }> =>
+  api('POST', '/api/pediatric-asthma/episodes', payload);
+
+export const updatePediatricAsthmaEpisode = (id: number, payload: any): Promise<{ episode: PediatricAsthmaStatusRecord }> =>
+  api('PATCH', `/api/pediatric-asthma/episodes/${id}`, payload);
+
+export const deletePediatricAsthmaEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-asthma/episodes/${id}`);
+
+export const logPediatricAsthmaFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number; totalMwcasScore: number }> =>
+  api('POST', `/api/pediatric-asthma/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deletePediatricAsthmaFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-asthma/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculatePediatricAsthma = (payload: any): Promise<any> =>
+  api('POST', '/api/pediatric-asthma/calculate', payload);
+
+
 
 
 
