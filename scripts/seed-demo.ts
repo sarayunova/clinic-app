@@ -2394,6 +2394,147 @@ async function seed() {
     }
   }
 
+  // --- SERIES 18A: Neonatal Hyperbilirubinemia BIND Scoring & AABR Hearing Screening ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_bind_aabr_episodes (
+      patient_id, admission_id, episode_code, assessment_datetime,
+      gestational_age_weeks, birth_weight_grams, peak_tsb_mg_dl,
+      direct_bilirubin_mg_dl, albumin_g_dl, calculated_b_a_ratio,
+      mental_status_score, muscle_tone_score, cry_score,
+      total_bind_score, bind_severity, aabr_right_ear,
+      aabr_left_ear, aabr_test_datetime, exchange_transfusion_performed,
+      ivig_given, status, consultant_id, neuro_auditory_followup_plan,
+      clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'BIND-20261107-101', '2026-11-07T07:30:00',
+      36.0, 2600, 21.5,
+      0.8, 3.0, 7.2,
+      1, 1, 1,
+      3, 'mild_abe', 'refer',
+      'pass', '2026-11-07T08:00:00', 0,
+      1, 'under_phototherapy', ?,
+      'Diagnostic ABR and serial audiology evaluation at 1 month. High-risk neurodevelopmental follow-up clinic appointment at 3, 6, and 12 months.',
+      '36-week late preterm male neonate with acute hyperbilirubinemia (peak TSB 21.5 mg/dL, B/A ratio 7.2). Mild ABE features (somnolence, mild hypotonia, high pitched cry, BIND 3). AABR hearing screen refers right ear. Quadruple intensive LED phototherapy started; IVIG 1 g/kg infused for ABO incompatibility.',
+      ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingBind = db.prepare('SELECT id FROM neonatal_bind_aabr_episodes WHERE episode_code = ?').get('BIND-20261107-101') as { id: number } | undefined;
+  if (existingBind) {
+    const bindLogs = [
+      { h: 0, m: 1, t: 1, c: 1, tot: 3, tsb: 21.5, photo: 'quadruple_intensive', notes: 'Initiated intensive LED phototherapy and IVIG infusion. Hydration monitored.' },
+      { h: 4, m: 0, t: 1, c: 0, tot: 1, tsb: 17.8, photo: 'quadruple_intensive', notes: 'Tone improved, suckling vigorously. TSB responsive to phototherapy.' },
+    ];
+    for (const bl of bindLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_bind_serial_flowsheet_logs (
+          episode_id, patient_id, log_datetime, hours_from_admission,
+          mental_status_score, muscle_tone_score, cry_score,
+          total_bind_score, tsb_mg_dl, phototherapy_type,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-07T08:00:00', ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingBind.id, babyId, bl.h, bl.m, bl.t, bl.c, bl.tot, bl.tsb, bl.photo, bl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 18B: Intrahepatic Cholestasis of Pregnancy (ICP) & Bile Acids ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_icp_episodes (
+      patient_id, admission_id, episode_code, diagnosis_datetime,
+      gestation_weeks, peak_tsba_umol_l, baseline_alt_u_l, baseline_ast_u_l,
+      pruritus_severity_score, pruritus_palms_soles, nocturnal_worsening,
+      icp_severity_tier, udca_started, udca_dose_mg_day,
+      ctg_surveillance_frequency, planned_delivery_weeks,
+      delivery_timing_rationale, status, consultant_id,
+      clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'ICP-20261107-101', '2026-11-07T08:00:00',
+      32.5, 48.5, 68.0, 54.0,
+      7, 1, 1,
+      'moderate_40_99', 1, 1000,
+      'twice_weekly', 36.5,
+      'SMFM/ACOG Moderate ICP Protocol: TSBA 48.5 umol/L. Planned induction between 36w0d and 37w0d with twice-weekly CTG surveillance and weekly fasting TSBA monitoring.',
+      'active_surveillance', ?,
+      '32.5 weeks gravida presenting with intractable palmar and plantar pruritus with nocturnal worsening. Fasting TSBA elevated at 48.5 umol/L confirming moderate obstetric cholestasis. Started on Ursodeoxycholic acid (UDCA) 500 mg PO BID (1000 mg/day). Twice weekly biophysical/CTG scheduled.',
+      ?, ?
+    )
+  `).run(anitaId, docId, now, now);
+
+  const existingIcp = db.prepare('SELECT id FROM obstetric_icp_episodes WHERE episode_code = ?').get('ICP-20261107-101') as { id: number } | undefined;
+  if (existingIcp) {
+    const icpLogs = [
+      { gw: 32.5, tsba: 48.5, alt: 68.0, ast: 54.0, pr: 7, ctg: 'reactive', mv: 1, udca: 1000, notes: 'Baseline assessment upon presentation. Reactive CTG.' },
+      { gw: 33.5, tsba: 36.2, alt: 48.0, ast: 38.0, pr: 4, ctg: 'reactive', mv: 1, udca: 1000, notes: 'Pruritus improved after 1 week on UDCA. TSBA trending down. Normal reactive CTG.' },
+    ];
+    for (const il of icpLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_icp_flowsheet_logs (
+          icp_episode_id, patient_id, log_datetime, gestation_weeks,
+          current_tsba_umol_l, alt_u_l, ast_u_l, pruritus_score,
+          ctg_result, fetal_movements_adequate, udca_current_dose_mg_day,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-07T08:30:00', ?,
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingIcp.id, anitaId, il.gw, il.tsba, il.alt, il.ast, il.pr, il.ctg, il.mv, il.udca, il.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 18C: Pediatric Status Epilepticus Resuscitation ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_status_epilepticus_episodes (
+      patient_id, admission_id, episode_code, seizure_onset_datetime,
+      age_months, weight_kg, etiology, seizure_semiology,
+      phase1_benzo_given, phase1_benzo_agent, phase1_benzo_dose_mg,
+      phase1_administered_minute, phase2_second_line_given,
+      phase2_agent, phase2_dose_mg, phase2_administered_minute,
+      phase3_refractory_status, seizure_cessation_minute,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'PSTAT-20261107-101', '2026-11-07T08:30:00',
+      18, 11.5, 'febrile_status', 'generalized_tonic_clonic',
+      1, 'lorazepam_iv', 1.2,
+      4, 1,
+      'levetiracetam', 690.0, 14,
+      0, 19,
+      'seizure_abated_post_ictal', ?,
+      '18-month-old child presenting with prolonged febrile convulsion lasting >15 minutes. Phase 1 IV Lorazepam (0.1 mg/kg = 1.2 mg) given at minute 4. Due to ongoing clonic movements at minute 12, Phase 2 Levetiracetam 60 mg/kg (690 mg) infused over 10 minutes. Complete seizure cessation at minute 19. Blood glucose 98 mg/dL. Airway maintained on high-flow O2. Currently post-ictal, hemodynamically stable.',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingStat = db.prepare('SELECT id FROM pediatric_status_epilepticus_episodes WHERE episode_code = ?').get('PSTAT-20261107-101') as { id: number } | undefined;
+  if (existingStat) {
+    const statLogs = [
+      { min: 5, phase: 'phase_1_emergent_benzo', sz: 1, hr: 160, sbp: 95, dbp: 58, spo2: 96.0, air: 'patent_spontaneous', rate: 0.0, eeg: 'continuous_spikes', notes: 'Administered Lorazepam 1.2 mg IV push. High-flow blow-by oxygen.' },
+      { min: 15, phase: 'phase_2_urgent_control', sz: 1, hr: 148, sbp: 98, dbp: 60, spo2: 98.0, air: 'patent_spontaneous', rate: 0.0, eeg: 'continuous_spikes', notes: 'Started IV Levetiracetam 690 mg infusion over 10 minutes.' },
+      { min: 20, phase: 'post_seizure_stabilization', sz: 0, hr: 118, sbp: 96, dbp: 62, spo2: 99.0, air: 'patent_spontaneous', rate: 0.0, eeg: 'slowing', notes: 'Convulsion ceased at minute 19. Child placed in recovery position. Neurologic status post-ictal.' },
+    ];
+    for (const sl of statLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_status_epilepticus_flowsheet_logs (
+          seizure_episode_id, patient_id, log_datetime, minutes_from_onset,
+          phase_active, seizure_activity_present, vitals_hr, vitals_sbp,
+          vitals_dbp, vitals_spo2, airway_status, infusion_rate_mcg_kg_min,
+          eeg_background, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-07T08:35:00', ?,
+          ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingStat.id, aaravId, sl.min, sl.phase, sl.sz, sl.hr, sl.sbp, sl.dbp, sl.spo2, sl.air, sl.rate, sl.eeg, sl.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

@@ -6795,6 +6795,288 @@ export const calculatePediatricPards = (payload: any): Promise<any> =>
 export const getPediatricPardsPrint = (id: number): Promise<any> =>
   api('GET', `/api/pediatric-pards/episodes/${id}/print`);
 
+// ==========================================
+// SERIES 18A: Neonatal BIND & AABR Hearing Screening
+// ==========================================
+
+export interface NeonatalBindAabrRecord {
+  id: number;
+  patient_id: number;
+  admission_id?: number | null;
+  episode_code: string;
+  assessment_datetime: string;
+  gestational_age_weeks: number;
+  birth_weight_grams: number;
+  peak_tsb_mg_dl: number;
+  direct_bilirubin_mg_dl?: number | null;
+  albumin_g_dl?: number | null;
+  calculated_b_a_ratio?: number | null;
+  mental_status_score: number;
+  muscle_tone_score: number;
+  cry_score: number;
+  total_bind_score: number;
+  bind_severity: 'normal' | 'mild_abe' | 'moderate_abe' | 'severe_abe';
+  aabr_right_ear: 'not_tested' | 'pass' | 'refer';
+  aabr_left_ear: 'not_tested' | 'pass' | 'refer';
+  aabr_test_datetime?: string | null;
+  exchange_transfusion_performed: number;
+  ivig_given: number;
+  status: 'evaluating' | 'under_phototherapy' | 'post_exchange_transfusion' | 'cleared_pass' | 'high_risk_neuro_followup';
+  consultant_id: number;
+  neuro_auditory_followup_plan?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NeonatalBindFlowsheetRecord {
+  id: number;
+  episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_admission: number;
+  mental_status_score: number;
+  muscle_tone_score: number;
+  cry_score: number;
+  total_bind_score: number;
+  tsb_mg_dl?: number | null;
+  phototherapy_type?: string | null;
+  notes?: string | null;
+  logged_by_id: number;
+  created_at: string;
+}
+
+export const getNeonatalBindEpisodes = (params?: {
+  patientId?: number;
+  status?: string;
+}): Promise<{ episodes: NeonatalBindAabrRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.status) q.append('status', params.status);
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ episodes: NeonatalBindAabrRecord[] }>('GET', `/api/neonatal-bind/episodes${queryStr}`);
+};
+
+export const getNeonatalBindEpisode = (
+  id: number
+): Promise<{ episode: NeonatalBindAabrRecord; logs: NeonatalBindFlowsheetRecord[] }> =>
+  api('GET', `/api/neonatal-bind/episodes/${id}`);
+
+export const createNeonatalBindEpisode = (payload: any): Promise<{ episode: NeonatalBindAabrRecord; evalResult: any }> =>
+  api('POST', '/api/neonatal-bind/episodes', payload);
+
+export const updateNeonatalBindEpisode = (
+  id: number,
+  payload: any
+): Promise<{ episode: NeonatalBindAabrRecord }> =>
+  api('PATCH', `/api/neonatal-bind/episodes/${id}`, payload);
+
+export const deleteNeonatalBindEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-bind/episodes/${id}`);
+
+export const logNeonatalBindFlowsheet = (
+  episodeId: number,
+  payload: any
+): Promise<{ logId: number; totalBindScore: number; severity: string }> =>
+  api('POST', `/api/neonatal-bind/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteNeonatalBindFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-bind/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateNeonatalBind = (payload: any): Promise<any> =>
+  api('POST', '/api/neonatal-bind/calculate', payload);
+
+export const getNeonatalBindPrint = (id: number): Promise<any> =>
+  api('GET', `/api/neonatal-bind/episodes/${id}/print`);
+
+// ==========================================
+// SERIES 18B: Obstetric Intrahepatic Cholestasis of Pregnancy (ICP)
+// ==========================================
+
+export interface ObstetricIcpRecord {
+  id: number;
+  patient_id: number;
+  admission_id?: number | null;
+  episode_code: string;
+  diagnosis_datetime: string;
+  gestation_weeks: number;
+  peak_tsba_umol_l: number;
+  baseline_alt_u_l?: number | null;
+  baseline_ast_u_l?: number | null;
+  pruritus_severity_score: number;
+  pruritus_palms_soles: number;
+  nocturnal_worsening: number;
+  icp_severity_tier: 'mild_10_39' | 'moderate_40_99' | 'severe_ge_100';
+  udca_started: number;
+  udca_dose_mg_day: number;
+  ctg_surveillance_frequency: 'weekly' | 'twice_weekly' | 'daily' | 'continuous_inpatient';
+  planned_delivery_weeks: number;
+  delivery_timing_rationale?: string | null;
+  status: 'active_surveillance' | 'medication_titration' | 'planned_induction' | 'delivered' | 'resolved';
+  consultant_id: number;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ObstetricIcpFlowsheetRecord {
+  id: number;
+  icp_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  gestation_weeks: number;
+  current_tsba_umol_l: number;
+  alt_u_l?: number | null;
+  ast_u_l?: number | null;
+  pruritus_score: number;
+  ctg_result: 'reactive' | 'equivocal' | 'non_reactive';
+  fetal_movements_adequate: number;
+  udca_current_dose_mg_day: number;
+  notes?: string | null;
+  logged_by_id: number;
+  created_at: string;
+}
+
+export const getObstetricIcpEpisodes = (params?: {
+  patientId?: number;
+  status?: string;
+}): Promise<{ episodes: ObstetricIcpRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.status) q.append('status', params.status);
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ episodes: ObstetricIcpRecord[] }>('GET', `/api/obstetric-icp/episodes${queryStr}`);
+};
+
+export const getObstetricIcpEpisode = (
+  id: number
+): Promise<{ episode: ObstetricIcpRecord; logs: ObstetricIcpFlowsheetRecord[] }> =>
+  api('GET', `/api/obstetric-icp/episodes/${id}`);
+
+export const createObstetricIcpEpisode = (payload: any): Promise<{ episode: ObstetricIcpRecord; evalResult: any }> =>
+  api('POST', '/api/obstetric-icp/episodes', payload);
+
+export const updateObstetricIcpEpisode = (
+  id: number,
+  payload: any
+): Promise<{ episode: ObstetricIcpRecord }> =>
+  api('PATCH', `/api/obstetric-icp/episodes/${id}`, payload);
+
+export const deleteObstetricIcpEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-icp/episodes/${id}`);
+
+export const logObstetricIcpFlowsheet = (
+  episodeId: number,
+  payload: any
+): Promise<{ logId: number; currentTsbaUmolL: number }> =>
+  api('POST', `/api/obstetric-icp/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteObstetricIcpFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-icp/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateObstetricIcp = (payload: any): Promise<any> =>
+  api('POST', '/api/obstetric-icp/calculate', payload);
+
+export const getObstetricIcpPrint = (id: number): Promise<any> =>
+  api('GET', `/api/obstetric-icp/episodes/${id}/print`);
+
+// ==========================================
+// SERIES 18C: Pediatric Status Epilepticus Resuscitation
+// ==========================================
+
+export interface PediatricStatusEpilepticusRecord {
+  id: number;
+  patient_id: number;
+  admission_id?: number | null;
+  episode_code: string;
+  seizure_onset_datetime: string;
+  age_months: number;
+  weight_kg: number;
+  etiology: 'febrile_status' | 'known_epilepsy' | 'cns_infection' | 'toxic_metabolic' | 'trauma_stroke' | 'unknown';
+  seizure_semiology: 'generalized_tonic_clonic' | 'focal_motor' | 'non_convulsive_status' | 'myoclonic';
+  phase1_benzo_given: number;
+  phase1_benzo_agent?: 'midazolam_buccal_in' | 'lorazepam_iv' | 'diazepam_rectal' | null;
+  phase1_benzo_dose_mg?: number | null;
+  phase1_administered_minute?: number | null;
+  phase2_second_line_given: number;
+  phase2_agent?: 'levetiracetam' | 'fosphenytoin' | 'valproate_sodium' | null;
+  phase2_dose_mg?: number | null;
+  phase2_administered_minute?: number | null;
+  phase3_refractory_status: number;
+  phase3_infusion_agent?: 'midazolam_infusion' | 'propofol_infusion' | 'ketamine_infusion' | null;
+  phase3_infusion_rate_mcg_kg_min?: number | null;
+  seizure_cessation_minute?: number | null;
+  status: 'active_seizure' | 'refractory_status' | 'seizure_abated_post_ictal' | 'picu_neuro_monitoring' | 'resolved';
+  consultant_id: number;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PediatricSeizureFlowsheetRecord {
+  id: number;
+  seizure_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  minutes_from_onset: number;
+  phase_active: 'phase_1_emergent_benzo' | 'phase_2_urgent_control' | 'phase_3_refractory_infusion' | 'post_seizure_stabilization';
+  seizure_activity_present: number;
+  vitals_hr?: number | null;
+  vitals_sbp?: number | null;
+  vitals_dbp?: number | null;
+  vitals_spo2?: number | null;
+  airway_status: 'patent_spontaneous' | 'bag_valve_mask' | 'intubated_ett' | 'laryngeal_mask';
+  infusion_rate_mcg_kg_min?: number | null;
+  eeg_background?: 'not_monitoring' | 'normal' | 'slowing' | 'continuous_spikes' | 'burst_suppression' | 'flat' | null;
+  notes?: string | null;
+  logged_by_id: number;
+  created_at: string;
+}
+
+export const getPediatricStatusEpilepticusEpisodes = (params?: {
+  patientId?: number;
+  status?: string;
+}): Promise<{ episodes: PediatricStatusEpilepticusRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.status) q.append('status', params.status);
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ episodes: PediatricStatusEpilepticusRecord[] }>('GET', `/api/pediatric-status-epilepticus/episodes${queryStr}`);
+};
+
+export const getPediatricStatusEpilepticusEpisode = (
+  id: number
+): Promise<{ episode: PediatricStatusEpilepticusRecord; logs: PediatricSeizureFlowsheetRecord[] }> =>
+  api('GET', `/api/pediatric-status-epilepticus/episodes/${id}`);
+
+export const createPediatricStatusEpilepticusEpisode = (payload: any): Promise<{ episode: PediatricStatusEpilepticusRecord; evalResult: any }> =>
+  api('POST', '/api/pediatric-status-epilepticus/episodes', payload);
+
+export const updatePediatricStatusEpilepticusEpisode = (
+  id: number,
+  payload: any
+): Promise<{ episode: PediatricStatusEpilepticusRecord }> =>
+  api('PATCH', `/api/pediatric-status-epilepticus/episodes/${id}`, payload);
+
+export const deletePediatricStatusEpilepticusEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-status-epilepticus/episodes/${id}`);
+
+export const logPediatricSeizureFlowsheet = (
+  episodeId: number,
+  payload: any
+): Promise<{ logId: number; seizureActive: boolean }> =>
+  api('POST', `/api/pediatric-status-epilepticus/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deletePediatricSeizureFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-status-epilepticus/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculatePediatricStatusEpilepticus = (payload: any): Promise<any> =>
+  api('POST', '/api/pediatric-status-epilepticus/calculate', payload);
+
+export const getPediatricStatusEpilepticusPrint = (id: number): Promise<any> =>
+  api('GET', `/api/pediatric-status-epilepticus/episodes/${id}/print`);
+
+
 
 
 
