@@ -2086,6 +2086,159 @@ async function seed() {
     }
   }
 
+  // --- SERIES 16: NEONATAL SEPSIS, OBSTETRIC HYPERTENSIVE CRISIS, PEDIATRIC SEPTIC SHOCK ---
+  // 16A: Neonatal Sepsis & Inotrope Stewardship (Kaiser EOS / I-T Ratio)
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_sepsis_episodes (
+      patient_id, admission_id, episode_code, evaluation_datetime,
+      gestational_age_weeks, gestational_age_days, birth_weight_kg,
+      maternal_temp_celsius, rom_hours, maternal_gbs_status, maternal_iap_status,
+      clinical_presentation, eos_risk_per_1000, eos_recommendation,
+      blood_culture_drawn, blood_culture_result, empiric_antibiotics_started,
+      ampicillin_dose_mg, gentamicin_dose_mg, it_ratio, crp_mg_l, micro_esr_mm_hr,
+      platelets_k_ul, los_suspected, los_action_plan, status, consultant_id,
+      clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'EOS-20261107-001', '2026-11-07T06:00:00',
+      36, 4, 2.4,
+      38.2, 19.0, 'positive', 'inadequate',
+      'equivocal', 4.12, 'blood_culture_empiric_antibiotics',
+      1, 'pending', 1,
+      120.0, 9.6, 0.23, 18.5, 12.0,
+      180.0, 0, 'Serial observation in SCN', 'active_treatment', ?,
+      'Late-preterm 36w4d infant with maternal chorioamnionitis risk (GBS+, ROM 19h, temp 38.2C). Kaiser EOS risk 4.12/1000 with I/T ratio 0.23 (>0.20). Blood culture drawn; IV Ampicillin + Gentamicin started. Dopamine titrated for MAP maintenance.',
+      ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingSep = db.prepare('SELECT id FROM neonatal_sepsis_episodes WHERE episode_code = ?').get('EOS-20261107-001') as { id: number } | undefined;
+  if (existingSep) {
+    const inotropeLogs = [
+      { hr: 1.0, bpm: 162, sbp: 48, dbp: 24, map: 32.0, preSpo2: 95, postSpo2: 91, svc: 72, uo: 0.8, dop: 5.0, notes: 'Dopamine started at 5 mcg/kg/min for MAP < GA (32 < 36 mmHg).' },
+      { hr: 2.0, bpm: 152, sbp: 54, dbp: 30, map: 38.0, preSpo2: 98, postSpo2: 96, svc: 88, uo: 1.6, dop: 5.0, notes: 'Target MAP achieved (38 mmHg >= 36 mmHg). Capillary refill 2s, urine output normalized.' },
+    ];
+    for (const il of inotropeLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_inotrope_flowsheet_logs (
+          sepsis_episode_id, patient_id, log_datetime, hours_on_inotropes,
+          heart_rate_bpm, blood_pressure_systolic, blood_pressure_diastolic,
+          map_mmhg, pre_ductal_spo2, post_ductal_spo2, delta_spo2, svc_flow_ml_kg_min,
+          urine_output_ml_kg_hr, dopamine_mcg_kg_min, dobutamine_mcg_kg_min,
+          epinephrine_mcg_kg_min, milrinone_mcg_kg_min, hydrocortisone_mg_kg,
+          ino_ppm, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-07T07:00:00', ?,
+          ?, ?, ?,
+          ?, ?, ?, ?, ?,
+          ?, ?, 0,
+          0, 0, 0,
+          0, ?, ?, ?
+        )
+      `).run(existingSep.id, babyId, il.hr, il.bpm, il.sbp, il.dbp, il.map, il.preSpo2, il.postSpo2, il.preSpo2 - il.postSpo2, il.svc, il.uo, il.dop, il.notes, nurseId, now);
+    }
+  }
+
+  // 16B: Obstetric Hypertensive Crisis & PPCM (Sunita Rao / sunitaId)
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_hypertensive_crises (
+      patient_id, admission_id, crisis_code, crisis_datetime, gestation_weeks,
+      onset_phase, initial_sbp, initial_dbp, initial_map, first_line_agent,
+      asthma_history, bradycardia_history, mgso4_co_administered,
+      cumulative_labetalol_mg, cumulative_hydralazine_mg, cumulative_nifedipine_mg,
+      final_sbp, final_dbp, final_map, blood_pressure_controlled,
+      fetal_heart_rate_status, ppcm_screen_positive, lvef_percent, nt_pro_bnp_pg_ml,
+      troponin_i_ng_ml, board_bromocriptine_started, board_oral_hf_rx,
+      board_anticoagulation_started, board_diuretics_started, status, consultant_id,
+      clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'OHTN-20261107-101', '2026-11-07T06:30:00', 36.5,
+      'postpartum', 178, 114, 135.3, 'labetalol',
+      0, 0, 1,
+      60.0, 0, 0,
+      142, 92, 108.7, 1,
+      'postpartum_na', 0, 60.0, 68.0,
+      0.01, 0, NULL,
+      0, 0, 'controlled_surveillance', ?,
+      'Postpartum Day 2 severe hypertensive crisis (178/114 mmHg confirmed at 15m). Magnesium sulfate 4g IV loading given for eclampsia prophylaxis. IV Labetalol 20mg then 40mg achieved target BP 142/92 mmHg without maternal bradycardia.',
+      ?, ?
+    )
+  `).run(sunitaId, docId, now, now);
+
+  const existingHtn = db.prepare('SELECT id FROM obstetric_hypertensive_crises WHERE crisis_code = ?').get('OHTN-20261107-101') as { id: number } | undefined;
+  if (existingHtn) {
+    const htnLogs = [
+      { step: 1, dt: '2026-11-07T06:46:00', sbp: 178, dbp: 114, map: 135.3, med: 'Labetalol IV', dose: 20, route: 'IV', hr: 84, notes: 'Step 1: 20mg IV push over 2 minutes. BP remained severe at 20 min.' },
+      { step: 2, dt: '2026-11-07T07:07:00', sbp: 168, dbp: 108, map: 128.0, med: 'Labetalol IV', dose: 40, route: 'IV', hr: 78, notes: 'Step 2: 40mg IV push. Target BP achieved (142/92 mmHg). Maintained on 30-min vitals schedule.' },
+    ];
+    for (const hl of htnLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_hypertensive_dose_logs (
+          crisis_id, patient_id, log_datetime, step_number,
+          sbp, dbp, map_mmhg, medication_administered, dose_value, dose_unit,
+          route, fetal_heart_rate, maternal_symptoms, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, ?, ?,
+          ?, ?, ?, ?, ?, 'mg',
+          ?, NULL, 'Headache improving', ?, ?, ?
+        )
+      `).run(existingHtn.id, sunitaId, hl.dt, hl.step, hl.sbp, hl.dbp, hl.map, hl.med, hl.dose, hl.route, hl.notes, nurseId, now);
+    }
+  }
+
+  // 16C: Pediatric Septic Shock & VIS (Master Aarav Patel / aaravId)
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_septic_shock_episodes (
+      patient_id, admission_id, episode_code, recognition_datetime,
+      age_months, weight_kg, shock_phenotype, mental_status,
+      capillary_refill_seconds, heart_rate_bpm, sbp, dbp, map_mmhg,
+      pulse_quality, extremity_temperature, cumulative_fluid_ml,
+      cumulative_fluid_ml_kg, hepatomegaly_present, pulmonary_crackles_present,
+      fluid_overload_alert, fluid_refractory, first_line_vasoactive,
+      stress_hydrocortisone_administered, current_vis_score, organ_dysfunction_flags,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'PSEP-20261107-201', '2026-11-07T07:00:00',
+      18, 11.5, 'cold_shock', 'lethargic',
+      4.0, 168, 76, 42, 53.3,
+      'weak_thready', 'cool_mottled', 345.0,
+      30.0, 0, 0,
+      0, 1, 'epinephrine',
+      0, 7.0, '["hypotension", "tachycardia", "delayed_capillary_refill"]',
+      'resuscitating', ?,
+      '18-month-old male with septic shock secondary to severe pneumonia. Fluid-refractory after 30 mL/kg crystalloid boluses. Epinephrine peripheral infusion started for cold shock; VIS score stabilized from 12.0 down to 7.0.',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingShock = db.prepare('SELECT id FROM pediatric_septic_shock_episodes WHERE episode_code = ?').get('PSEP-20261107-201') as { id: number } | undefined;
+  if (existingShock) {
+    const shockLogs = [
+      { min: 15, bpm: 168, sbp: 76, dbp: 42, map: 53.3, crt: 4.0, mental: 'lethargic', fluidType: 'Normal Saline 0.9%', fluidMl: 230, totalMlKg: 20.0, epi: 0.12, vis: 12.0, notes: 'First bolus 20 mL/kg completed. Cold extremities persistent. Epinephrine started at 0.12 mcg/kg/min.' },
+      { min: 45, bpm: 144, sbp: 92, dbp: 54, map: 66.7, crt: 2.0, mental: 'alert', fluidType: 'Normal Saline 0.9%', fluidMl: 115, totalMlKg: 30.0, epi: 0.07, vis: 7.0, notes: 'Second bolus 10 mL/kg given. Warm peripheries, CRT 2.0s, normal pulses, VIS weaned to 7.0.' },
+    ];
+    for (const sl of shockLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_septic_shock_flowsheet_logs (
+          shock_episode_id, patient_id, log_datetime, minutes_from_recognition,
+          heart_rate_bpm, sbp, dbp, map_mmhg, capillary_refill_seconds,
+          mental_status, bolus_fluid_type, bolus_fluid_volume_ml, total_fluid_ml_kg,
+          dopamine_mcg_kg_min, dobutamine_mcg_kg_min, epinephrine_mcg_kg_min,
+          norepinephrine_mcg_kg_min, milrinone_mcg_kg_min, vasopressin_units_kg_min,
+          vis_score, hepatomegaly_checked, pulmonary_crackles_checked, notes,
+          logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-07T07:30:00', ?,
+          ?, ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          0, 0, ?,
+          0, 0, 0,
+          ?, 1, 1, ?,
+          ?, ?
+        )
+      `).run(existingShock.id, aaravId, sl.min, sl.bpm, sl.sbp, sl.dbp, sl.map, sl.crt, sl.mental, sl.fluidType, sl.fluidMl, sl.totalMlKg, sl.epi, sl.vis, sl.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

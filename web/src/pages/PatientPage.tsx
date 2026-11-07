@@ -62,6 +62,9 @@ import { PediatricDkaTab } from '../components/PediatricDkaTab';
 import { NeonatalRdsTab } from '../components/NeonatalRdsTab';
 import { MaternalVteTab } from '../components/MaternalVteTab';
 import { PediatricSeizureTab } from '../components/PediatricSeizureTab';
+import { NeonatalSepsisTab } from '../components/NeonatalSepsisTab';
+import { ObstetricHypertensionTab } from '../components/ObstetricHypertensionTab';
+import { PediatricSepticShockTab } from '../components/PediatricSepticShockTab';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -172,7 +175,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'abdm' | 'pediatric' | 'pediatric_growth' | 'pediatric_renal' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'pac' | 'blood_bank' | 'risk' | 'postnatal' | 'maternity_admission' | 'ams' | 'mgso4' | 'pews_pals' | 'nicu_tpn' | 'maternal_comorbidities' | 'pediatric_allergy' | 'neonatal_hie' | 'maternal_sepsis' | 'pediatric_dka' | 'neonatal_rds' | 'maternal_vte' | 'pediatric_seizures' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'abdm' | 'pediatric' | 'pediatric_growth' | 'pediatric_renal' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'pac' | 'blood_bank' | 'risk' | 'postnatal' | 'maternity_admission' | 'ams' | 'mgso4' | 'pews_pals' | 'nicu_tpn' | 'maternal_comorbidities' | 'pediatric_allergy' | 'neonatal_hie' | 'maternal_sepsis' | 'pediatric_dka' | 'neonatal_rds' | 'maternal_vte' | 'pediatric_seizures' | 'neonatal_sepsis' | 'obstetric_hypertension' | 'pediatric_septic_shock' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -886,6 +889,27 @@ export function PatientPage() {
                 </button>
                 <button
                   type="button"
+                  className={`btn small ${viewMode === 'neonatal_sepsis' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('neonatal_sepsis')}
+                >
+                  👶 Neonatal Sepsis & Inotropes
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'obstetric_hypertension' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('obstetric_hypertension')}
+                >
+                  ⚡ Obstetric HTN & PPCM
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'pediatric_septic_shock' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('pediatric_septic_shock')}
+                >
+                  🧸 Pediatric Septic Shock & VIS
+                </button>
+                <button
+                  type="button"
                   className={`btn small ${viewMode === 'list' ? 'primary' : ''}`}
                   onClick={() => setViewMode('list')}
                 >
@@ -1082,6 +1106,21 @@ export function PatientPage() {
             />
           ) : viewMode === 'pediatric_seizures' ? (
             <PediatricSeizureTab
+              patientId={patient!.id}
+              patientName={patient!.fullName}
+            />
+          ) : viewMode === 'neonatal_sepsis' ? (
+            <NeonatalSepsisTab
+              patientId={patient!.id}
+              patientName={patient!.fullName}
+            />
+          ) : viewMode === 'obstetric_hypertension' ? (
+            <ObstetricHypertensionTab
+              patientId={patient!.id}
+              patientName={patient!.fullName}
+            />
+          ) : viewMode === 'pediatric_septic_shock' ? (
+            <PediatricSepticShockTab
               patientId={patient!.id}
               patientName={patient!.fullName}
             />

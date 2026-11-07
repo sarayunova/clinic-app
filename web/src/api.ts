@@ -6162,6 +6162,338 @@ export const auditPediatricSeizurePrint = (id: number): Promise<{ success: boole
 export const calculatePediatricSeizure = (payload: any): Promise<any> =>
   api('POST', '/api/pediatric-seizures/calculate', payload);
 
+// ==========================================
+// SERIES 16A: NEONATAL SEPSIS & INOTROPES
+// ==========================================
+export interface NeonatalSepsisRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  evaluation_datetime: string;
+  gestational_age_weeks: number;
+  gestational_age_days: number;
+  birth_weight_kg: number;
+  maternal_temp_celsius: number;
+  rom_hours: number;
+  maternal_gbs_status: 'positive' | 'negative' | 'unknown';
+  maternal_iap_status: 'adequate' | 'inadequate' | 'none';
+  clinical_presentation: 'well_appearing' | 'equivocal' | 'clinical_illness';
+  eos_risk_per_1000: number;
+  eos_recommendation: 'routine_care' | 'serial_physical_exams' | 'blood_culture_empiric_antibiotics';
+  blood_culture_drawn: number;
+  blood_culture_result: string | null;
+  empiric_antibiotics_started: number;
+  ampicillin_dose_mg: number | null;
+  gentamicin_dose_mg: number | null;
+  it_ratio: number | null;
+  crp_mg_l: number | null;
+  micro_esr_mm_hr: number | null;
+  platelets_k_ul: number | null;
+  los_suspected: number;
+  los_action_plan: string | null;
+  status: 'evaluating' | 'active_treatment' | 'surveillance_complete' | 'resolved' | 'escalated_septic_shock';
+  consultant_id: number;
+  consultant_name?: string;
+  clinical_notes: string | null;
+  patient_name?: string;
+  patient_uhid?: string;
+  patient_dob?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NeonatalInotropeRecord {
+  id: number;
+  sepsis_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_on_inotropes: number;
+  heart_rate_bpm: number | null;
+  blood_pressure_systolic: number | null;
+  blood_pressure_diastolic: number | null;
+  map_mmhg: number | null;
+  pre_ductal_spo2: number | null;
+  post_ductal_spo2: number | null;
+  delta_spo2: number | null;
+  svc_flow_ml_kg_min: number | null;
+  urine_output_ml_kg_hr: number | null;
+  dopamine_mcg_kg_min: number;
+  dobutamine_mcg_kg_min: number;
+  epinephrine_mcg_kg_min: number;
+  milrinone_mcg_kg_min: number;
+  hydrocortisone_mg_kg: number;
+  ino_ppm: number;
+  notes: string | null;
+  logged_by_id: number;
+  logged_by_name?: string;
+  created_at: string;
+}
+
+export const getNeonatalSepsisEpisodes = (params?: {
+  patientId?: number;
+  status?: string;
+}): Promise<{ episodes: NeonatalSepsisRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.status) q.append('status', params.status);
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ episodes: NeonatalSepsisRecord[] }>('GET', `/api/neonatal-sepsis/episodes${queryStr}`);
+};
+
+export const getNeonatalSepsisEpisode = (
+  id: number
+): Promise<{ episode: NeonatalSepsisRecord; inotropeLogs: NeonatalInotropeRecord[] }> =>
+  api('GET', `/api/neonatal-sepsis/episodes/${id}`);
+
+export const createNeonatalSepsisEpisode = (payload: any): Promise<{ episode: NeonatalSepsisRecord }> =>
+  api('POST', '/api/neonatal-sepsis/episodes', payload);
+
+export const updateNeonatalSepsisEpisode = (id: number, payload: any): Promise<{ episode: NeonatalSepsisRecord }> =>
+  api('PUT', `/api/neonatal-sepsis/episodes/${id}`, payload);
+
+export const deleteNeonatalSepsisEpisode = (id: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/neonatal-sepsis/episodes/${id}`);
+
+export const logNeonatalInotropeFlowsheet = (
+  episodeId: number,
+  payload: any
+): Promise<{ log: NeonatalInotropeRecord }> =>
+  api('POST', `/api/neonatal-sepsis/episodes/${episodeId}/inotrope-logs`, payload);
+
+export const deleteNeonatalInotropeFlowsheet = (logId: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/neonatal-sepsis/flowsheet-logs/${logId}`);
+
+export const calculateNeonatalSepsis = (payload: any): Promise<any> =>
+  api('POST', '/api/neonatal-sepsis/calculate-eos', payload);
+
+export const auditNeonatalSepsisPrint = (id: number): Promise<{ success: boolean }> =>
+  api('POST', `/api/neonatal-sepsis/episodes/${id}/audit-print`, {});
+
+// ==========================================
+// SERIES 16B: OBSTETRIC HYPERTENSIVE CRISIS & PPCM
+// ==========================================
+export interface ObstetricHypertensiveCrisisRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  crisis_code: string;
+  crisis_datetime: string;
+  gestation_weeks: number | null;
+  onset_phase: 'antepartum' | 'intrapartum' | 'postpartum';
+  initial_sbp: number;
+  initial_dbp: number;
+  initial_map: number;
+  first_line_agent: 'labetalol' | 'hydralazine' | 'nifedipine';
+  asthma_history: number;
+  bradycardia_history: number;
+  mgso4_co_administered: number;
+  cumulative_labetalol_mg: number;
+  cumulative_hydralazine_mg: number;
+  cumulative_nifedipine_mg: number;
+  final_sbp: number | null;
+  final_dbp: number | null;
+  final_map: number | null;
+  blood_pressure_controlled: number;
+  fetal_heart_rate_status: 'normal' | 'category_1' | 'category_2' | 'category_3' | 'postpartum_na';
+  ppcm_screen_positive: number;
+  lvef_percent: number | null;
+  nt_pro_bnp_pg_ml: number | null;
+  troponin_i_ng_ml: number | null;
+  board_bromocriptine_started: number;
+  board_oral_hf_rx: string | null;
+  board_anticoagulation_started: number;
+  board_diuretics_started: number;
+  status: 'active_crisis' | 'controlled_surveillance' | 'resolved' | 'icu_transferred';
+  consultant_id: number;
+  consultant_name?: string;
+  clinical_notes: string | null;
+  patient_name?: string;
+  patient_uhid?: string;
+  patient_dob?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ObstetricHypertensiveDoseRecord {
+  id: number;
+  crisis_id: number;
+  patient_id: number;
+  log_datetime: string;
+  step_number: number;
+  sbp: number;
+  dbp: number;
+  map_mmhg: number;
+  medication_administered: string;
+  dose_value: number;
+  dose_unit: string;
+  route: string;
+  fetal_heart_rate: number | null;
+  maternal_symptoms: string | null;
+  notes: string | null;
+  logged_by_id: number;
+  logged_by_name?: string;
+  created_at: string;
+}
+
+export const getObstetricHypertensiveCrises = (params?: {
+  patientId?: number;
+  status?: string;
+}): Promise<{ crises: ObstetricHypertensiveCrisisRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.status) q.append('status', params.status);
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ crises: ObstetricHypertensiveCrisisRecord[] }>('GET', `/api/obstetric-hypertension/crises${queryStr}`);
+};
+
+export const getObstetricHypertensiveCrisis = (
+  id: number
+): Promise<{ crisis: ObstetricHypertensiveCrisisRecord; doseLogs: ObstetricHypertensiveDoseRecord[] }> =>
+  api('GET', `/api/obstetric-hypertension/crises/${id}`);
+
+export const createObstetricHypertensiveCrisis = (payload: any): Promise<{ crisis: ObstetricHypertensiveCrisisRecord }> =>
+  api('POST', '/api/obstetric-hypertension/crises', payload);
+
+export const updateObstetricHypertensiveCrisis = (
+  id: number,
+  payload: any
+): Promise<{ crisis: ObstetricHypertensiveCrisisRecord }> =>
+  api('PUT', `/api/obstetric-hypertension/crises/${id}`, payload);
+
+export const deleteObstetricHypertensiveCrisis = (id: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/obstetric-hypertension/crises/${id}`);
+
+export const logObstetricHypertensiveDose = (
+  crisisId: number,
+  payload: any
+): Promise<{ log: ObstetricHypertensiveDoseRecord; isControlled: boolean }> =>
+  api('POST', `/api/obstetric-hypertension/crises/${crisisId}/dose-logs`, payload);
+
+export const deleteObstetricHypertensiveDose = (logId: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/obstetric-hypertension/dose-logs/${logId}`);
+
+export const calculateObstetricHypertension = (payload: any): Promise<any> =>
+  api('POST', '/api/obstetric-hypertension/calculate', payload);
+
+export const auditObstetricHypertensionPrint = (id: number): Promise<{ success: boolean }> =>
+  api('POST', `/api/obstetric-hypertension/crises/${id}/audit-print`, {});
+
+// ==========================================
+// SERIES 16C: PEDIATRIC SEPTIC SHOCK & VIS
+// ==========================================
+export interface PediatricSepticShockRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  recognition_datetime: string;
+  age_months: number;
+  weight_kg: number;
+  shock_phenotype: 'cold_shock' | 'warm_shock' | 'unspecified' | 'indeterminate';
+  mental_status: 'alert' | 'voice' | 'pain' | 'unresponsive';
+  capillary_refill_seconds: number;
+  heart_rate_bpm: number;
+  sbp: number;
+  dbp: number;
+  map_mmhg: number;
+  pulse_quality: 'normal' | 'bounding' | 'weak_thready' | 'absent';
+  extremity_temperature: 'warm' | 'cool_mottled';
+  cumulative_fluid_ml: number;
+  cumulative_fluid_ml_kg: number;
+  hepatomegaly_present: number;
+  pulmonary_crackles_present: number;
+  fluid_overload_alert: number;
+  fluid_refractory: number;
+  first_line_vasoactive: 'epinephrine' | 'norepinephrine' | 'dobutamine' | 'none';
+  stress_hydrocortisone_administered: number;
+  current_vis_score: number;
+  organ_dysfunction_flags: string | null;
+  status: 'resuscitating' | 'stabilized' | 'fluid_refractory' | 'picu_transferred' | 'resolved';
+  consultant_id: number;
+  consultant_name?: string;
+  clinical_notes: string | null;
+  patient_name?: string;
+  patient_uhid?: string;
+  patient_dob?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PediatricSepticShockFlowsheetRecord {
+  id: number;
+  shock_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  minutes_from_recognition: number;
+  heart_rate_bpm: number | null;
+  sbp: number | null;
+  dbp: number | null;
+  map_mmhg: number | null;
+  capillary_refill_seconds: number | null;
+  mental_status: string | null;
+  bolus_fluid_type: string | null;
+  bolus_fluid_volume_ml: number;
+  total_fluid_ml_kg: number;
+  dopamine_mcg_kg_min: number;
+  dobutamine_mcg_kg_min: number;
+  epinephrine_mcg_kg_min: number;
+  norepinephrine_mcg_kg_min: number;
+  milrinone_mcg_kg_min: number;
+  vasopressin_units_kg_min: number;
+  vis_score: number;
+  hepatomegaly_checked: number;
+  pulmonary_crackles_checked: number;
+  notes: string | null;
+  logged_by_id: number;
+  logged_by_name?: string;
+  created_at: string;
+}
+
+export const getPediatricSepticShockEpisodes = (params?: {
+  patientId?: number;
+  status?: string;
+}): Promise<{ episodes: PediatricSepticShockRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.status) q.append('status', params.status);
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ episodes: PediatricSepticShockRecord[] }>('GET', `/api/pediatric-septic-shock/episodes${queryStr}`);
+};
+
+export const getPediatricSepticShockEpisode = (
+  id: number
+): Promise<{ episode: PediatricSepticShockRecord; flowsheetLogs: PediatricSepticShockFlowsheetRecord[] }> =>
+  api('GET', `/api/pediatric-septic-shock/episodes/${id}`);
+
+export const createPediatricSepticShockEpisode = (payload: any): Promise<{ episode: PediatricSepticShockRecord }> =>
+  api('POST', '/api/pediatric-septic-shock/episodes', payload);
+
+export const updatePediatricSepticShockEpisode = (
+  id: number,
+  payload: any
+): Promise<{ episode: PediatricSepticShockRecord }> =>
+  api('PUT', `/api/pediatric-septic-shock/episodes/${id}`, payload);
+
+export const deletePediatricSepticShockEpisode = (id: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/pediatric-septic-shock/episodes/${id}`);
+
+export const logPediatricSepticShockFlowsheet = (
+  episodeId: number,
+  payload: any
+): Promise<{ log: PediatricSepticShockFlowsheetRecord; visScore: number; newTotalFluidMlKg: number }> =>
+  api('POST', `/api/pediatric-septic-shock/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deletePediatricSepticShockFlowsheet = (logId: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/pediatric-septic-shock/flowsheet-logs/${logId}`);
+
+export const calculatePediatricSepticShock = (payload: any): Promise<any> =>
+  api('POST', '/api/pediatric-septic-shock/calculate', payload);
+
+export const auditPediatricSepticShockPrint = (id: number): Promise<{ success: boolean }> =>
+  api('POST', `/api/pediatric-septic-shock/episodes/${id}/audit-print`, {});
+
+
 
 
 
