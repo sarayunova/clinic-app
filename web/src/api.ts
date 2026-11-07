@@ -5539,6 +5539,316 @@ export const auditPediatricAllergyPrint = (
 ): Promise<{ success: boolean }> =>
   api('POST', `/api/pediatric-allergy/${type}/${id}/print`, {});
 
+// ==========================================
+// SERIES 14A: NEONATAL HIE & THERAPEUTIC HYPOTHERMIA (TTM)
+// ==========================================
+
+export interface NeonatalHieRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  assessment_code: string;
+  birth_datetime: string;
+  assessment_datetime: string;
+  gestational_age_weeks: number;
+  birth_weight_kg: number;
+  apgar_10m: number | null;
+  resuscitation_duration_minutes: number | null;
+  cord_or_arterial_ph: number | null;
+  base_deficit_mmol_l: number | null;
+  sarnat_stage: 'stage_I_mild' | 'stage_II_moderate' | 'stage_III_severe';
+  level_of_consciousness: 'hyperalert' | 'lethargic_obtunded' | 'stuporous_comatose';
+  muscle_tone: 'normal' | 'hypotonic' | 'flaccid';
+  primitive_reflexes_suck_moro: 'normal_exaggerated' | 'weak_incomplete' | 'absent';
+  autonomic_function: 'normal' | 'sympathetic_parasympathetic_skew' | 'depressed_bradycardia';
+  clinical_seizures_present: number;
+  cooling_criteria_met: number;
+  hours_from_birth_to_cooling: number | null;
+  cooling_device_type: 'servo_controlled_cooling_blanket' | 'selective_head_cooling_cap' | 'phase_change_material_mattress';
+  target_core_temp_celsius: number;
+  protocol_status: 'eligible_pending' | 'cooling_active' | 'rewarming_phase' | 'completed_normothermia' | 'discontinued';
+  cooling_started_at: string | null;
+  rewarming_started_at: string | null;
+  protocol_completed_at: string | null;
+  consultant_neonatologist_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  patient_name?: string;
+  patient_uhid?: string;
+  patient_dob?: string | null;
+  consultant_neonatologist_name?: string;
+}
+
+export interface TtmFlowsheetRecord {
+  id: number;
+  hie_assessment_id: number;
+  log_datetime: string;
+  hours_into_protocol: number;
+  phase: 'induction' | 'maintenance_cooling' | 'controlled_rewarming' | 'post_cooling_normothermia';
+  core_temperature_celsius: number;
+  skin_temperature_celsius: number | null;
+  heart_rate_bpm: number;
+  mean_arterial_pressure_mmhg: number | null;
+  blood_glucose_mg_dl: number | null;
+  serum_potassium_meq_l: number | null;
+  aeeg_background_pattern: 'continuous_normal_voltage_cnv' | 'discontinuous_normal_voltage_dnv' | 'continuous_low_voltage_clv' | 'burst_suppression_bs' | 'flat_trace_ft' | null;
+  aeeg_sleep_wake_cycling: number;
+  electrographic_seizures_detected: number;
+  anticonvulsant_administered: string | null;
+  inotropic_support: string | null;
+  logged_by_id: number;
+  logged_by_name?: string;
+  notes: string | null;
+  created_at: string;
+}
+
+export const getNeonatalHieAssessments = (params?: {
+  patientId?: number;
+  status?: string;
+}): Promise<{ assessments: NeonatalHieRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.status) q.append('status', params.status);
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ assessments: NeonatalHieRecord[] }>('GET', `/api/neonatal-hie/assessments${queryStr}`);
+};
+
+export const createNeonatalHieAssessment = (payload: any): Promise<{
+  assessment: NeonatalHieRecord;
+  calculation: any;
+}> => api('POST', '/api/neonatal-hie/assessments', payload);
+
+export const getNeonatalHieAssessment = (
+  id: number
+): Promise<{ assessment: NeonatalHieRecord; flowsheetLogs: TtmFlowsheetRecord[] }> =>
+  api('GET', `/api/neonatal-hie/assessments/${id}`);
+
+export const updateNeonatalHieStatus = (
+  id: number,
+  status: 'eligible_pending' | 'cooling_active' | 'rewarming_phase' | 'completed_normothermia' | 'discontinued'
+): Promise<{ assessment: NeonatalHieRecord }> =>
+  api('PUT', `/api/neonatal-hie/assessments/${id}/status`, { status });
+
+export const deleteNeonatalHieAssessment = (id: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/neonatal-hie/assessments/${id}`);
+
+export const logTtmFlowsheet = (
+  hieId: number,
+  payload: any
+): Promise<{ log: TtmFlowsheetRecord }> =>
+  api('POST', `/api/neonatal-hie/assessments/${hieId}/flowsheet`, payload);
+
+export const deleteTtmFlowsheet = (logId: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/neonatal-hie/flowsheet/${logId}`);
+
+export const auditNeonatalHiePrint = (id: number): Promise<{ success: boolean }> =>
+  api('POST', `/api/neonatal-hie/assessments/${id}/print`, {});
+
+// ==========================================
+// SERIES 14B: MATERNAL CRITICAL CARE SEPSIS & SHOCK INDEX
+// ==========================================
+
+export interface MaternalSepsisRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  assessment_code: string;
+  assessment_datetime: string;
+  gestational_age_weeks: number | null;
+  postpartum_days: number | null;
+  suspected_source: 'chorioamnionitis_intrauterine' | 'postpartum_endometritis' | 'urinary_tract_pyelonephritis' | 'respiratory_pneumonia' | 'septic_pelvic_thrombophlebitis' | 'surgical_site_cesarean_wound' | 'mastitis_breast_abscess' | 'other_unknown_source';
+  temperature_celsius: number;
+  systolic_bp_mmhg: number;
+  diastolic_bp_mmhg: number;
+  heart_rate_bpm: number;
+  respiratory_rate_bpm: number;
+  spo2_percent: number;
+  wbc_count_per_ul: number | null;
+  immature_bands_percent: number | null;
+  serum_lactate_mmol_l: number | null;
+  sos_score: number;
+  sos_risk_level: 'low_risk' | 'intermediate_risk' | 'severe_septic_shock';
+  obstetric_shock_index: number;
+  shock_index_tier: 'normal_lt_0_9' | 'elevated_warning_0_9_to_1_4' | 'critical_shock_gte_1_4';
+  mean_arterial_pressure_mmhg: number;
+  icu_transfer_recommended: number;
+  assessed_by_id: number;
+  clinical_impression: string | null;
+  created_at: string;
+  patient_name?: string;
+  patient_uhid?: string;
+  patient_dob?: string | null;
+  assessed_by_name?: string;
+}
+
+export interface MaternalBundleRecord {
+  id: number;
+  sepsis_assessment_id: number;
+  log_datetime: string;
+  blood_cultures_drawn: number;
+  blood_cultures_drawn_time: string | null;
+  iv_antibiotics_given: number;
+  antibiotic_name_regimen: string | null;
+  iv_antibiotics_time: string | null;
+  antibiotic_within_60m: number;
+  fluid_bolus_30ml_per_kg_given: number;
+  fluid_bolus_volume_ml: number | null;
+  norepinephrine_vasopressor_active: number;
+  vasopressor_dose_mcg_min: number | null;
+  repeat_lactate_mmol_l: number | null;
+  target_map_achieved_gte_65: number;
+  urine_output_ml_hr: number | null;
+  logged_by_id: number;
+  logged_by_name?: string;
+  interventions_summary: string | null;
+  created_at: string;
+}
+
+export const getMaternalSepsisAssessments = (params?: {
+  patientId?: number;
+}): Promise<{ assessments: MaternalSepsisRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ assessments: MaternalSepsisRecord[] }>('GET', `/api/maternal-sepsis/assessments${queryStr}`);
+};
+
+export const createMaternalSepsisAssessment = (payload: any): Promise<{
+  assessment: MaternalSepsisRecord;
+  calculation: any;
+}> => api('POST', '/api/maternal-sepsis/assessments', payload);
+
+export const getMaternalSepsisAssessment = (
+  id: number
+): Promise<{ assessment: MaternalSepsisRecord; bundleLogs: MaternalBundleRecord[] }> =>
+  api('GET', `/api/maternal-sepsis/assessments/${id}`);
+
+export const updateMaternalSepsisAssessment = (
+  id: number,
+  payload: any
+): Promise<{ assessment: MaternalSepsisRecord }> =>
+  api('PUT', `/api/maternal-sepsis/assessments/${id}`, payload);
+
+export const deleteMaternalSepsisAssessment = (id: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/maternal-sepsis/assessments/${id}`);
+
+export const logMaternalSepsisBundle = (
+  sepsisId: number,
+  payload: any
+): Promise<{ log: MaternalBundleRecord }> =>
+  api('POST', `/api/maternal-sepsis/assessments/${sepsisId}/bundle`, payload);
+
+export const deleteMaternalSepsisBundle = (logId: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/maternal-sepsis/bundle/${logId}`);
+
+export const auditMaternalSepsisPrint = (id: number): Promise<{ success: boolean }> =>
+  api('POST', `/api/maternal-sepsis/assessments/${id}/print`, {});
+
+// ==========================================
+// SERIES 14C: PEDIATRIC DKA RESUSCITATION & TWO-BAG PROTOCOL
+// ==========================================
+
+export interface PediatricDkaRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  diagnosis_datetime: string;
+  child_weight_kg: number;
+  child_height_cm: number | null;
+  initial_blood_glucose_mg_dl: number;
+  venous_ph: number;
+  serum_bicarbonate_mmol_l: number;
+  serum_beta_hydroxybutyrate_mmol_l: number | null;
+  ketones_urine_or_blood: 'moderate_2_plus' | 'large_3_plus' | 'beta_hydroxybutyrate_gte_3';
+  dka_severity: 'mild_ph_7_20_7_29' | 'moderate_ph_7_10_7_19' | 'severe_ph_lt_7_10';
+  estimated_dehydration_percent: number;
+  total_fluid_deficit_ml: number;
+  maintenance_fluid_ml_day: number;
+  initial_saline_bolus_ml: number;
+  rehydration_rate_ml_hr: number;
+  insulin_infusion_rate_u_kg_hr: number;
+  two_bag_system_active: number;
+  status: 'active_resuscitation' | 'ketoacidosis_resolved_subcutaneous_bridged' | 'completed' | 'discontinued';
+  attending_pediatrician_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  patient_name?: string;
+  patient_uhid?: string;
+  patient_dob?: string | null;
+  attending_pediatrician_name?: string;
+}
+
+export interface PediatricDkaFlowsheetRecord {
+  id: number;
+  dka_episode_id: number;
+  log_datetime: string;
+  hours_on_protocol: number;
+  blood_glucose_mg_dl: number;
+  venous_ph: number | null;
+  serum_bicarbonate_mmol_l: number | null;
+  serum_sodium_meq_l: number | null;
+  corrected_sodium_meq_l: number | null;
+  serum_potassium_meq_l: number | null;
+  effective_serum_osmolality_mosm_kg: number | null;
+  anion_gap_mmol_l: number | null;
+  bag_1_rate_ml_hr: number;
+  bag_2_rate_ml_hr: number;
+  insulin_infusion_units_hr: number;
+  glasgow_coma_scale_score: number;
+  neurological_headache_vomiting: number;
+  cushing_triad_warning: number;
+  emergency_hyperosmolar_saline_given: number;
+  urine_output_ml_kg_hr: number | null;
+  logged_by_id: number;
+  logged_by_name?: string;
+  notes: string | null;
+  created_at: string;
+}
+
+export const getPediatricDkaEpisodes = (params?: {
+  patientId?: number;
+  status?: string;
+}): Promise<{ episodes: PediatricDkaRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.status) q.append('status', params.status);
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ episodes: PediatricDkaRecord[] }>('GET', `/api/pediatric-dka/episodes${queryStr}`);
+};
+
+export const createPediatricDkaEpisode = (payload: any): Promise<{
+  episode: PediatricDkaRecord;
+  calculation: any;
+}> => api('POST', '/api/pediatric-dka/episodes', payload);
+
+export const getPediatricDkaEpisode = (
+  id: number
+): Promise<{ episode: PediatricDkaRecord; flowsheetLogs: PediatricDkaFlowsheetRecord[] }> =>
+  api('GET', `/api/pediatric-dka/episodes/${id}`);
+
+export const updatePediatricDkaStatus = (
+  id: number,
+  status: 'active_resuscitation' | 'ketoacidosis_resolved_subcutaneous_bridged' | 'completed' | 'discontinued'
+): Promise<{ episode: PediatricDkaRecord }> =>
+  api('PUT', `/api/pediatric-dka/episodes/${id}/status`, { status });
+
+export const deletePediatricDkaEpisode = (id: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/pediatric-dka/episodes/${id}`);
+
+export const logPediatricDkaFlowsheet = (
+  dkaId: number,
+  payload: any
+): Promise<{ log: PediatricDkaFlowsheetRecord }> =>
+  api('POST', `/api/pediatric-dka/episodes/${dkaId}/flowsheet`, payload);
+
+export const deletePediatricDkaFlowsheet = (logId: number): Promise<{ success: boolean; message: string }> =>
+  api('DELETE', `/api/pediatric-dka/flowsheet/${logId}`);
+
+export const auditPediatricDkaPrint = (id: number): Promise<{ success: boolean }> =>
+  api('POST', `/api/pediatric-dka/episodes/${id}/print`, {});
+
+
 
 
 

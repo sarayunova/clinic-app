@@ -71,6 +71,12 @@ import { MaternalComorbiditiesPage } from './pages/MaternalComorbiditiesPage';
 import { MaternalComorbiditiesPrint } from './pages/MaternalComorbiditiesPrint';
 import { PediatricAllergyPage } from './pages/PediatricAllergyPage';
 import { PediatricAllergyPrint } from './pages/PediatricAllergyPrint';
+import { NeonatalHiePage } from './pages/NeonatalHiePage';
+import { NeonatalHiePrint } from './pages/NeonatalHiePrint';
+import { MaternalSepsisPage } from './pages/MaternalSepsisPage';
+import { MaternalSepsisPrint } from './pages/MaternalSepsisPrint';
+import { PediatricDkaPage } from './pages/PediatricDkaPage';
+import { PediatricDkaPrint } from './pages/PediatricDkaPrint';
 import { DeliveryWardPage } from './pages/DeliveryWardPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditPage } from './pages/AuditPage';
@@ -151,6 +157,9 @@ function Shell() {
     ...(can('patient:read_clinical') ? [{ to: '/nicu-tpn', label: 'NICU TPN', icon: '🧪', end: false }] : []),
     ...(can('patient:read_clinical') ? [{ to: '/maternal-comorbidities', label: 'Maternal Comorbidities', icon: '🤰', end: false }] : []),
     ...(can('patient:read_clinical') ? [{ to: '/pediatric-allergy', label: 'Asthma & Allergy', icon: '🫁', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/neonatal-hie', label: 'Neonatal HIE', icon: '🧊', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/maternal-sepsis', label: 'Maternal Sepsis', icon: '🚨', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/pediatric-dka', label: 'Pediatric DKA', icon: '🍼', end: false }] : []),
     ...(can('ipd:read_basic') || can('station:read') ? [{ to: '/delivery-ward', label: 'Delivery ward', icon: '👶', end: false }] : []),
     ...(can('billing:read') ? [{ to: '/billing', label: 'Billing', icon: '💳', end: false }] : []),
     ...(can('settings:manage') ? [{ to: '/settings', label: 'Clinic', icon: '🏥', end: false }] : []),
@@ -244,6 +253,12 @@ function Shell() {
           <Route path="/maternal-comorbidities/:type/:id/print" element={can('patient:read_clinical') ? <MaternalComorbiditiesPrint /> : <Navigate to="/maternal-comorbidities" replace />} />
           <Route path="/pediatric-allergy" element={can('patient:read_clinical') ? <PediatricAllergyPage /> : <Navigate to="/" replace />} />
           <Route path="/pediatric-allergy/:type/:id/print" element={can('patient:read_clinical') ? <PediatricAllergyPrint /> : <Navigate to="/pediatric-allergy" replace />} />
+          <Route path="/neonatal-hie" element={can('patient:read_clinical') ? <NeonatalHiePage /> : <Navigate to="/" replace />} />
+          <Route path="/neonatal-hie/:id/print" element={can('patient:read_clinical') ? <NeonatalHiePrint /> : <Navigate to="/neonatal-hie" replace />} />
+          <Route path="/maternal-sepsis" element={can('patient:read_clinical') ? <MaternalSepsisPage /> : <Navigate to="/" replace />} />
+          <Route path="/maternal-sepsis/:id/print" element={can('patient:read_clinical') ? <MaternalSepsisPrint /> : <Navigate to="/maternal-sepsis" replace />} />
+          <Route path="/pediatric-dka" element={can('patient:read_clinical') ? <PediatricDkaPage /> : <Navigate to="/" replace />} />
+          <Route path="/pediatric-dka/:id/print" element={can('patient:read_clinical') ? <PediatricDkaPrint /> : <Navigate to="/pediatric-dka" replace />} />
           <Route path="/delivery-ward" element={can('ipd:read_basic') || can('station:read') ? <DeliveryWardPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id" element={can('visit:read') ? <VisitPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id/print" element={can('visit:read') ? <PrescriptionPrint /> : <Navigate to="/" replace />} />

@@ -1807,6 +1807,139 @@ async function seed() {
     )
   `).run(aaravId, docId, now);
 
+  // =========================================================================
+  // SERIES 14 DEMO DATA: NEONATAL HIE / TTM, MATERNAL SEPSIS & PEDIATRIC DKA
+  // =========================================================================
+
+  // 14A: Neonatal Hypoxic-Ischemic Encephalopathy (HIE) & Targeted Temperature Management (TTM)
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_hie_assessments (
+      patient_id, admission_id, assessment_code, birth_datetime, assessment_datetime,
+      gestational_age_weeks, birth_weight_kg, apgar_10m, resuscitation_duration_minutes,
+      cord_or_arterial_ph, base_deficit_mmol_l, sarnat_stage, level_of_consciousness,
+      muscle_tone, primitive_reflexes_suck_moro, autonomic_function, clinical_seizures_present,
+      cooling_criteria_met, hours_from_birth_to_cooling, cooling_device_type,
+      target_core_temp_celsius, protocol_status, cooling_started_at,
+      consultant_neonatologist_id, clinical_notes, created_at
+    ) VALUES (
+      ?, NULL, 'HIE-20261107-1001', '2026-11-07T03:30:00', '2026-11-07T05:30:00',
+      38.5, 3.10, 4, 12,
+      6.94, 18.0, 'stage_II_moderate', 'lethargic_obtunded',
+      'hypotonic', 'weak_incomplete', 'sympathetic_parasympathetic_skew', 1,
+      1, 2.5, 'servo_controlled_cooling_blanket',
+      33.5, 'cooling_active', '2026-11-07T06:00:00',
+      ?, 'Severe perinatal depression, cord pH 6.94, Sarnat II moderate encephalopathy with subtle seizures. TOBY criteria met; 72h servo-blanket cooling active.', ?
+    )
+  `).run(babyId, docId, now);
+
+  const existingHie = db.prepare('SELECT id FROM neonatal_hie_assessments WHERE assessment_code = ?').get('HIE-20261107-1001') as { id: number } | undefined;
+  if (existingHie) {
+    const hieLogs = [
+      { hr: 1, temp: 33.6, skin: 33.1, hrBpm: 112, map: 44, bg: 82, k: 4.3, aeeg: 'discontinuous_normal_voltage_dnv', notes: 'Core temp reached 33.6°C. Shivering suppressed.' },
+      { hr: 2, temp: 33.5, skin: 33.0, hrBpm: 108, map: 46, bg: 88, k: 4.1, aeeg: 'discontinuous_normal_voltage_dnv', notes: 'Target 33.5°C steady. Dopamine 5 mcg/kg/min running.' },
+      { hr: 3, temp: 33.4, skin: 32.9, hrBpm: 105, map: 45, bg: 85, k: 4.2, aeeg: 'discontinuous_normal_voltage_dnv', notes: 'Stable hemodynamics. Skin sites repositioned.' },
+    ];
+    for (const l of hieLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_ttm_flowsheet_logs (
+          hie_assessment_id, log_datetime, hours_into_protocol, phase, core_temperature_celsius,
+          skin_temperature_celsius, heart_rate_bpm, mean_arterial_pressure_mmhg,
+          blood_glucose_mg_dl, serum_potassium_meq_l, aeeg_background_pattern,
+          aeeg_sleep_wake_cycling, electrographic_seizures_detected,
+          anticonvulsant_administered, inotropic_support, logged_by_id, notes, created_at
+        ) VALUES (
+          ?, '2026-11-07T08:00:00', ?, 'maintenance_cooling', ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          0, 0,
+          'Phenobarbital 20 mg/kg load', 'Dopamine 5 mcg/kg/min', ?, ?, ?
+        )
+      `).run(existingHie.id, l.hr, l.temp, l.skin, l.hrBpm, l.map, l.bg, l.k, l.aeeg, docId, l.notes, now);
+    }
+  }
+
+  // 14B: Maternal Critical Care Sepsis & Shock Index
+  db.prepare(`
+    INSERT OR IGNORE INTO maternal_sepsis_assessments (
+      patient_id, admission_id, assessment_code, assessment_datetime, gestational_age_weeks,
+      postpartum_days, suspected_source, temperature_celsius, systolic_bp_mmhg, diastolic_bp_mmhg,
+      heart_rate_bpm, respiratory_rate_bpm, spo2_percent, wbc_count_per_ul, immature_bands_percent,
+      serum_lactate_mmol_l, sos_score, sos_risk_level, obstetric_shock_index, shock_index_tier,
+      mean_arterial_pressure_mmhg, icu_transfer_recommended, assessed_by_id, clinical_impression, created_at
+    ) VALUES (
+      ?, NULL, 'SOS-20261107-2001', '2026-11-07T07:15:00', 36.4,
+      NULL, 'chorioamnionitis_intrauterine', 39.0, 86, 50,
+      126, 26, 92.0, 19500, 12,
+      3.2, 12, 'severe_septic_shock', 1.47, 'critical_shock_gte_1_4',
+      62.0, 1, ?, 'Severe maternal sepsis secondary to acute chorioamnionitis. SOS 12, Shock Index 1.47, MAP 62. Emergency Hour-1 Bundle activated.', ?
+    )
+  `).run(anitaId, docId, now);
+
+  const existingSepsis = db.prepare('SELECT id FROM maternal_sepsis_assessments WHERE assessment_code = ?').get('SOS-20261107-2001') as { id: number } | undefined;
+  if (existingSepsis) {
+    db.prepare(`
+      INSERT OR IGNORE INTO maternal_sepsis_bundle_logs (
+        sepsis_assessment_id, log_datetime, blood_cultures_drawn, blood_cultures_drawn_time,
+        iv_antibiotics_given, antibiotic_name_regimen, iv_antibiotics_time, antibiotic_within_60m,
+        fluid_bolus_30ml_per_kg_given, fluid_bolus_volume_ml, norepinephrine_vasopressor_active,
+        vasopressor_dose_mcg_min, repeat_lactate_mmol_l, target_map_achieved_gte_65,
+        urine_output_ml_hr, logged_by_id, interventions_summary, created_at
+      ) VALUES (
+        ?, '2026-11-07T08:00:00', 1, '2026-11-07T07:25:00',
+        1, 'Piperacillin-Tazobactam 4.5g IV + Clindamycin 900mg IV', '2026-11-07T07:45:00', 1,
+        1, 2000.0, 0,
+        NULL, 1.9, 1,
+        48.0, ?, 'Blood cultures taken at 10m. Antibiotics infused at 30m (<60m goal). 2L crystalloid bolus completed; MAP normalized to 68 mmHg.', ?
+      )
+    `).run(existingSepsis.id, docId, now);
+  }
+
+  // 14C: Pediatric Diabetic Ketoacidosis (DKA) Resuscitation & Two-Bag Protocol
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_dka_episodes (
+      patient_id, admission_id, episode_code, diagnosis_datetime, child_weight_kg,
+      child_height_cm, initial_blood_glucose_mg_dl, venous_ph, serum_bicarbonate_mmol_l,
+      serum_beta_hydroxybutyrate_mmol_l, ketones_urine_or_blood, dka_severity,
+      estimated_dehydration_percent, total_fluid_deficit_ml, maintenance_fluid_ml_day,
+      initial_saline_bolus_ml, rehydration_rate_ml_hr, insulin_infusion_rate_u_kg_hr,
+      two_bag_system_active, status, attending_pediatrician_id, clinical_notes, created_at
+    ) VALUES (
+      ?, NULL, 'DKA-20261107-3001', '2026-11-07T06:00:00', 18.0,
+      112.0, 520.0, 7.06, 5.0,
+      5.8, 'beta_hydroxybutyrate_gte_3', 'severe_ph_lt_7_10',
+      7.0, 1260.0, 1400.0,
+      180.0, 80.8, 0.08,
+      1, 'active_resuscitation', ?, 'New onset T1D presenting with severe DKA and 7% dehydration. PICU Two-Bag IV titration active. Standby 3% NaCl bedside.', ?
+    )
+  `).run(aaravId, docId, now);
+
+  const existingDka = db.prepare('SELECT id FROM pediatric_dka_episodes WHERE episode_code = ?').get('DKA-20261107-3001') as { id: number } | undefined;
+  if (existingDka) {
+    const dkaLogs = [
+      { hr: 1, bg: 450, ph: 7.12, hco3: 7.5, na: 133, k: 4.6, b1: 65, b2: 15, gcs: 15, notes: 'BG decreased by 70 mg/dL. Bag 1 running primary.' },
+      { hr: 2, bg: 380, ph: 7.18, hco3: 10.0, na: 135, k: 4.4, b1: 50, b2: 30, gcs: 15, notes: 'Bag 2 (D10) titrated up to maintain smooth glucose curve.' },
+    ];
+    for (const dl of dkaLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_dka_flowsheet_logs (
+          dka_episode_id, log_datetime, hours_on_protocol, blood_glucose_mg_dl,
+          venous_ph, serum_bicarbonate_mmol_l, serum_sodium_meq_l, corrected_sodium_meq_l,
+          serum_potassium_meq_l, effective_serum_osmolality_mosm_kg, anion_gap_mmol_l,
+          bag_1_rate_ml_hr, bag_2_rate_ml_hr, insulin_infusion_units_hr,
+          glasgow_coma_scale_score, neurological_headache_vomiting, cushing_triad_warning,
+          emergency_hyperosmolar_saline_given, urine_output_ml_kg_hr, logged_by_id, notes, created_at
+        ) VALUES (
+          ?, '2026-11-07T08:00:00', ?, ?,
+          ?, ?, ?, 139.0,
+          ?, 295.0, 16.0,
+          ?, ?, 1.44,
+          ?, 0, 0,
+          0, 1.4, ?, ?, ?
+        )
+      `).run(existingDka.id, dl.hr, dl.bg, dl.ph, dl.hco3, dl.na, dl.k, dl.b1, dl.b2, dl.gcs, docId, dl.notes, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },
