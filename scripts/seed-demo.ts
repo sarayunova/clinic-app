@@ -972,6 +972,102 @@ async function seed() {
     docId, docId, docId, now, now
   );
 
+  // ============================================================================
+  // Series 7 Seeds: Labor Induction, Perinatal Loss & ART Cycles
+  // ============================================================================
+
+  console.log('Seeding Series 7: Labor Induction, Perinatal Loss Registry & ART Cycles...');
+
+  // 7A: Labor Induction Episode (Anita Sharma - Post-dates labor induction)
+  db.prepare(`
+    INSERT INTO labor_induction_episodes (
+      patient_id, initiation_date, initiation_time, gestational_age_weeks, gestational_age_days,
+      indication, indication_details, parity, previous_cesarean, previous_cesarean_count,
+      dilation_cm, effacement_percent, fetal_station, consistency, position,
+      bishop_score_total, cervical_favorability, ripening_method, ripening_dose_details,
+      contraindications_checked, oxytocin_used, oxytocin_start_time, oxytocin_start_rate_m_u_min,
+      oxytocin_max_rate_m_u_min, arm_performed, arm_time, liquor_status,
+      tachysystole_detected, induction_outcome, induction_to_delivery_hours, clinical_notes,
+      performed_by, reviewed_by, created_by, updated_by, created_at, updated_at
+    ) VALUES (
+      ?, '2026-02-12', '07:30', 41, 1,
+      'post_dates', '41+1 weeks prolonged pregnancy, AFI 6.2 cm, reassuring CTG Category 1', 'nulliparous', 0, 0,
+      1.5, 30, -2, 'firm', 'posterior',
+      2, 'unfavorable_le_5', 'dinoprostone_pge2_tape', 'Dinoprostone 10 mg controlled release tape (Propess) in posterior fornix for 24h',
+      1, 1, '18:00', 2.0,
+      12.0, 1, '19:30', 'clear',
+      0, 'vaginal_delivery', 14.5, 'Spontaneous vaginal delivery of healthy male infant, APGAR 8/9, birth weight 3380g. Minimal blood loss.',
+      'Dr. Demo Sharma', ?, ?, ?, ?, ?
+    )
+  `).run(anitaId, docId, docId, docId, now, now);
+
+  // 7B: Perinatal Loss Audit Episode (Meera - Previous Stillbirth Demise Audit)
+  db.prepare(`
+    INSERT INTO perinatal_loss_episodes (
+      patient_id, loss_type, diagnosis_date, delivery_date, delivery_time,
+      gestational_age_weeks, gestational_age_days, parity_prior,
+      mode_of_delivery, fetal_presentation, fetal_birth_weight_g, fetal_weight_centile,
+      fetal_appearance, apparent_dysmorphic_features, primary_cause_category,
+      primary_cause_details, contributing_factors, diagnostic_workup_json,
+      maternal_blood_group, anti_d_administered, anti_d_dose_mcg,
+      lactation_suppression_given, lactation_suppression_details,
+      memory_box_offered, memory_box_accepted, bereavement_counselor_contacted,
+      recurrence_risk_category, future_pregnancy_plan, counseling_notes,
+      consultant_name, reviewed_by, created_by, updated_by, created_at, updated_at
+    ) VALUES (
+      ?, 'stillbirth_antepartum', '2025-11-10', '2025-11-11', '02:40',
+      31, 4, 'G2P0A1',
+      'induced_vaginal', 'cephalic', 1420, 12.5,
+      'fresh_stillbirth', 'No gross congenital anomalies or facial dysmorphisms noted',
+      'placental_abruption', 'Acute placental abruption with 30% parenchymal infarction and 220 mL retroplacental clot',
+      'Maternal chronic hypertension with superimposed preeclampsia',
+      '{"hba1c": 5.4, "tsh": 1.9, "torch": "Negative IgM", "thrombophilia": "Negative", "cma": "Normal euploid female 46,XX"}',
+      'O_negative', 1, 300,
+      1, 'Cabergoline 1 mg PO stat single dose within 24 hours of delivery',
+      1, 1, 1,
+      'moderate_2_to_5_pct',
+      'Pre-conceptional joint MFM review. Low-dose Aspirin 150 mg nightly from 11w to 36w. Calcium 2 g/day. Serial growth scans and uterine artery Doppler from 24w fortnightly.',
+      'Conducted formal 6-week postnatal bereavement debrief with parents. Memory box provided.',
+      'Dr. Demo Sharma', ?, ?, ?, ?, ?
+    )
+  `).run(meeraId, docId, docId, docId, now, now);
+
+  // 7C: ART / IVF-ICSI Cycle (Pooja Sharma - ICSI Fresh Cycle with SET)
+  db.prepare(`
+    INSERT INTO art_cycles (
+      patient_id, cycle_number, start_date, cycle_type, protocol_type,
+      indication, indication_notes, gonadotropin_type, total_gonadotropin_dose_iu,
+      stimulation_days, peak_estradiol_pg_ml, trigger_progesterone_ng_ml,
+      trigger_type, trigger_datetime, opu_datetime, total_oocytes_retrieved,
+      mature_mii_oocytes, insemination_method, fertilized_2pn_count,
+      fertilization_rate_percent, day3_embryos_count, day5_blastocysts_count,
+      embryos_transferred_count, transfer_stage, transfer_datetime,
+      transferred_embryos_details, endometrial_thickness_at_transfer_mm,
+      transfer_difficulty, embryos_frozen_count, frozen_storage_straws,
+      luteal_support_regimen, beta_hcg_day14_miu_ml, beta_hcg_day16_miu_ml,
+      hcg_doubling_time_hours, clinical_pregnancy_status, gestational_sacs_count,
+      fetal_heart_present, cycle_notes, lead_embryologist,
+      reviewed_by, created_by, updated_by, created_at, updated_at
+    ) VALUES (
+      ?, 1, '2026-01-10', 'icsi_fresh', 'gnrh_antagonist',
+      'tubal_factor', 'Bilateral tubal block, partner semen analysis within normal WHO parameters',
+      'Recombinant FSH 225 IU + HMG 75 IU', 2250,
+      10, 2750.0, 0.85,
+      'rhcg_250mcg', '2026-01-20T22:00:00', '2026-01-22T10:00:00', 13,
+      11, 'icsi', 9,
+      81.8, 8, 4,
+      1, 'day_5_blastocyst', '2026-01-27T11:30:00',
+      '4AA', 10.1,
+      'easy', 3, 'Tank 1, Canister B, Straw #881 (4BA), Straw #882 (4BB, 3BB)',
+      'Micronized progesterone 400 mg BD vaginally + Estradiol valerate 2 mg BD',
+      440.0, 960.0,
+      42.7, 'clinical_intrauterine_sac', 1,
+      1, 'TVS at 6w3d demonstrates single live intrauterine gestational sac with yolk sac and fetal pole, CRL 6.8 mm, FH 138 bpm (+).',
+      'Senior Clinical Embryologist',
+      ?, ?, ?, ?, ?
+    )
+  `).run(poojaId, docId, docId, docId, now, now);
+
   // Book today's outpatient appointments for the active queue
   const todayStr = new Date().toISOString().slice(0, 10);
   const appts = [

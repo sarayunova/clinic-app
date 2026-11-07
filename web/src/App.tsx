@@ -41,6 +41,9 @@ import { GeneticScreeningPrint } from './pages/GeneticScreeningPrint';
 import { FetalDopplerPrint } from './pages/FetalDopplerPrint';
 import { PreeclampsiaScreeningPrint } from './pages/PreeclampsiaScreeningPrint';
 import { MultipleGestationPrint } from './pages/MultipleGestationPrint';
+import { InductionPrint } from './pages/InductionPrint';
+import { PerinatalLossPrint } from './pages/PerinatalLossPrint';
+import { ArtCyclePrint } from './pages/ArtCyclePrint';
 import { DeliveryWardPage } from './pages/DeliveryWardPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditPage } from './pages/AuditPage';
@@ -173,6 +176,9 @@ function Shell() {
           <Route path="/patients/:patientId/doppler/:id/print" element={can('patient:read_clinical') ? <FetalDopplerPrint /> : <Navigate to="/patients" replace />} />
           <Route path="/patients/:patientId/preeclampsia/:id/print" element={can('patient:read_clinical') ? <PreeclampsiaScreeningPrint /> : <Navigate to="/patients" replace />} />
           <Route path="/patients/:patientId/multiple-gestation/:id/print" element={can('patient:read_clinical') ? <MultipleGestationPrint /> : <Navigate to="/patients" replace />} />
+          <Route path="/patients/:patientId/induction/:id/print" element={can('patient:read_clinical') ? <InductionPrint /> : <Navigate to="/patients" replace />} />
+          <Route path="/patients/:patientId/perinatal-loss/:id/print" element={can('patient:read_clinical') ? <PerinatalLossPrint /> : <Navigate to="/patients" replace />} />
+          <Route path="/patients/:patientId/art-cycles/:id/print" element={can('patient:read_clinical') ? <ArtCyclePrint /> : <Navigate to="/patients" replace />} />
           <Route path="/delivery-ward" element={can('ipd:read_basic') || can('station:read') ? <DeliveryWardPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id" element={can('visit:read') ? <VisitPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id/print" element={can('visit:read') ? <PrescriptionPrint /> : <Navigate to="/" replace />} />

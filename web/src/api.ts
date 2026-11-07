@@ -2896,3 +2896,316 @@ export interface MultipleGestationAssessment {
   createdAt: string;
   updatedAt: string;
 }
+
+
+// ============================================================================
+// Series 7: Labor Induction, Perinatal Loss & ART Cycles
+// ============================================================================
+
+export interface LaborInductionEpisode {
+  id: number;
+  patientId: number;
+  admissionId?: number | null;
+  initiationDate: string;
+  initiationTime?: string | null;
+  gestationalAgeWeeks: number;
+  gestationalAgeDays: number;
+  indication:
+    | 'post_dates'
+    | 'preeclampsia_gest_htn'
+    | 'prom_rom'
+    | 'oligohydramnios'
+    | 'fgr_placental'
+    | 'gdm_diabetes'
+    | 'maternal_medical'
+    | 'elective_39w'
+    | 'other';
+  indicationDetails?: string | null;
+  previousCesareanCount: number;
+
+  dilationCm: number;
+  effacementPercent: number;
+  fetalStation: number;
+  consistency: 'firm' | 'medium' | 'soft';
+  position: 'posterior' | 'mid' | 'anterior';
+  calculatedBishopScore: number;
+  cervixFavorability: 'unfavorable_le_5' | 'intermediate_6_7' | 'favorable_ge_8';
+
+  ripeningMethod:
+    | 'foley_bulb_mechanical'
+    | 'cook_double_balloon'
+    | 'dinoprostone_pge2_tape'
+    | 'dinoprostone_pge2_gel'
+    | 'misoprostol_pge1_oral'
+    | 'misoprostol_pge1_vaginal'
+    | 'direct_arm_oxytocin'
+    | 'none';
+  ripeningDoseDetails?: string | null;
+  contraindicationsChecked: boolean;
+
+  oxytocinUsed: boolean;
+  oxytocinStartTime?: string | null;
+  oxytocinStartRateMUPerMin?: number | null;
+  oxytocinMaxRateMUPerMin?: number | null;
+  armPerformed: boolean;
+  armTime?: string | null;
+  liquorStatus?: 'clear' | 'meconium_grade_1' | 'meconium_grade_2' | 'meconium_grade_3' | 'blood_stained' | null;
+
+  serialBishopJson?: string | null;
+
+  tachysystoleDetected: boolean;
+  uterineHyperstimulationManagement?: string | null;
+
+  inductionOutcome:
+    | 'in_progress'
+    | 'vaginal_delivery_spontaneous'
+    | 'vaginal_delivery_vacuum_forceps'
+    | 'emergency_cesarean_failed_induction'
+    | 'emergency_cesarean_fetal_distress'
+    | 'emergency_cesarean_arrest_of_dilation'
+    | 'cancelled_patient_request';
+  cesareanReason?: string | null;
+  deliveryDatetime?: string | null;
+  birthWeightGrams?: number | null;
+  apgar1Min?: number | null;
+  apgar5Min?: number | null;
+  postpartumComplications?: string | null;
+  inductionSummaryNotes?: string | null;
+
+  attendingObstetrician?: string | null;
+  reviewedBy: number;
+  reviewedByName?: string | null;
+  createdBy: number;
+  createdByName?: string | null;
+  updatedBy: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PerinatalLossEpisode {
+  id: number;
+  patientId: number;
+  admissionId?: number | null;
+  lossType:
+    | 'early_miscarriage_lt_12w'
+    | 'late_miscarriage_12_20w'
+    | 'stillbirth_antepartum'
+    | 'stillbirth_intrapartum'
+    | 'neonatal_death_early'
+    | 'medical_termination_anomaly';
+  diagnosisDate: string;
+  deliveryDate?: string | null;
+  deliveryTime?: string | null;
+  gestationalAgeWeeks: number;
+  gestationalAgeDays: number;
+  parityPrior?: string | null;
+
+  modeOfDelivery:
+    | 'spontaneous_vaginal'
+    | 'induced_vaginal'
+    | 'emergency_cesarean'
+    | 'elective_cesarean'
+    | 'surgical_evacuation_d_and_e';
+  fetalPresentation?: 'cephalic' | 'breech' | 'transverse' | 'other' | null;
+  fetalBirthWeightG?: number | null;
+  fetalWeightCentile?: number | null;
+  fetalAppearance:
+    | 'fresh_stillbirth'
+    | 'macerated_slight_peeling'
+    | 'macerated_moderate'
+    | 'macerated_severe'
+    | 'gross_anomalies_present';
+  apparentDysmorphicFeatures?: string | null;
+
+  primaryCauseCategory:
+    | 'fetal_anomaly_genetic'
+    | 'umbilical_cord_accident'
+    | 'placental_insufficiency_infarction'
+    | 'placental_abruption'
+    | 'chorioamnionitis_infection'
+    | 'maternal_medical_preeclampsia'
+    | 'maternal_medical_diabetes'
+    | 'maternal_cholestasis_icp'
+    | 'intrapartum_asphyxia'
+    | 'unexplained_idiopathic';
+  primaryCauseDetails: string;
+  contributingFactors?: string | null;
+  diagnosticWorkupJson?: string | null;
+
+  maternalBloodGroup?: string | null;
+  fetomaternalHemorrhageMl?: number | null;
+  antiDAdministered: boolean;
+  antiDDoseMcg?: number | null;
+  lactationSuppressionGiven: boolean;
+  lactationSuppressionDetails?: string | null;
+  memoryBoxOffered: boolean;
+  memoryBoxAccepted: boolean;
+  bereavementCounselorContacted: boolean;
+
+  recurrenceRiskCategory:
+    | 'low_less_than_1_pct'
+    | 'moderate_2_to_5_pct'
+    | 'high_gt_5_pct'
+    | 'dependent_on_genetics';
+  futurePregnancyPlan: string;
+  counselingNotes?: string | null;
+
+  consultantName?: string | null;
+  reviewedBy?: number;
+  reviewedByName?: string | null;
+  createdBy: number;
+  createdByName?: string | null;
+  updatedBy: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ArtCycleRecord {
+  id: number;
+  patientId: number;
+  cycleNumber: number;
+  startDate: string;
+  cycleType:
+    | 'ivf_fresh'
+    | 'icsi_fresh'
+    | 'fet_frozen_transfer'
+    | 'iui_husband'
+    | 'iui_donor'
+    | 'oocyte_vitrification'
+    | 'surrogacy';
+  protocolType:
+    | 'gnrh_antagonist'
+    | 'gnrh_agonist_long'
+    | 'gnrh_agonist_short'
+    | 'minimal_stimulation'
+    | 'natural_modified'
+    | 'hrt_programmed';
+  indication:
+    | 'tubal_factor'
+    | 'male_factor'
+    | 'pcos_ovulatory'
+    | 'diminished_ovarian_reserve'
+    | 'endometriosis'
+    | 'unexplained'
+    | 'genetic_pgt'
+    | 'secondary_infertility';
+  indicationNotes?: string | null;
+
+  gonadotropinType?: string | null;
+  totalGonadotropinDoseIu?: number | null;
+  stimulationDays?: number | null;
+  peakEstradiolPgMl?: number | null;
+  triggerProgesteroneNgMl?: number | null;
+  triggerType?: 'rhcg_250mcg' | 'urinary_hcg_10000iu' | 'gnrh_agonist_dual' | 'gnrh_agonist_solo_ohss_prevention' | null;
+  triggerDatetime?: string | null;
+
+  opuDatetime?: string | null;
+  totalOocytesRetrieved: number;
+  matureMiiOocytes: number;
+  inseminationMethod?: 'standard_ivf' | 'icsi' | 'half_ivf_half_icsi' | 'frozen_thawed' | null;
+  fertilized2pnCount: number;
+  fertilizationRatePercent?: number | null;
+
+  day3EmbryosCount: number;
+  day5BlastocystsCount: number;
+  embryosTransferredCount: number;
+  transferStage?: 'day_3_cleavage' | 'day_5_blastocyst' | 'day_6_blastocyst' | 'freeze_all_no_transfer' | null;
+  transferDatetime?: string | null;
+  transferredEmbryosDetails?: string | null;
+  endometrialThicknessAtTransferMm?: number | null;
+  transferDifficulty: 'easy' | 'moderate_tenaculum' | 'difficult_stylet';
+  embryosFrozenCount: number;
+  frozenStorageStraws?: string | null;
+
+  lutealSupportRegimen?: string | null;
+  betaHcgDay14MiuMl?: number | null;
+  betaHcgDay16MiuMl?: number | null;
+  hcgDoublingTimeHours?: number | null;
+  clinicalPregnancyStatus:
+    | 'cycle_in_progress'
+    | 'biochemical_pregnancy'
+    | 'clinical_intrauterine_sac'
+    | 'ectopic_pregnancy'
+    | 'negative_not_pregnant'
+    | 'cancelled_ohss_risk'
+    | 'freeze_all';
+  gestationalSacsCount: number;
+  fetalHeartPresent: boolean;
+  cycleNotes?: string | null;
+
+  leadEmbryologist?: string | null;
+  reviewedBy: number;
+  reviewedByName?: string | null;
+  createdBy: number;
+  createdByName?: string | null;
+  updatedBy: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Series 7 API caller methods:
+export const getInductionEpisodes = (patientId: number): Promise<LaborInductionEpisode[]> =>
+  api<LaborInductionEpisode[]>('GET', `/api/patients/${patientId}/induction`);
+
+export const getInductionEpisode = (id: number): Promise<LaborInductionEpisode> =>
+  api<LaborInductionEpisode>('GET', `/api/induction/${id}`);
+
+export const createInductionEpisode = (payload: Partial<LaborInductionEpisode>): Promise<LaborInductionEpisode> =>
+  api<LaborInductionEpisode>('POST', '/api/induction', payload);
+
+export const updateInductionEpisode = (id: number, payload: Partial<LaborInductionEpisode>): Promise<LaborInductionEpisode> =>
+  api<LaborInductionEpisode>('PUT', `/api/induction/${id}`, payload);
+
+export const deleteInductionEpisode = (id: number): Promise<{ ok: boolean; deletedId: number }> =>
+  api<{ ok: boolean; deletedId: number }>('DELETE', `/api/induction/${id}`);
+
+export const auditPrintInduction = (id: number): Promise<{ ok: boolean }> =>
+  api<{ ok: boolean }>('POST', `/api/induction/${id}/audit-print`);
+
+export const calculateInduction = (input: any): Promise<any> =>
+  api<any>('POST', '/api/induction/calculate', input);
+
+export const getPerinatalLossEpisodes = (patientId: number): Promise<PerinatalLossEpisode[]> =>
+  api<PerinatalLossEpisode[]>('GET', `/api/patients/${patientId}/perinatal-loss`);
+
+export const getPerinatalLossEpisode = (id: number): Promise<PerinatalLossEpisode> =>
+  api<PerinatalLossEpisode>('GET', `/api/perinatal-loss/${id}`);
+
+export const createPerinatalLossEpisode = (payload: Partial<PerinatalLossEpisode>): Promise<PerinatalLossEpisode> =>
+  api<PerinatalLossEpisode>('POST', '/api/perinatal-loss', payload);
+
+export const updatePerinatalLossEpisode = (id: number, payload: Partial<PerinatalLossEpisode>): Promise<PerinatalLossEpisode> =>
+  api<PerinatalLossEpisode>('PUT', `/api/perinatal-loss/${id}`, payload);
+
+export const deletePerinatalLossEpisode = (id: number): Promise<{ ok: boolean; deletedId: number }> =>
+  api<{ ok: boolean; deletedId: number }>('DELETE', `/api/perinatal-loss/${id}`);
+
+export const auditPrintPerinatalLoss = (id: number): Promise<{ ok: boolean }> =>
+  api<{ ok: boolean }>('POST', `/api/perinatal-loss/${id}/audit-print`);
+
+export const calculatePerinatalLoss = (input: any): Promise<any> =>
+  api<any>('POST', '/api/perinatal-loss/calculate', input);
+
+export const getArtCycles = (patientId: number): Promise<ArtCycleRecord[]> =>
+  api<ArtCycleRecord[]>('GET', `/api/patients/${patientId}/art-cycles`);
+
+export const getArtCycle = (id: number): Promise<ArtCycleRecord> =>
+  api<ArtCycleRecord>('GET', `/api/art-cycles/${id}`);
+
+export const createArtCycle = (payload: Partial<ArtCycleRecord>): Promise<ArtCycleRecord> =>
+  api<ArtCycleRecord>('POST', '/api/art-cycles', payload);
+
+export const updateArtCycle = (id: number, payload: Partial<ArtCycleRecord>): Promise<ArtCycleRecord> =>
+  api<ArtCycleRecord>('PUT', `/api/art-cycles/${id}`, payload);
+
+export const deleteArtCycle = (id: number): Promise<{ ok: boolean; deletedId: number }> =>
+  api<{ ok: boolean; deletedId: number }>('DELETE', `/api/art-cycles/${id}`);
+
+export const auditPrintArtCycle = (id: number): Promise<{ ok: boolean }> =>
+  api<{ ok: boolean }>('POST', `/api/art-cycles/${id}/audit-print`);
+
+export const calculateArtKinetics = (input: any): Promise<any> =>
+  api<any>('POST', '/api/art/calculate-kinetics', input);
+
+export const parseGardnerBlastocystGrade = (gradeCode: string): Promise<any> =>
+  api<any>('POST', '/api/art/parse-gardner-grade', { gradeCode });
