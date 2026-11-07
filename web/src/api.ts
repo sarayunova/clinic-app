@@ -3617,3 +3617,259 @@ export const auditEmergencyQrCardPrint = (patientId: number): Promise<{ ok: bool
   api<{ ok: boolean }>('POST', '/api/communication/audit-qr-card', { patientId });
 
 
+// ==========================================
+// SERIES 10: WARD BOARD, TELECONSULTATION & ABDM
+// ==========================================
+
+export interface WardBedInfo {
+  bedId: number;
+  bedNumber: string;
+  ward: string;
+  bedActive: number;
+  admissionId?: number | null;
+  patientId?: number | null;
+  admittedAt?: string | null;
+  primaryDiagnosis?: string | null;
+  attendingDoctorId?: number | null;
+  attendingDoctorName?: string | null;
+  uhid?: string | null;
+  patientName?: string | null;
+  ageYears?: number | null;
+  patientPhone?: string | null;
+  gravida?: number | null;
+  para?: number | null;
+  lastMenstrualPeriod?: string | null;
+}
+
+export interface OccupiedWardAdmission extends WardBedInfo {
+  latestMeows?: any | null;
+  sncuRecord?: any | null;
+  latestHandover?: WardHandoverNote | null;
+  activeAlerts?: any[];
+  deteriorationStatus: 'NORMAL_GREEN' | 'WARNING_YELLOW' | 'CRITICAL_RED';
+  triggerReasons: string[];
+}
+
+export interface LiveWardBoardResponse {
+  stats: {
+    totalBeds: number;
+    occupiedCount: number;
+    vacantCount: number;
+    criticalRedCount: number;
+    warningYellowCount: number;
+  };
+  allBeds: WardBedInfo[];
+  occupiedAdmissions: OccupiedWardAdmission[];
+}
+
+export interface WardHandoverNote {
+  id: number;
+  admission_id: number;
+  shift_type: 'morning' | 'evening' | 'night';
+  shift_date: string;
+  nurse_id: number;
+  nurse_name: string;
+  situation: string;
+  background: string;
+  assessment: string;
+  recommendation: string;
+  pending_tasks?: string | string[] | null;
+  iv_fluids_status?: string | null;
+  dietary_order?: string | null;
+  created_at: string;
+}
+
+export const getLiveWardBoard = (): Promise<LiveWardBoardResponse> =>
+  api<LiveWardBoardResponse>('GET', '/api/ipd/ward-board/live');
+
+export const createWardHandover = (payload: {
+  admissionId: number;
+  shiftType: 'morning' | 'evening' | 'night';
+  shiftDate: string;
+  situation: string;
+  background: string;
+  assessment: string;
+  recommendation: string;
+  pendingTasks?: string | string[];
+  ivFluidsStatus?: string | null;
+  dietaryOrder?: string | null;
+}): Promise<WardHandoverNote> =>
+  api<WardHandoverNote>('POST', '/api/ipd/ward-board/handover', payload);
+
+export const getWardHandovers = (admissionId: number): Promise<{ handovers: WardHandoverNote[] }> =>
+  api<{ handovers: WardHandoverNote[] }>('GET', `/api/ipd/ward-board/handover/${admissionId}`);
+
+export const deleteWardHandover = (id: number): Promise<{ success: boolean; message: string }> =>
+  api<{ success: boolean; message: string }>('DELETE', `/api/ipd/ward-board/handover/${id}`);
+
+export const acknowledgeCriticalAlert = (id: number, resolutionNotes?: string): Promise<{ success: boolean }> =>
+  api<{ success: boolean }>('POST', `/api/ipd/ward-board/alert-acknowledge/${id}`, { resolutionNotes });
+
+export const auditWardHandoverPrint = (admissionId?: number, ward?: string): Promise<{ success: boolean }> =>
+  api<{ success: boolean }>('POST', '/api/ipd/ward-board/audit-print', { admissionId, ward });
+
+// Teleconsultations API
+export interface TeleconsultationRecord {
+  id: number;
+  patient_id: number;
+  doctor_id: number;
+  scheduled_at: string;
+  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
+  consult_type: 'FIRST_CONSULT' | 'FOLLOW_UP' | 'REPORT_REVIEW' | 'POST_OP_CHECK' | 'EMERGENCY_TRIAGE';
+  video_platform: 'WHATSAPP_VIDEO' | 'JITSI' | 'PHONE_CALL' | 'OTHER';
+  meeting_link?: string | null;
+  meeting_room_id?: string | null;
+  chief_complaint: string;
+  clinical_notes?: string | null;
+  provisional_diagnosis?: string | null;
+  advice_instructions?: string | null;
+  prescription_medicines?: string | any[] | null;
+  investigations_advised?: string | any[] | null;
+  telemedicine_consent_obtained: number;
+  emergency_disclaimer_acknowledged: number;
+  digital_signature_hash?: string | null;
+  signed_by_doctor_name?: string | null;
+  doctor_reg_number?: string | null;
+  doctor_qualifications?: string | null;
+  signed_at?: string | null;
+  whatsapp_invite_sent_at?: string | null;
+  created_at: string;
+  patient_name?: string;
+  uhid?: string;
+  patient_phone?: string;
+  patient_age?: number;
+  doctor_name?: string;
+}
+
+export const getTeleconsultations = (params?: {
+  patientId?: number;
+  doctorId?: number;
+  status?: string;
+  fromDate?: string;
+  toDate?: string;
+}): Promise<{ teleconsultations: TeleconsultationRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.doctorId) query.set('doctorId', String(params.doctorId));
+  if (params?.status) query.set('status', params.status);
+  if (params?.fromDate) query.set('fromDate', params.fromDate);
+  if (params?.toDate) query.set('toDate', params.toDate);
+  const qStr = query.toString();
+  return api<{ teleconsultations: TeleconsultationRecord[] }>('GET', `/api/teleconsultations${qStr ? `?${qStr}` : ''}`);
+};
+
+export const createTeleconsultation = (payload: {
+  patientId: number;
+  doctorId: number;
+  scheduledAt: string;
+  consultType?: string;
+  videoPlatform?: string;
+  chiefComplaint: string;
+  clinicalNotes?: string | null;
+  provisionalDiagnosis?: string | null;
+  adviceInstructions?: string | null;
+  prescriptionMedicines?: any;
+  investigationsAdvised?: any;
+  telemedicineConsentObtained?: boolean;
+  emergencyDisclaimerAcknowledged?: boolean;
+}): Promise<TeleconsultationRecord> =>
+  api<TeleconsultationRecord>('POST', '/api/teleconsultations', payload);
+
+export const getTeleconsultation = (id: number): Promise<TeleconsultationRecord> =>
+  api<TeleconsultationRecord>('GET', `/api/teleconsultations/${id}`);
+
+export const updateTeleconsultation = (id: number, payload: Partial<TeleconsultationRecord>): Promise<TeleconsultationRecord> =>
+  api<TeleconsultationRecord>('PUT', `/api/teleconsultations/${id}`, payload);
+
+export const signTeleconsultation = (id: number): Promise<TeleconsultationRecord> =>
+  api<TeleconsultationRecord>('POST', `/api/teleconsultations/${id}/sign`, {});
+
+export const sendTeleconsultationWhatsAppInvite = (id: number): Promise<{
+  success: boolean;
+  whatsappUrl: string;
+  messageText: string;
+  cleanPhone: string;
+}> =>
+  api<{
+    success: boolean;
+    whatsappUrl: string;
+    messageText: string;
+    cleanPhone: string;
+  }>('POST', `/api/teleconsultations/${id}/whatsapp-invite`, {});
+
+export const deleteTeleconsultation = (id: number): Promise<{ success: boolean; message: string }> =>
+  api<{ success: boolean; message: string }>('DELETE', `/api/teleconsultations/${id}`);
+
+export const auditTeleconsultationPrint = (id: number): Promise<{ success: boolean }> =>
+  api<{ success: boolean }>('POST', `/api/teleconsultations/${id}/audit-print`, {});
+
+// ABDM API
+export const getAbdmPatientData = (patientId: number): Promise<{
+  profile: any | null;
+  consents: any[];
+  fhirBundles: any[];
+}> =>
+  api<{
+    profile: any | null;
+    consents: any[];
+    fhirBundles: any[];
+  }>('GET', `/api/abdm/patient/${patientId}`);
+
+export const linkAbhaProfile = (
+  patientId: number,
+  payload: {
+    abhaNumber: string;
+    abhaAddress: string;
+    authMethod?: 'AADHAAR_OTP' | 'MOBILE_OTP' | 'DEMOGRAPHIC';
+    kycFullName?: string;
+    kycGender?: string;
+    kycDob?: string;
+    kycMobile?: string;
+    kycAddress?: string;
+  }
+): Promise<any> =>
+  api<any>('POST', `/api/abdm/patient/${patientId}/link`, payload);
+
+export const mockAadhaarVerifyAbha = (patientId: number): Promise<any> =>
+  api<any>('POST', `/api/abdm/patient/${patientId}/mock-aadhaar-verify`, {});
+
+export const unlinkAbhaProfile = (patientId: number): Promise<{ success: boolean }> =>
+  api<{ success: boolean }>('DELETE', `/api/abdm/patient/${patientId}/unlink`);
+
+export const generateFhirBundle = (
+  patientId: number,
+  payload: {
+    bundleType: 'OPConsultation' | 'DischargeSummary' | 'ImmunizationRecord' | 'AntenatalRecord';
+    visitId?: number;
+    admissionId?: number;
+  }
+): Promise<{
+  bundleId: string;
+  bundleJson: string;
+  bundleHash: string;
+  fhirObject: any;
+}> =>
+  api<{
+    bundleId: string;
+    bundleJson: string;
+    bundleHash: string;
+    fhirObject: any;
+  }>('POST', `/api/abdm/patient/${patientId}/generate-fhir`, payload);
+
+export const getFhirBundle = (id: string): Promise<any> =>
+  api<any>('GET', `/api/abdm/fhir-bundle/${id}`);
+
+export const createAbdmConsent = (payload: {
+  patientId: number;
+  purposeCode: string;
+  hiTypes: string;
+  requesterName: string;
+  requesterHipId: string;
+  dateRangeFrom: string;
+  dateRangeTo: string;
+  expiryAt: string;
+}): Promise<any> =>
+  api<any>('POST', '/api/abdm/consent', payload);
+
+export const revokeAbdmConsent = (id: string): Promise<{ success: boolean }> =>
+  api<{ success: boolean }>('POST', `/api/abdm/consent/${id}/revoke`, {});

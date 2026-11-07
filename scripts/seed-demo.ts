@@ -1238,8 +1238,79 @@ async function seed() {
     )
   `).run(aaravId, docId, now);
 
-  // Book today's outpatient appointments for the active queue
+  // --- SERIES 10: Live Ward Board SBAR Handovers, Teleconsultations & ABDM FHIR ---
   const todayStr = new Date().toISOString().slice(0, 10);
+
+  // 10A: SBAR Handover Note
+  const activeAdm = db.prepare("SELECT id FROM admissions WHERE status = 'admitted' LIMIT 1").get() as { id: number } | undefined;
+  if (activeAdm) {
+    db.prepare(`
+      INSERT OR IGNORE INTO ward_handover_notes (
+        admission_id, shift_type, shift_date, nurse_id, nurse_name,
+        situation, background, assessment, recommendation,
+        pending_tasks, iv_fluids_status, dietary_order, created_at, updated_at
+      ) VALUES (
+        ?, 'morning', ?, ?, 'Nurse Priya',
+        'Patient on Postnatal Ward Day 1. Vitals stable, uterine retraction good.',
+        'G2P1 post uncomplicated LSCS for fetal distress at 39 weeks.',
+        'BP 124/82 mmHg, HR 78 bpm, SpO2 99%, lochia rubra mild, pain score 2/10.',
+        'Continue post-op analgesia, encourage early ambulation and exclusive breastfeeding.',
+        '["Repeat Hb at 16:00","Check Foley output","Encourage KMC"]',
+        'RL 500 mL @ 80 mL/h', 'Soft bland diet as tolerated', ?, ?
+      )
+    `).run(activeAdm.id, todayStr, nurseId, now, now);
+  }
+
+  // 10B: Teleconsultation with Cryptographic Digital Signature
+  const mockSignatureHash = 'E4F90B22C79A171D6293A7F2494E5106941BF3A5432D6DE0D9A3B5D3941F7C51';
+  db.prepare(`
+    INSERT OR IGNORE INTO teleconsultations (
+      patient_id, doctor_id, scheduled_at, status, consult_type,
+      video_platform, meeting_link, meeting_room_id, chief_complaint,
+      clinical_notes, provisional_diagnosis, advice_instructions,
+      prescription_medicines, telemedicine_consent_obtained, emergency_disclaimer_acknowledged,
+      digital_signature_hash, signed_by_doctor_name, doctor_reg_number, doctor_qualifications,
+      signed_at, created_at, updated_at
+    ) VALUES (
+      ?, ?, ?, 'COMPLETED', 'REPORT_REVIEW',
+      'WHATSAPP_VIDEO', 'https://wa.me/919845011003', 'livi-tele-sunita-9921',
+      'Review of 6-week post-op thyroid profile and calcium supplementation.',
+      'Patient reports good recovery, wound healed cleanly, lactation established.',
+      'Post-op LSCS recovery, Euthyroid state maintained',
+      'Continue Tab Calcium 500mg OD for 3 months during breastfeeding. Walk 30 min daily.',
+      '[{"name":"Tab Calcium Carbonate & Vit D3","dosage":"500mg + 250IU","frequency":"Once daily after lunch","duration":"60 days","instructions":"With water"}]',
+      1, 1,
+      ?, 'Dr. K. Sarayu Rao', 'NMC-MCI-2012-77412', 'MBBS, MS (OBGYN), Fellowship in Fetal Medicine',
+      ?, ?, ?
+    )
+  `).run(sunitaId, docId, `${todayStr}T14:30:00`, mockSignatureHash, now, now, now);
+
+  // 10C: ABDM Patient Profile & FHIR R4 Bundle
+  db.prepare(`
+    INSERT OR IGNORE INTO abdm_patient_profiles (
+      patient_id, abha_number, abha_address, status, auth_method,
+      kyc_full_name, kyc_gender, kyc_dob, kyc_mobile, kyc_address,
+      linked_at, updated_at
+    ) VALUES (
+      ?, '91-5832-1940-2019', 'anita.sharma@abdm', 'VERIFIED', 'AADHAAR_OTP',
+      'Anita Sharma', 'Female', '1994-08-14', '9845011001', 'Koramangala, Bengaluru',
+      ?, ?
+    )
+  `).run(anitaId, now, now);
+
+  db.prepare(`
+    INSERT OR IGNORE INTO abdm_consent_artifacts (
+      patient_id, consent_id, purpose_code, status, hi_types,
+      requester_name, requester_hip_id, date_range_from, date_range_to, expiry_at, created_at
+    ) VALUES (
+      ?, 'consent-art-demo-9901', 'CARETREE', 'GRANTED',
+      'OPConsultation,DischargeSummary,ImmunizationRecord',
+      'Manipal Hospital Whitefield', 'HIP-MANIPAL-002',
+      ?, '2027-11-07', '2027-11-07', ?
+    )
+  `).run(anitaId, todayStr, now);
+
+  // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },
     { pid: poojaId, time: '10:15:00', reason: 'Folliculometry TVS & Trigger Decision', status: 'in_consultation' },

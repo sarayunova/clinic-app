@@ -277,3 +277,8 @@ function calculateRsParity(data: number[], ecCount: number): number[] {
 
   return remainder;
 }
+
+export function generateQrSvgDataUri(text: string, size = 180): string {
+  const svg = generateQrSvg(text, size);
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}

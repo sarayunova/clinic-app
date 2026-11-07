@@ -50,6 +50,10 @@ import { GynOncologyPrint } from './pages/GynOncologyPrint';
 import { SncuPrint } from './pages/SncuPrint';
 import { EmergencyQrPrint } from './pages/EmergencyQrPrint';
 import { ImmunizationRecallPage } from './pages/ImmunizationRecallPage';
+import { WardBoardPage } from './pages/WardBoardPage';
+import { WardHandoverPrint } from './pages/WardHandoverPrint';
+import { TeleconsultationsPage } from './pages/TeleconsultationsPage';
+import { TeleconsultationPrint } from './pages/TeleconsultationPrint';
 import { DeliveryWardPage } from './pages/DeliveryWardPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditPage } from './pages/AuditPage';
@@ -119,6 +123,8 @@ function Shell() {
     ...(can('station:read') ? [{ to: '/station', label: 'Nurse station', icon: '🩺', end: false }] : []),
     { to: '/patients', label: 'Patients', icon: '👥', end: false },
     { to: '/wards', label: 'Wards', icon: '🛏️', end: false },
+    ...(can('patient:read_clinical') ? [{ to: '/ward-board', label: 'Ward Board', icon: '📊', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/teleconsultations', label: 'Teleconsult', icon: '📹', end: false }] : []),
     ...(can('ipd:read_basic') || can('station:read') ? [{ to: '/delivery-ward', label: 'Delivery ward', icon: '👶', end: false }] : []),
     ...(can('billing:read') ? [{ to: '/billing', label: 'Billing', icon: '💳', end: false }] : []),
     ...(can('settings:manage') ? [{ to: '/settings', label: 'Clinic', icon: '🏥', end: false }] : []),
@@ -191,6 +197,10 @@ function Shell() {
           <Route path="/patients/:patientId/gyn-oncology/:id/print" element={can('patient:read_clinical') ? <GynOncologyPrint /> : <Navigate to="/patients" replace />} />
           <Route path="/patients/:patientId/sncu/:id/print" element={can('patient:read_clinical') ? <SncuPrint /> : <Navigate to="/patients" replace />} />
           <Route path="/patients/:patientId/emergency-card/print" element={can('patient:read_clinical') ? <EmergencyQrPrint /> : <Navigate to="/patients" replace />} />
+          <Route path="/ward-board" element={can('patient:read_clinical') ? <WardBoardPage /> : <Navigate to="/" replace />} />
+          <Route path="/ward-board/handover-print" element={can('patient:read_clinical') ? <WardHandoverPrint /> : <Navigate to="/ward-board" replace />} />
+          <Route path="/teleconsultations" element={can('patient:read_clinical') ? <TeleconsultationsPage /> : <Navigate to="/" replace />} />
+          <Route path="/teleconsultations/:id/print" element={can('patient:read_clinical') ? <TeleconsultationPrint /> : <Navigate to="/teleconsultations" replace />} />
           <Route path="/delivery-ward" element={can('ipd:read_basic') || can('station:read') ? <DeliveryWardPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id" element={can('visit:read') ? <VisitPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id/print" element={can('visit:read') ? <PrescriptionPrint /> : <Navigate to="/" replace />} />

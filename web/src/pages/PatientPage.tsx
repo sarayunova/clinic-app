@@ -46,6 +46,7 @@ import { GynOncologyTracker } from '../components/GynOncologyTracker';
 import { SncuTracker } from '../components/SncuTracker';
 import { ImmunizationRecallDashboard } from '../components/ImmunizationRecallDashboard';
 import { EmergencyQrCard } from '../components/EmergencyQrCard';
+import { AbdmProfileTab } from '../components/AbdmProfileTab';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -156,7 +157,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'pediatric' | 'pediatric_growth' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'abdm' | 'pediatric' | 'pediatric_growth' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -716,6 +717,13 @@ export function PatientPage() {
                 </button>
                 <button
                   type="button"
+                  className={`btn small ${viewMode === 'abdm' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('abdm')}
+                >
+                  🇮🇳 ABDM / ABHA &amp; FHIR
+                </button>
+                <button
+                  type="button"
                   className={`btn small ${viewMode === 'lab' ? 'primary' : ''}`}
                   onClick={() => setViewMode('lab')}
                 >
@@ -834,6 +842,8 @@ export function PatientPage() {
             <ImmunizationRecallDashboard patient={patient!} />
           ) : viewMode === 'emergency_qr' ? (
             <EmergencyQrCard patient={patient!} />
+          ) : viewMode === 'abdm' ? (
+            <AbdmProfileTab patientId={patient!.id} />
           ) : viewMode === 'eras_reeda' ? (
             <ErasReedaManager patientId={patient!.id} />
           ) : isPediatric && viewMode === 'pediatric' ? (
