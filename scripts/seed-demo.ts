@@ -2239,6 +2239,161 @@ async function seed() {
     }
   }
 
+  // --- SERIES 17A: Neonatal Hypoglycemia, GIR Titration & aEEG Neuro-Monitoring ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_hypoglycemia_episodes (
+      patient_id, admission_id, episode_code, evaluation_datetime,
+      age_hours, birth_weight_kg, current_weight_kg, risk_factors_json,
+      symptoms_present, initial_blood_glucose_mg_dl, glucose_target_mg_dl,
+      d10w_bolus_given_ml, current_gir_mg_kg_min, fluid_dextrose_percent,
+      fluid_rate_ml_hr, seizure_activity_observed, seizure_type,
+      aeeg_background_pattern, first_line_asm_given, status, consultant_id,
+      clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'NHYP-20261107-101', '2026-11-07T06:00:00',
+      12, 3.1, 3.05, '["infant_of_diabetic_mother", "large_for_gestational_age"]',
+      1, 28, 45,
+      6.2, 5.0, 10.0,
+      9.3, 0, 'none',
+      'continuous_normal_voltage', 0, 'active_infusion', ?,
+      '12-hour-old term infant of diabetic mother developed symptomatic hypoglycemia (blood glucose 28 mg/dL). Immediate D10W 2 mL/kg mini-bolus given. Maintenance GIR 5.0 mg/kg/min started with frequent SMBG.',
+      ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingHypo = db.prepare('SELECT id FROM neonatal_hypoglycemia_episodes WHERE episode_code = ?').get('NHYP-20261107-101') as { id: number } | undefined;
+  if (existingHypo) {
+    const hypoLogs = [
+      { dt: '2026-11-07T07:00:00', h: 1, bg: 38, dPct: 10.0, rate: 11.2, gir: 6.0, bolus: 0, feedMl: 10, feedType: 'ebm', aeeg: 'continuous_normal_voltage', seizures: 0, notes: 'GIR titrated to 6.0 mg/kg/min. Jitteriness improving. Sucking reflex vigorous.' },
+      { dt: '2026-11-07T09:00:00', h: 3, bg: 52, dPct: 10.0, rate: 11.2, gir: 6.0, bolus: 0, feedMl: 15, feedType: 'ebm', aeeg: 'continuous_normal_voltage', seizures: 0, notes: 'Blood glucose reached AAP safe target (52 >= 45 mg/dL). Clinically stable, alert.' },
+    ];
+    for (const hl of hypoLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_glucose_gir_flowsheet_logs (
+          episode_id, patient_id, log_datetime, hours_on_protocol,
+          blood_glucose_mg_dl, fluid_dextrose_percent, fluid_rate_ml_hr,
+          calculated_gir_mg_kg_min, d10w_bolus_ml, feeding_volume_ml,
+          feeding_type, aeeg_pattern, seizure_events_count, notes,
+          logged_by_id, created_at
+        ) VALUES (
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?
+        )
+      `).run(existingHypo.id, babyId, hl.dt, hl.h, hl.bg, hl.dPct, hl.rate, hl.gir, hl.bolus, hl.feedMl, hl.feedType, hl.aeeg, hl.seizures, hl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 17B: Obstetric Postpartum Hemorrhage (PPH), WHO E-MOTIVE & Bakri Balloon ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_pph_episodes (
+      patient_id, admission_id, episode_code, delivery_mode,
+      pph_recognition_datetime, gestation_weeks, gravimetric_qbl_ml,
+      drape_blood_volume_ml, swab_sponge_weight_net_g, initial_sbp,
+      initial_dbp, initial_heart_rate, shock_index, etiology_4t,
+      maternal_hypertension_history, maternal_asthma_history,
+      emotive_massage_done, emotive_oxytocin_given, emotive_txa_given,
+      emotive_iv_fluids_given, emotive_exam_completed, emotive_escalation_needed,
+      bakri_balloon_placed, bakri_fill_volume_ml, tamponade_test_result,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'PPH-20261107-101', 'vaginal',
+      '2026-11-07T08:15:00', 39, 1150,
+      850, 300, 90,
+      55, 118, 1.31, 'tone_atony',
+      0, 0,
+      1, 1, 1,
+      1, 1, 1,
+      1, 350, 'success_bleeding_stopped',
+      'tamponade_active', ?,
+      'Severe atonic PPH recognized immediately after vaginal delivery with calibrated V-drape collection (850 mL) and weighed sponges (300g). WHO E-MOTIVE bundle instituted within 10 minutes: bimanual massage, IV Oxytocin infusion, 1g IV Tranexamic acid, and rapid crystalloid. Bleeding ongoing; Bakri balloon inserted and inflated with 350 mL saline. Positive tamponade test with cessation of active uterine bleeding.',
+      ?, ?
+    )
+  `).run(meeraId, docId, now, now);
+
+  const existingPph = db.prepare('SELECT id FROM obstetric_pph_episodes WHERE episode_code = ?').get('PPH-20261107-101') as { id: number } | undefined;
+  if (existingPph) {
+    const pphLogs = [
+      { min: 15, intLoss: 150, cumQbl: 1300, sbp: 98, dbp: 62, hr: 108, si: 1.10, tone: 'boggy_soft', med: 'Inj. Oxytocin 20 IU + Ergometrine 0.2mg', bakriDrain: 40, uo: 35, notes: 'Bakri balloon in situ. Gentle uterine compression maintained.' },
+      { min: 45, intLoss: 50, cumQbl: 1350, sbp: 112, dbp: 70, hr: 86, si: 0.77, tone: 'firm_contracted', med: 'Maintenance Oxytocin IV infusion', bakriDrain: 25, uo: 65, notes: 'Tamponade test positive. Hemodynamics normalized (Shock Index 0.77). Urine clear.' },
+    ];
+    for (const pl of pphLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_pph_flowsheet_logs (
+          pph_episode_id, patient_id, log_datetime, minutes_from_recognition,
+          interval_blood_loss_ml, cumulative_qbl_ml, sbp, dbp,
+          heart_rate_bpm, calculated_shock_index, uterine_tone,
+          medication_given, bakri_drainage_ml, urine_output_ml, notes,
+          logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-07T08:30:00', ?,
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?
+        )
+      `).run(existingPph.id, meeraId, pl.min, pl.intLoss, pl.cumQbl, pl.sbp, pl.dbp, pl.hr, pl.si, pl.tone, pl.med, pl.bakriDrain, pl.uo, pl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 17C: Pediatric ARDS (PARDS), PALICC-2 Mechanics & Adjuvant Prone Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_pards_episodes (
+      patient_id, admission_id, episode_code, diagnosis_datetime,
+      age_months, weight_kg, predicted_body_weight_kg, trigger_cause,
+      ventilation_mode, current_peep_cmh2o, current_map_cmh2o,
+      current_fio2_percent, pao2_mmhg, spo2_percent, calculated_oi,
+      calculated_osi, pards_severity, target_tidal_volume_ml_min,
+      target_tidal_volume_ml_max, plateau_pressure_limit_cmh2o,
+      driving_pressure_limit_cmh2o, prone_positioning_active,
+      neuromuscular_blockade_active, status, consultant_id,
+      clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'PARDS-20261107-101', '2026-11-07T06:30:00',
+      12, 10.0, 10.0, 'pneumonia',
+      'invasive_mechanical', 8.0, 12.0,
+      60.0, 68.0, 92.0, 10.6,
+      7.8, 'moderate', 30.0,
+      60.0, 28.0, 15.0, 1,
+      1, 'acute_management', ?,
+      '12-month-old infant with severe bilateral viral bronchopneumonia meeting PALICC-2 criteria for invasive Moderate PARDS (OI 10.6, P/F 113). Managed with lung-protective ventilation (Vt 5.5 mL/kg, Pplat 24, PEEP 8, Driving Pressure 16 -> target <15), adjuvant prone positioning protocol (16-hour cycle), and cisatracurium neuromuscular blockade.',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingPards = db.prepare('SELECT id FROM pediatric_pards_episodes WHERE episode_code = ?').get('PARDS-20261107-101') as { id: number } | undefined;
+  if (existingPards) {
+    const pardsLogs = [
+      { h: 2, pip: 26, pplat: 24, peep: 8.0, dp: 16.0, map: 12.0, fio2: 60.0, vt: 55, vtKg: 5.5, rrSet: 32, rrTot: 32, ph: 7.32, pao2: 68.0, pco2: 48.0, hco3: 24.5, spo2: 92.0, oi: 10.6, osi: 7.8, proneH: 2.0, notes: 'Prone position established. Permissive hypercapnia accepted (pH > 7.20).' },
+      { h: 6, pip: 24, pplat: 21, peep: 8.0, dp: 13.0, map: 11.0, fio2: 45.0, vt: 50, vtKg: 5.0, rrSet: 30, rrTot: 30, ph: 7.38, pao2: 82.0, pco2: 42.0, hco3: 24.0, spo2: 96.0, oi: 6.0, osi: 5.2, proneH: 6.0, notes: 'Driving pressure decreased to 13 cmH2O following lung recruitment in prone position. FiO2 successfully weaned to 45%.' },
+    ];
+    for (const pl of pardsLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_pards_flowsheet_logs (
+          pards_episode_id, patient_id, log_datetime, hours_on_protocol,
+          pip_cmh2o, plateau_pressure_cmh2o, peep_cmh2o,
+          calculated_driving_pressure_cmh2o, map_cmh2o, fio2_percent,
+          tidal_volume_set_ml, tidal_volume_measured_ml_kg,
+          respiratory_rate_set, respiratory_rate_total, abg_ph,
+          abg_pao2_mmhg, abg_pco2_mmhg, abg_hco3_meq_l,
+          spo2_percent, calculated_oi, calculated_osi,
+          prone_positioning_hours, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-07T08:30:00', ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingPards.id, aaravId, pl.h, pl.pip, pl.pplat, pl.peep, pl.dp, pl.map, pl.fio2, pl.vt, pl.vtKg, pl.rrSet, pl.rrTot, pl.ph, pl.pao2, pl.pco2, pl.hco3, pl.spo2, pl.oi, pl.osi, pl.proneH, pl.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

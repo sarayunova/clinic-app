@@ -84,6 +84,9 @@ import { registerPediatricSeizuresRoutes } from './routes/pediatricSeizures.js';
 import { registerNeonatalSepsisRoutes } from './routes/neonatalSepsis.js';
 import { registerObstetricHypertensionRoutes } from './routes/obstetricHypertension.js';
 import { registerPediatricSepticShockRoutes } from './routes/pediatricSepticShock.js';
+import { registerNeonatalHypoglycemiaRoutes } from './routes/neonatalHypoglycemia.js';
+import { registerObstetricPphRoutes } from './routes/obstetricPph.js';
+import { registerPediatricPardsRoutes } from './routes/pediatricPards.js';
 import type { LoadedTls } from './tls.js';
 
 declare module 'fastify' {
@@ -271,6 +274,9 @@ export async function buildApp(ctx: Omit<Ctx, 'throttle'> & { throttle?: LoginTh
   registerNeonatalSepsisRoutes(app, full);
   registerObstetricHypertensionRoutes(app, full);
   registerPediatricSepticShockRoutes(app, full);
+  registerNeonatalHypoglycemiaRoutes(app, full);
+  registerObstetricPphRoutes(app, full);
+  registerPediatricPardsRoutes(app, full);
 
   app.get('/api/health', async () => ({ ok: true }));
   return app;

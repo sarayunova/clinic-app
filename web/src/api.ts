@@ -6493,6 +6493,309 @@ export const calculatePediatricSepticShock = (payload: any): Promise<any> =>
 export const auditPediatricSepticShockPrint = (id: number): Promise<{ success: boolean }> =>
   api('POST', `/api/pediatric-septic-shock/episodes/${id}/audit-print`, {});
 
+// -------------------------------------------------------------
+// SERIES 17: NEONATAL HYPOGLYCEMIA, OBSTETRIC PPH, PEDIATRIC PARDS
+// -------------------------------------------------------------
+
+// 17A: Neonatal Hypoglycemia, GIR Calculator & aEEG Neuro-Monitoring
+export interface NeonatalHypoglycemiaRecord {
+  id: number;
+  patient_id: number;
+  admission_id?: number | null;
+  episode_code: string;
+  evaluation_datetime: string;
+  age_hours: number;
+  birth_weight_kg: number;
+  current_weight_kg: number;
+  risk_factors_json: string;
+  symptoms_present: number;
+  initial_blood_glucose_mg_dl: number;
+  glucose_target_mg_dl: number;
+  d10w_bolus_given_ml: number;
+  current_gir_mg_kg_min: number;
+  fluid_dextrose_percent: number;
+  fluid_rate_ml_hr: number;
+  seizure_activity_observed: number;
+  seizure_type: 'none' | 'subclinical_only' | 'electroclinical_clonic' | 'electroclinical_tonic' | 'electroclinical_myoclonic' | 'electroclinical_subtle';
+  aeeg_background_pattern: 'continuous_normal_voltage' | 'discontinuous_normal_voltage' | 'continuous_low_voltage' | 'burst_suppression' | 'flat_trace';
+  first_line_asm_given: number;
+  phenobarbital_dose_mg?: number | null;
+  levetiracetam_dose_mg?: number | null;
+  status: 'evaluating' | 'active_infusion' | 'stabilized_weaning' | 'resolved';
+  consultant_id: number;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NeonatalGirFlowsheetRecord {
+  id: number;
+  episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_on_protocol: number;
+  blood_glucose_mg_dl: number;
+  fluid_dextrose_percent: number;
+  fluid_rate_ml_hr: number;
+  calculated_gir_mg_kg_min: number;
+  d10w_bolus_ml: number;
+  feeding_volume_ml: number;
+  feeding_type: 'breast_milk' | 'formula' | 'tpn_npo';
+  aeeg_pattern: 'continuous_normal_voltage' | 'discontinuous_normal_voltage' | 'continuous_low_voltage' | 'burst_suppression' | 'flat_trace';
+  seizure_events_count: number;
+  notes?: string | null;
+  logged_by_id: number;
+  created_at: string;
+}
+
+export const getNeonatalHypoglycemiaEpisodes = (params?: {
+  patientId?: number;
+  status?: string;
+}): Promise<{ episodes: NeonatalHypoglycemiaRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.status) q.append('status', params.status);
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ episodes: NeonatalHypoglycemiaRecord[] }>('GET', `/api/neonatal-hypoglycemia/episodes${queryStr}`);
+};
+
+export const getNeonatalHypoglycemiaEpisode = (
+  id: number
+): Promise<{ episode: NeonatalHypoglycemiaRecord; logs: NeonatalGirFlowsheetRecord[] }> =>
+  api('GET', `/api/neonatal-hypoglycemia/episodes/${id}`);
+
+export const createNeonatalHypoglycemiaEpisode = (payload: any): Promise<{ episode: NeonatalHypoglycemiaRecord; evalResult: any }> =>
+  api('POST', '/api/neonatal-hypoglycemia/episodes', payload);
+
+export const updateNeonatalHypoglycemiaEpisode = (
+  id: number,
+  payload: any
+): Promise<{ episode: NeonatalHypoglycemiaRecord }> =>
+  api('PATCH', `/api/neonatal-hypoglycemia/episodes/${id}`, payload);
+
+export const deleteNeonatalHypoglycemiaEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-hypoglycemia/episodes/${id}`);
+
+export const logNeonatalGirFlowsheet = (
+  episodeId: number,
+  payload: any
+): Promise<{ logId: number; calculatedGir: number }> =>
+  api('POST', `/api/neonatal-hypoglycemia/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteNeonatalGirFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-hypoglycemia/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateNeonatalHypoglycemia = (payload: any): Promise<any> =>
+  api('POST', '/api/neonatal-hypoglycemia/calculate', payload);
+
+export const getNeonatalHypoglycemiaPrint = (id: number): Promise<any> =>
+  api('GET', `/api/neonatal-hypoglycemia/episodes/${id}/print`);
+
+// 17B: Obstetric Postpartum Hemorrhage (PPH) & WHO E-MOTIVE Bundle
+export interface ObstetricPphRecord {
+  id: number;
+  patient_id: number;
+  admission_id?: number | null;
+  episode_code: string;
+  delivery_mode: 'vaginal' | 'cesarean';
+  pph_recognition_datetime: string;
+  gestation_weeks?: number | null;
+  gravimetric_qbl_ml: number;
+  drape_blood_volume_ml: number;
+  swab_sponge_weight_net_g: number;
+  initial_sbp: number;
+  initial_dbp: number;
+  initial_heart_rate: number;
+  shock_index: number;
+  etiology_4t: 'tone_atony' | 'trauma_laceration' | 'tissue_retained' | 'thrombin_coagulopathy';
+  maternal_hypertension_history: number;
+  maternal_asthma_history: number;
+  emotive_massage_done: number;
+  emotive_oxytocin_given: number;
+  emotive_txa_given: number;
+  emotive_iv_fluids_given: number;
+  emotive_exam_completed: number;
+  emotive_escalation_needed: number;
+  bakri_balloon_placed: number;
+  bakri_fill_volume_ml: number;
+  tamponade_test_result: 'not_performed' | 'success_bleeding_stopped' | 'failure_ongoing_bleeding';
+  status: 'resuscitation_active' | 'tamponade_active' | 'stabilized' | 'surgical_escalation' | 'resolved';
+  consultant_id: number;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ObstetricPphFlowsheetRecord {
+  id: number;
+  pph_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  minutes_from_recognition: number;
+  interval_blood_loss_ml: number;
+  cumulative_qbl_ml: number;
+  sbp: number;
+  dbp: number;
+  heart_rate_bpm: number;
+  calculated_shock_index: number;
+  uterine_tone: 'firm_contracted' | 'boggy_soft' | 'relaxed';
+  medication_given?: string | null;
+  bakri_drainage_ml: number;
+  urine_output_ml: number;
+  notes?: string | null;
+  logged_by_id: number;
+  created_at: string;
+}
+
+export const getObstetricPphEpisodes = (params?: {
+  patientId?: number;
+  status?: string;
+}): Promise<{ episodes: ObstetricPphRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.status) q.append('status', params.status);
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ episodes: ObstetricPphRecord[] }>('GET', `/api/obstetric-pph/episodes${queryStr}`);
+};
+
+export const getObstetricPphEpisode = (
+  id: number
+): Promise<{ episode: ObstetricPphRecord; logs: ObstetricPphFlowsheetRecord[] }> =>
+  api('GET', `/api/obstetric-pph/episodes/${id}`);
+
+export const createObstetricPphEpisode = (payload: any): Promise<{ episode: ObstetricPphRecord; evalResult: any }> =>
+  api('POST', '/api/obstetric-pph/episodes', payload);
+
+export const updateObstetricPphEpisode = (
+  id: number,
+  payload: any
+): Promise<{ episode: ObstetricPphRecord }> =>
+  api('PATCH', `/api/obstetric-pph/episodes/${id}`, payload);
+
+export const deleteObstetricPphEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-pph/episodes/${id}`);
+
+export const logObstetricPphFlowsheet = (
+  episodeId: number,
+  payload: any
+): Promise<{ logId: number; newCumulativeQblMl: number; shockIndex: number }> =>
+  api('POST', `/api/obstetric-pph/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteObstetricPphFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-pph/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateObstetricPph = (payload: any): Promise<any> =>
+  api('POST', '/api/obstetric-pph/calculate', payload);
+
+export const getObstetricPphPrint = (id: number): Promise<any> =>
+  api('GET', `/api/obstetric-pph/episodes/${id}/print`);
+
+// 17C: Pediatric Acute Respiratory Distress Syndrome (PARDS) & PALICC-2 Ventilation
+export interface PediatricPardsRecord {
+  id: number;
+  patient_id: number;
+  admission_id?: number | null;
+  episode_code: string;
+  diagnosis_datetime: string;
+  age_months: number;
+  weight_kg: number;
+  predicted_body_weight_kg: number;
+  trigger_cause: 'pneumonia' | 'aspiration' | 'sepsis_shock' | 'trauma' | 'drowning' | 'other';
+  ventilation_mode: 'invasive_mechanical' | 'non_invasive_cpap_bipap' | 'high_frequency_oscillation';
+  current_peep_cmh2o: number;
+  current_map_cmh2o: number;
+  current_fio2_percent: number;
+  pao2_mmhg?: number | null;
+  spo2_percent: number;
+  calculated_oi?: number | null;
+  calculated_osi?: number | null;
+  pards_severity: 'none_at_risk' | 'mild' | 'moderate' | 'severe';
+  target_tidal_volume_ml_min: number;
+  target_tidal_volume_ml_max: number;
+  plateau_pressure_limit_cmh2o: number;
+  driving_pressure_limit_cmh2o: number;
+  prone_positioning_active: number;
+  neuromuscular_blockade_active: number;
+  status: 'acute_management' | 'stabilized_weaning' | 'extubated' | 'picu_stepdown' | 'resolved';
+  consultant_id: number;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PediatricPardsFlowsheetRecord {
+  id: number;
+  pards_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_on_protocol: number;
+  pip_cmh2o?: number | null;
+  plateau_pressure_cmh2o?: number | null;
+  peep_cmh2o: number;
+  calculated_driving_pressure_cmh2o?: number | null;
+  map_cmh2o: number;
+  fio2_percent: number;
+  tidal_volume_set_ml?: number | null;
+  tidal_volume_measured_ml_kg?: number | null;
+  respiratory_rate_set?: number | null;
+  respiratory_rate_total?: number | null;
+  abg_ph?: number | null;
+  abg_pao2_mmhg?: number | null;
+  abg_pco2_mmhg?: number | null;
+  abg_hco3_meq_l?: number | null;
+  spo2_percent?: number | null;
+  calculated_oi?: number | null;
+  calculated_osi?: number | null;
+  prone_positioning_hours: number;
+  notes?: string | null;
+  logged_by_id: number;
+  created_at: string;
+}
+
+export const getPediatricPardsEpisodes = (params?: {
+  patientId?: number;
+  status?: string;
+}): Promise<{ episodes: PediatricPardsRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  if (params?.status) q.append('status', params.status);
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ episodes: PediatricPardsRecord[] }>('GET', `/api/pediatric-pards/episodes${queryStr}`);
+};
+
+export const getPediatricPardsEpisode = (
+  id: number
+): Promise<{ episode: PediatricPardsRecord; logs: PediatricPardsFlowsheetRecord[] }> =>
+  api('GET', `/api/pediatric-pards/episodes/${id}`);
+
+export const createPediatricPardsEpisode = (payload: any): Promise<{ episode: PediatricPardsRecord; evalResult: any }> =>
+  api('POST', '/api/pediatric-pards/episodes', payload);
+
+export const updatePediatricPardsEpisode = (
+  id: number,
+  payload: any
+): Promise<{ episode: PediatricPardsRecord }> =>
+  api('PATCH', `/api/pediatric-pards/episodes/${id}`, payload);
+
+export const deletePediatricPardsEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-pards/episodes/${id}`);
+
+export const logPediatricPardsFlowsheet = (
+  episodeId: number,
+  payload: any
+): Promise<{ logId: number; calculatedOi: number | null; calculatedOsi: number | null; drivingPressure: number | null; severity: string }> =>
+  api('POST', `/api/pediatric-pards/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deletePediatricPardsFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-pards/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculatePediatricPards = (payload: any): Promise<any> =>
+  api('POST', '/api/pediatric-pards/calculate', payload);
+
+export const getPediatricPardsPrint = (id: number): Promise<any> =>
+  api('GET', `/api/pediatric-pards/episodes/${id}/print`);
+
+
 
 
 
