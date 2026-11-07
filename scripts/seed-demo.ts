@@ -1310,6 +1310,83 @@ async function seed() {
     )
   `).run(anitaId, todayStr, now);
 
+  // --- SERIES 11A: Operating Theater Scheduler, PAC Clearance & WHO Safety Checklist ---
+  const otSchedRes = db.prepare(`
+    INSERT OR IGNORE INTO ot_schedules (
+      patient_id, admission_id, ot_room, scheduled_date, scheduled_start_time,
+      estimated_duration_minutes, procedure_name, procedure_category, priority,
+      status, primary_surgeon_id, primary_surgeon_name, assistant_surgeon_name,
+      anesthesiologist_id, anesthesiologist_name, scrub_nurse_name,
+      pediatrician_standby_name, blood_units_reserved, special_equipment_needed,
+      created_by, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'OT_2_MATERNITY', ?, '09:00',
+      60, 'Elective Lower Segment Cesarean Section (LSCS)', 'OBSTETRIC', 'ELECTIVE',
+      'SURGERY_IN_PROGRESS', ?, 'Dr. Ananya Rao, MD (OBGYN)', 'Dr. Priya Desai',
+      ?, 'Dr. S. K. Murthy (Consultant Anesthesiologist)', 'Sister Prema, RN',
+      'Dr. Rohini Kulkarni, MD (Pediatrics)', 1, 'Radiant Infant Warmer & Cord Blood Collection Kit',
+      ?, ?, ?
+    )
+  `).run(anitaId, todayStr, docId, docId, docId, now, now);
+
+  const otSchedId = Number(otSchedRes.lastInsertRowid);
+  if (otSchedId > 0) {
+    // PAC Clearance
+    db.prepare(`
+      INSERT OR IGNORE INTO pre_anesthesia_clearances (
+        patient_id, ot_schedule_id, evaluation_date, anesthesiologist_id,
+        anesthesiologist_name, asa_grade, mallampati_class, mouth_opening_cm,
+        thyromental_distance_cm, dentition_status, neck_mobility,
+        npo_solid_hours, npo_clear_liquid_hours, cardiovascular_assessment,
+        respiratory_assessment, airway_notes, planned_anesthesia_technique,
+        pac_clearance_status, high_risk_warnings, preop_orders_instructions,
+        blood_products_crossmatched, created_at, updated_at
+      ) VALUES (
+        ?, ?, ?, ?,
+        'Dr. S. K. Murthy', 'ASA_II', 'CLASS_I', 4.5,
+        6.8, 'intact', 'normal_full',
+        8, 3, 'S1, S2 audible, no murmur. BP 122/78 mmHg. Normal sinus rhythm.',
+        'B/L air entry equal, clear chest. SpO2 99% on room air.',
+        'Anticipate normal direct laryngoscopy and easy mask ventilation.', 'SPINAL',
+        'FIT_FOR_SURGERY', 'Gestational diabetes on dietary control. Monitor perioperative capillary blood glucose.',
+        'NPO from 01:00 AM. 18G IV cannula on left hand. Standby 1 Unit PRBC.',
+        '1 Unit PRBC Crossmatched & Reserved', ?, ?
+      )
+    `).run(anitaId, otSchedId, todayStr, docId, now, now);
+
+    // WHO Surgical Safety Checklist (Sign In & Time Out completed)
+    db.prepare(`
+      INSERT OR IGNORE INTO who_surgical_safety_checklists (
+        ot_schedule_id, patient_id,
+        signin_completed, signin_patient_confirmed, signin_site_marked,
+        signin_anesthesia_safety_check, signin_pulse_oximeter_functioning,
+        signin_known_allergy, signin_difficult_airway_risk, signin_blood_loss_risk,
+        signin_nurse_anesthetist_name, signin_timestamp,
+        timeout_completed, timeout_team_introduced, timeout_verbal_confirmation,
+        timeout_surgeon_review, timeout_anesthetist_review, timeout_nursing_sterility_confirmed,
+        timeout_antibiotic_prophylaxis_given, timeout_antibiotic_name_dose,
+        timeout_imaging_displayed, timeout_completed_by_name, timeout_timestamp,
+        signout_completed, signout_procedure_recorded_name, signout_counts_correct,
+        signout_specimen_labeled, signout_equipment_problems, signout_recovery_concerns,
+        signout_completed_by_name, signout_timestamp, updated_at
+      ) VALUES (
+        ?, ?,
+        1, 1, 1,
+        1, 1,
+        0, 0, 1,
+        'Sister Prema / Dr. Murthy', ?,
+        1, 1, 1,
+        'Anticipated LSCS with transverse lower segment incision, expected blood loss <500mL',
+        'Spinal block L3-L4 0.5% Bupivacaine heavy 2.0mL + Fentanyl 15mcg given. Stable hemodynamics.', 1,
+        1, 'Inj. Cefazolin 1g IV stat given at 08:35 AM',
+        1, 'Dr. Ananya Rao', ?,
+        0, 'Lower Segment Cesarean Section', 1,
+        1, 'None', 'Monitor uterine retraction, oxytocin infusion 20 IU in 500mL RL',
+        'Sister Prema', NULL, ?
+      )
+    `).run(otSchedId, anitaId, now, now, now);
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

@@ -3873,3 +3873,250 @@ export const createAbdmConsent = (payload: {
 
 export const revokeAbdmConsent = (id: string): Promise<{ success: boolean }> =>
   api<{ success: boolean }>('POST', `/api/abdm/consent/${id}/revoke`, {});
+
+// Series 11A: Operating Theater (OT) Scheduler, Pre-Anesthesia Clearance (PAC), and WHO Surgical Safety Checklist
+export type OtRoom = 'OT_1_MAIN' | 'OT_2_MATERNITY' | 'OT_3_MINOR' | 'LABOR_OT';
+export type OtPriority = 'ELECTIVE' | 'URGENT' | 'EMERGENCY_CAT_1';
+export type OtStatus = 'SCHEDULED' | 'PATIENT_IN_OT' | 'SURGERY_IN_PROGRESS' | 'PACU_RECOVERY' | 'COMPLETED' | 'CANCELLED';
+export type AsaGrade = 'ASA_I' | 'ASA_II' | 'ASA_III' | 'ASA_IV' | 'ASA_V' | 'ASA_I_E' | 'ASA_II_E' | 'ASA_III_E' | 'ASA_IV_E' | 'ASA_V_E';
+export type MallampatiClass = 'CLASS_I' | 'CLASS_II' | 'CLASS_III' | 'CLASS_IV';
+export type PacClearanceStatus = 'FIT_FOR_SURGERY' | 'FIT_WITH_HIGH_RISK' | 'PROCEED_EMERGENCY_LIFE_SAVING' | 'DEFERRED_PENDING_OPTIMIZATION';
+export type PlannedAnesthesiaTechnique = 'SPINAL' | 'EPIDURAL' | 'CSE' | 'GENERAL_ENDOTRACHEAL' | 'TIVA' | 'LOCAL_MAC';
+
+export interface OtScheduleRecord {
+  id: number;
+  patient_id: number;
+  admission_id?: number | null;
+  ot_room: OtRoom;
+  scheduled_date: string;
+  scheduled_start_time: string;
+  estimated_duration_minutes: number;
+  procedure_name: string;
+  procedure_category: string;
+  priority: OtPriority;
+  status: OtStatus;
+  primary_surgeon_id: number;
+  primary_surgeon_name: string;
+  assistant_surgeon_name?: string | null;
+  anesthesiologist_id?: number | null;
+  anesthesiologist_name?: string | null;
+  scrub_nurse_name?: string | null;
+  pediatrician_standby_name?: string | null;
+  blood_units_reserved: number;
+  special_equipment_needed?: string | null;
+  cancellation_reason?: string | null;
+  created_at: string;
+  updated_at: string;
+  uhid?: string;
+  patient_name?: string;
+  patient_age?: number | null;
+  patient_phone?: string | null;
+  patient_address?: string | null;
+  gravida?: number | null;
+  para?: number | null;
+  lastMenstrualPeriod?: string | null;
+  primary_surgeon_full_name?: string;
+  anesthesiologist_full_name?: string;
+  asa_grade?: AsaGrade | null;
+  pac_clearance_status?: PacClearanceStatus | null;
+  signin_completed?: number;
+  timeout_completed?: number;
+  signout_completed?: number;
+}
+
+export interface PacClearanceRecord {
+  id: number;
+  patient_id: number;
+  ot_schedule_id?: number | null;
+  evaluation_date: string;
+  anesthesiologist_id: number;
+  anesthesiologist_name: string;
+  asa_grade: AsaGrade;
+  mallampati_class: MallampatiClass;
+  mouth_opening_cm: number;
+  thyromental_distance_cm: number;
+  dentition_status: 'intact' | 'loose_teeth' | 'edentulous' | 'dentures_present';
+  neck_mobility: 'normal_full' | 'restricted_extension' | 'fixed_flexion';
+  npo_solid_hours: number;
+  npo_clear_liquid_hours: number;
+  cardiovascular_assessment?: string | null;
+  respiratory_assessment?: string | null;
+  airway_notes?: string | null;
+  planned_anesthesia_technique: PlannedAnesthesiaTechnique;
+  pac_clearance_status: PacClearanceStatus;
+  high_risk_warnings?: string | null;
+  preop_orders_instructions?: string | null;
+  blood_products_crossmatched?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WhoChecklistRecord {
+  id: number;
+  ot_schedule_id: number;
+  patient_id: number;
+  signin_completed: number;
+  signin_patient_confirmed: number;
+  signin_site_marked: number;
+  signin_anesthesia_safety_check: number;
+  signin_pulse_oximeter_functioning: number;
+  signin_known_allergy: number;
+  signin_difficult_airway_risk: number;
+  signin_blood_loss_risk: number;
+  signin_nurse_anesthetist_name?: string | null;
+  signin_timestamp?: string | null;
+  timeout_completed: number;
+  timeout_team_introduced: number;
+  timeout_verbal_confirmation: number;
+  timeout_surgeon_review?: string | null;
+  timeout_anesthetist_review?: string | null;
+  timeout_nursing_sterility_confirmed: number;
+  timeout_antibiotic_prophylaxis_given: number;
+  timeout_antibiotic_name_dose?: string | null;
+  timeout_imaging_displayed: number;
+  timeout_completed_by_name?: string | null;
+  timeout_timestamp?: string | null;
+  signout_completed: number;
+  signout_procedure_recorded_name?: string | null;
+  signout_counts_correct: number;
+  signout_specimen_labeled: number;
+  signout_equipment_problems?: string | null;
+  signout_recovery_concerns?: string | null;
+  signout_completed_by_name?: string | null;
+  signout_timestamp?: string | null;
+  updated_at: string;
+}
+
+export const getOtSchedules = (params?: {
+  date?: string;
+  otRoom?: string;
+  status?: string;
+  patientId?: number;
+}): Promise<{ schedules: OtScheduleRecord[] }> => {
+  const q = new URLSearchParams();
+  if (params?.date) q.append('date', params.date);
+  if (params?.otRoom) q.append('otRoom', params.otRoom);
+  if (params?.status) q.append('status', params.status);
+  if (params?.patientId) q.append('patientId', String(params.patientId));
+  const queryStr = q.toString() ? `?${q.toString()}` : '';
+  return api<{ schedules: OtScheduleRecord[] }>('GET', `/api/ot-schedules${queryStr}`);
+};
+
+export const getOtStaff = (): Promise<{ staff: { id: number; fullName: string; username: string; role: Role }[] }> =>
+  api<{ staff: { id: number; fullName: string; username: string; role: Role }[] }>('GET', '/api/ot-schedules/staff');
+
+export const createOtSchedule = (payload: {
+  patientId: number;
+  admissionId?: number | null;
+  otRoom?: OtRoom;
+  scheduledDate: string;
+  scheduledStartTime: string;
+  estimatedDurationMinutes?: number;
+  procedureName: string;
+  procedureCategory?: string;
+  priority?: OtPriority;
+  primarySurgeonId: number;
+  assistantSurgeonName?: string | null;
+  anesthesiologistId?: number | null;
+  scrubNurseName?: string | null;
+  pediatricianStandbyName?: string | null;
+  bloodUnitsReserved?: number;
+  specialEquipmentNeeded?: string | null;
+}): Promise<OtScheduleRecord> =>
+  api<OtScheduleRecord>('POST', '/api/ot-schedules', payload);
+
+export const getOtSchedule = (id: number): Promise<{
+  schedule: OtScheduleRecord;
+  pac: PacClearanceRecord | null;
+  whoChecklist: WhoChecklistRecord | null;
+}> =>
+  api<{
+    schedule: OtScheduleRecord;
+    pac: PacClearanceRecord | null;
+    whoChecklist: WhoChecklistRecord | null;
+  }>('GET', `/api/ot-schedules/${id}`);
+
+export const updateOtSchedule = (id: number, payload: Partial<{
+  otRoom: OtRoom;
+  scheduledDate: string;
+  scheduledStartTime: string;
+  estimatedDurationMinutes: number;
+  procedureName: string;
+  procedureCategory: string;
+  priority: OtPriority;
+  status: OtStatus;
+  primarySurgeonId: number;
+  assistantSurgeonName: string | null;
+  anesthesiologistId: number | null;
+  scrubNurseName: string | null;
+  pediatricianStandbyName: string | null;
+  bloodUnitsReserved: number;
+  specialEquipmentNeeded: string | null;
+  cancellationReason: string | null;
+}>): Promise<OtScheduleRecord> =>
+  api<OtScheduleRecord>('PUT', `/api/ot-schedules/${id}`, payload);
+
+export const deleteOtSchedule = (id: number): Promise<{ success: boolean; message: string }> =>
+  api<{ success: boolean; message: string }>('DELETE', `/api/ot-schedules/${id}`);
+
+export const updateWhoChecklist = (id: number, payload: Partial<{
+  signinCompleted: boolean;
+  signinPatientConfirmed: boolean;
+  signinSiteMarked: boolean;
+  signinAnesthesiaSafetyCheck: boolean;
+  signinPulseOximeterFunctioning: boolean;
+  signinKnownAllergy: boolean;
+  signinDifficultAirwayRisk: boolean;
+  signinBloodLossRisk: boolean;
+  signinNurseAnesthetistName: string | null;
+  timeoutCompleted: boolean;
+  timeoutTeamIntroduced: boolean;
+  timeoutVerbalConfirmation: boolean;
+  timeoutSurgeonReview: string | null;
+  timeoutAnesthetistReview: string | null;
+  timeoutNursingSterilityConfirmed: boolean;
+  timeoutAntibioticProphylaxisGiven: boolean;
+  timeoutAntibioticNameDose: string | null;
+  timeoutImagingDisplayed: boolean;
+  timeoutCompletedByName: string | null;
+  signoutCompleted: boolean;
+  signoutProcedureRecordedName: string | null;
+  signoutCountsCorrect: boolean;
+  signoutSpecimenLabeled: boolean;
+  signoutEquipmentProblems: string | null;
+  signoutRecoveryConcerns: string | null;
+  signoutCompletedByName: string | null;
+}>): Promise<WhoChecklistRecord> =>
+  api<WhoChecklistRecord>('POST', `/api/ot-schedules/${id}/who-checklist`, payload);
+
+export const getPatientPac = (patientId: number): Promise<{ clearances: PacClearanceRecord[] }> =>
+  api<{ clearances: PacClearanceRecord[] }>('GET', `/api/patients/${patientId}/pac`);
+
+export const createPatientPac = (patientId: number, payload: {
+  otScheduleId?: number | null;
+  evaluationDate: string;
+  asaGrade: AsaGrade;
+  mallampatiClass?: MallampatiClass;
+  mouthOpeningCm?: number;
+  thyromentalDistanceCm?: number;
+  dentitionStatus?: 'intact' | 'loose_teeth' | 'edentulous' | 'dentures_present';
+  neckMobility?: 'normal_full' | 'restricted_extension' | 'fixed_flexion';
+  npoSolidHours?: number;
+  npoClearLiquidHours?: number;
+  cardiovascularAssessment?: string | null;
+  respiratoryAssessment?: string | null;
+  airwayNotes?: string | null;
+  plannedAnesthesiaTechnique?: PlannedAnesthesiaTechnique;
+  pacClearanceStatus?: PacClearanceStatus;
+  highRiskWarnings?: string | null;
+  preopOrdersInstructions?: string | null;
+  bloodProductsCrossmatched?: string | null;
+}): Promise<PacClearanceRecord> =>
+  api<PacClearanceRecord>('POST', `/api/patients/${patientId}/pac`, payload);
+
+export const deletePatientPac = (id: number): Promise<{ success: boolean; message: string }> =>
+  api<{ success: boolean; message: string }>('DELETE', `/api/pac/${id}`);
+
+export const auditOtPrint = (id: number): Promise<{ success: boolean }> =>
+  api<{ success: boolean }>('POST', `/api/ot-schedules/${id}/audit-print`, {});
+

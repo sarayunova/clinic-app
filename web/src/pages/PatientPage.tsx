@@ -47,6 +47,7 @@ import { SncuTracker } from '../components/SncuTracker';
 import { ImmunizationRecallDashboard } from '../components/ImmunizationRecallDashboard';
 import { EmergencyQrCard } from '../components/EmergencyQrCard';
 import { AbdmProfileTab } from '../components/AbdmProfileTab';
+import { PacClearanceTab } from '../components/PacClearanceTab';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -157,7 +158,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'abdm' | 'pediatric' | 'pediatric_growth' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'abdm' | 'pediatric' | 'pediatric_growth' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'pac' | 'risk' | 'postnatal' | 'maternity_admission' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -740,6 +741,13 @@ export function PatientPage() {
                 )}
                 <button
                   type="button"
+                  className={`btn small ${viewMode === 'pac' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('pac')}
+                >
+                  💉 PAC / Anesthesia
+                </button>
+                <button
+                  type="button"
                   className={`btn small ${viewMode === 'operative' ? 'primary' : ''}`}
                   onClick={() => setViewMode('operative')}
                 >
@@ -872,6 +880,8 @@ export function PatientPage() {
               patientId={patient!.id}
               onChanged={load}
             />
+          ) : viewMode === 'pac' ? (
+            <PacClearanceTab patientId={patient!.id} />
           ) : viewMode === 'operative' ? (
             <OperativeNotesList
               patientId={patient!.id}
