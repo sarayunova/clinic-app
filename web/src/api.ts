@@ -9281,6 +9281,271 @@ export const deletePediatricSepticArthritisFlowsheet = (episodeId: number, logId
 export const calculatePediatricSepticArthritis = (payload: any): Promise<{ evalResult: any }> =>
   api('POST', '/api/pediatric-septic-arthritis/evaluate', payload);
 
+// ==========================================
+// SERIES 27: Neonatal Chylothorax, Obstetric Cord Prolapse, Pediatric Intussusception
+// ==========================================
+
+// --- SERIES 27A: Neonatal Chylothorax & Octreotide Titration Protocol ---
+export interface NeonatalChylothoraxRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  patient_number?: string | null;
+  date_of_birth?: string | null;
+  admission_id?: number | null;
+  episode_code: string;
+  diagnosis_datetime: string;
+  gestational_age_weeks: number;
+  birth_weight_grams: number;
+  chronological_age_days: number;
+  current_weight_kg: number;
+  effusion_laterality: 'unilateral_right' | 'unilateral_left' | 'bilateral';
+  etiology: 'congenital_idiopathic' | 'post_cardiothoracic_surgery' | 'genetic_turner_noonan_trisomy21' | 'central_venous_thrombosis' | 'congenital_lymphangiomatosis';
+  pleural_triglycerides_mg_dl?: number | null;
+  pleural_total_cells_per_microliter?: number | null;
+  pleural_lymphocyte_percent?: number | null;
+  pleural_cholesterol_mg_dl?: number | null;
+  chylomicron_presence: number;
+  chest_tube_inserted: number;
+  initial_24h_drainage_ml: number;
+  drainage_ml_kg_day: number;
+  dietary_regimen: 'nil_by_mouth_tpn' | 'exclusive_mct_formula' | 'mct_supplemented_breast_milk' | 'unrestricted_breast_milk_formula';
+  octreotide_prescribed: number;
+  octreotide_current_dose_mcg_kg_hr: number;
+  chemical_pleurodesis_performed: number;
+  surgical_ligation_indicated: number;
+  status: 'acute_chest_tube_drainage' | 'octreotide_titration' | 'dietary_mct_transition' | 'resolved_tube_removed' | 'refractory_surgical_referral';
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NeonatalChylothoraxFlowsheetRecord {
+  id: number;
+  chylothorax_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  days_from_diagnosis: number;
+  drainage_24h_ml: number;
+  drainage_ml_kg_day: number;
+  octreotide_dose_mcg_kg_hr: number;
+  blood_glucose_mg_dl?: number | null;
+  serum_sodium_mmol_l?: number | null;
+  fluid_appearance: 'milky_chylous' | 'serosanguinous' | 'straw_colored_serous' | 'clear';
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getNeonatalChylothoraxEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: NeonatalChylothoraxRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: NeonatalChylothoraxRecord[] }>('GET', `/api/neonatal-chylothorax/episodes${queryStr}`);
+};
+
+export const getNeonatalChylothoraxEpisode = (id: number): Promise<{ episode: NeonatalChylothoraxRecord; logs: NeonatalChylothoraxFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/neonatal-chylothorax/episodes/${id}`);
+
+export const createNeonatalChylothoraxEpisode = (payload: any): Promise<{ episode: NeonatalChylothoraxRecord; evalResult: any }> =>
+  api('POST', '/api/neonatal-chylothorax/episodes', payload);
+
+export const updateNeonatalChylothoraxEpisode = (id: number, payload: any): Promise<{ episode: NeonatalChylothoraxRecord }> =>
+  api('PATCH', `/api/neonatal-chylothorax/episodes/${id}`, payload);
+
+export const deleteNeonatalChylothoraxEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-chylothorax/episodes/${id}`);
+
+export const addNeonatalChylothoraxFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/neonatal-chylothorax/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteNeonatalChylothoraxFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-chylothorax/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateNeonatalChylothorax = (payload: any): Promise<{ evalResult: any }> =>
+  api('POST', '/api/neonatal-chylothorax/evaluate', payload);
+
+
+// --- SERIES 27B: Obstetric Umbilical Cord Prolapse & Emergent Decompression Protocol ---
+export interface ObstetricCordProlapseRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  patient_number?: string | null;
+  date_of_birth?: string | null;
+  admission_id?: number | null;
+  episode_code: string;
+  detection_datetime: string;
+  maternal_age?: number | null;
+  gestational_age_weeks: number;
+  cervical_dilation_cm: number;
+  membrane_status: 'ruptured_artificial' | 'ruptured_spontaneous' | 'intact_funicular_presentation';
+  fetal_presentation: 'cephalic_vertex' | 'breech_frank' | 'breech_complete_footling' | 'transverse_shoulder' | 'compound';
+  prolapse_type: 'overt_cord_visible_or_in_vagina' | 'occult_cord_adjacent_to_head';
+  cord_pulsation_present: number;
+  baseline_fhr_bpm: number;
+  fhr_deceleration_type: 'prolonged_bradycardia' | 'severe_variable_decelerations' | 'normal_fhr_reassuring';
+  manual_elevation_performed: number;
+  maternal_positioning: 'knee_chest_genupectoral' | 'exaggerated_trendelenburg' | 'left_lateral_with_pillow' | 'supine_unfavorable';
+  bladder_filling_performed: number;
+  bladder_saline_volume_ml: number;
+  tocolysis_administered: number;
+  tocolysis_agent: 'none' | 'terbutaline_sc' | 'salbutamol_iv' | 'nitroglycerin_sublingual';
+  cord_manipulation_avoided: number;
+  cord_wrapped_warm_saline: number;
+  delivery_mode: 'category_1_emergency_cesarean' | 'assisted_operative_vaginal_vacuum' | 'assisted_operative_vaginal_forceps' | 'spontaneous_vaginal_imminent';
+  decision_to_delivery_minutes?: number | null;
+  apgar_1min?: number | null;
+  apgar_5min?: number | null;
+  umbilical_arterial_ph?: number | null;
+  status: 'emergent_decompression_active' | 'operating_room_in_transit' | 'delivered_neonatal_resuscitation' | 'postpartum_surveillance_stable';
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ObstetricCordProlapseFlowsheetRecord {
+  id: number;
+  cord_prolapse_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  minutes_from_detection: number;
+  fetal_heart_rate_bpm: number;
+  cord_pulsation_palpable: number;
+  manual_elevation_maintained: number;
+  maternal_blood_pressure_sys: number;
+  maternal_blood_pressure_dia: number;
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getObstetricCordProlapseEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: ObstetricCordProlapseRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: ObstetricCordProlapseRecord[] }>('GET', `/api/obstetric-cord-prolapse/episodes${queryStr}`);
+};
+
+export const getObstetricCordProlapseEpisode = (id: number): Promise<{ episode: ObstetricCordProlapseRecord; logs: ObstetricCordProlapseFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/obstetric-cord-prolapse/episodes/${id}`);
+
+export const createObstetricCordProlapseEpisode = (payload: any): Promise<{ episode: ObstetricCordProlapseRecord; evalResult: any }> =>
+  api('POST', '/api/obstetric-cord-prolapse/episodes', payload);
+
+export const updateObstetricCordProlapseEpisode = (id: number, payload: any): Promise<{ episode: ObstetricCordProlapseRecord }> =>
+  api('PATCH', `/api/obstetric-cord-prolapse/episodes/${id}`, payload);
+
+export const deleteObstetricCordProlapseEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-cord-prolapse/episodes/${id}`);
+
+export const addObstetricCordProlapseFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/obstetric-cord-prolapse/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteObstetricCordProlapseFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-cord-prolapse/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateObstetricCordProlapse = (payload: any): Promise<{ evalResult: any }> =>
+  api('POST', '/api/obstetric-cord-prolapse/evaluate', payload);
+
+
+// --- SERIES 27C: Pediatric Intussusception & Enema Reduction Protocol ---
+export interface PediatricIntussusceptionRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  patient_number?: string | null;
+  date_of_birth?: string | null;
+  admission_id?: number | null;
+  episode_code: string;
+  presentation_datetime: string;
+  age_months: number;
+  weight_kg: number;
+  symptom_duration_hours: number;
+  intermittent_colicky_pain: number;
+  vomiting_bilious: number;
+  red_currant_jelly_stool: number;
+  palpable_abdominal_mass: number;
+  lethargy_altered_sensorium: number;
+  ultrasound_target_sign_detected: number;
+  ultrasound_outer_diameter_mm?: number | null;
+  pseudokidney_sign_present: number;
+  pathologic_lead_point_suspected: number;
+  lead_point_type: 'none_idiopathic' | 'meckels_diverticulum' | 'intestinal_duplication_cyst' | 'polyp' | 'lymphoma_malignancy';
+  peritonitis_signs_present: number;
+  pneumoperitoneum_on_xray: number;
+  reduction_attempted: number;
+  reduction_method: 'pneumatic_air_enema' | 'hydrostatic_saline_enema' | 'none_primary_surgery';
+  maximum_pressure_mmhg: number;
+  reduction_attempts_count: number;
+  reduction_successful: number;
+  cecal_ileal_reflux_visualized: number;
+  surgical_exploration_required: number;
+  surgical_findings?: string | null;
+  status: 'evaluation_ultrasound' | 'reduction_in_progress' | 'reduction_successful_observation' | 'operating_room_exploration' | 'resolved_discharged';
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PediatricIntussusceptionFlowsheetRecord {
+  id: number;
+  intussusception_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  minutes_from_procedure: number;
+  heart_rate_bpm: number;
+  blood_pressure_sys: number;
+  blood_pressure_dia: number;
+  abdominal_soft_non_tender: number;
+  colicky_pain_recurrence: number;
+  oral_intake_tolerated: number;
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getPediatricIntussusceptionEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: PediatricIntussusceptionRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: PediatricIntussusceptionRecord[] }>('GET', `/api/pediatric-intussusception/episodes${queryStr}`);
+};
+
+export const getPediatricIntussusceptionEpisode = (id: number): Promise<{ episode: PediatricIntussusceptionRecord; logs: PediatricIntussusceptionFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/pediatric-intussusception/episodes/${id}`);
+
+export const createPediatricIntussusceptionEpisode = (payload: any): Promise<{ episode: PediatricIntussusceptionRecord; evalResult: any }> =>
+  api('POST', '/api/pediatric-intussusception/episodes', payload);
+
+export const updatePediatricIntussusceptionEpisode = (id: number, payload: any): Promise<{ episode: PediatricIntussusceptionRecord }> =>
+  api('PATCH', `/api/pediatric-intussusception/episodes/${id}`, payload);
+
+export const deletePediatricIntussusceptionEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-intussusception/episodes/${id}`);
+
+export const addPediatricIntussusceptionFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/pediatric-intussusception/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deletePediatricIntussusceptionFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-intussusception/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculatePediatricIntussusception = (payload: any): Promise<{ evalResult: any }> =>
+  api('POST', '/api/pediatric-intussusception/evaluate', payload);
+
+
 
 
 

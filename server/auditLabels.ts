@@ -482,6 +482,28 @@ export const ACTION_LABELS: Record<string, string> = {
   'pediatric_septic_arthritis.flowsheet_delete': 'Deleted pediatric septic arthritis flowsheet log',
   'pediatric_septic_arthritis.print': 'Printed pediatric septic arthritis & Kocher diagnostic criteria dossier',
 
+  // SERIES 27: Neonatal Chylothorax, Obstetric Cord Prolapse, Pediatric Intussusception
+  'neonatal_chylothorax.create': 'Initiated neonatal chylothorax evaluation & Octreotide titration calculation',
+  'neonatal_chylothorax.update': 'Updated neonatal chylothorax episode, dietary MCT or Octreotide status',
+  'neonatal_chylothorax.delete': 'Deleted neonatal chylothorax episode record',
+  'neonatal_chylothorax.flowsheet_add': 'Logged neonatal chylothorax 24h drainage & appearance checkpoint',
+  'neonatal_chylothorax.flowsheet_delete': 'Deleted neonatal chylothorax flowsheet log',
+  'neonatal_chylothorax.print': 'Printed neonatal chylothorax & Octreotide titration clinical dossier',
+
+  'obstetric_cord_prolapse.create': 'Initiated obstetric umbilical cord prolapse emergent decompression protocol',
+  'obstetric_cord_prolapse.update': 'Updated obstetric cord prolapse episode, manual elevation or delivery status',
+  'obstetric_cord_prolapse.delete': 'Deleted obstetric cord prolapse episode record',
+  'obstetric_cord_prolapse.flowsheet_add': 'Logged obstetric cord prolapse FHR & manual elevation checkpoint',
+  'obstetric_cord_prolapse.flowsheet_delete': 'Deleted obstetric cord prolapse flowsheet log',
+  'obstetric_cord_prolapse.print': 'Printed obstetric cord prolapse & Category-1 delivery clinical dossier',
+
+  'pediatric_intussusception.create': 'Initiated pediatric intussusception evaluation & reduction pressure protocol',
+  'pediatric_intussusception.update': 'Updated pediatric intussusception episode, reduction outcome or surgical status',
+  'pediatric_intussusception.delete': 'Deleted pediatric intussusception episode record',
+  'pediatric_intussusception.flowsheet_add': 'Logged pediatric post-reduction abdominal check & pain recurrence checkpoint',
+  'pediatric_intussusception.flowsheet_delete': 'Deleted pediatric intussusception flowsheet log',
+  'pediatric_intussusception.print': 'Printed pediatric intussusception & reduction protocol clinical dossier',
+
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

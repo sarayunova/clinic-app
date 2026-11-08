@@ -3735,6 +3735,157 @@ async function seed() {
     }
   }
 
+  // --- SERIES 27A: Neonatal Chylothorax & Octreotide Titration Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_chylothorax_episodes (
+      patient_id, admission_id, episode_code, diagnosis_datetime,
+      gestational_age_weeks, birth_weight_grams, chronological_age_days, current_weight_kg,
+      effusion_laterality, etiology, pleural_triglycerides_mg_dl, pleural_total_cells_per_microliter,
+      pleural_lymphocyte_percent, pleural_cholesterol_mg_dl, chylomicron_presence,
+      chest_tube_inserted, initial_24h_drainage_ml, drainage_ml_kg_day,
+      dietary_regimen, octreotide_prescribed, octreotide_current_dose_mcg_kg_hr,
+      chemical_pleurodesis_performed, surgical_ligation_indicated,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'CHYLO-20261108-101', '2026-11-08T06:00:00',
+      37.5, 2950, 6, 2.85,
+      'unilateral_right', 'post_cardiothoracic_surgery', 184.0, 4800,
+      89.0, 68.0, 1,
+      1, 68.4, 24.0,
+      'nil_by_mouth_tpn', 1, 3.0,
+      0, 0,
+      'octreotide_titration', ?,
+      '6-day-old neonate post-coarctation of aorta repair with high-output chylous pleural drainage (24.0 mL/kg/day). Pleural fluid confirms chyle leak with triglycerides 184 mg/dL and 89% lymphocytes. Enteral feeds halted, total parenteral nutrition instituted with strict LCT avoidance. IV Octreotide infusion commenced at 1 mcg/kg/hr and uptitrated to 3 mcg/kg/hr with serial glycemic and electrolyte surveillance. Responsive with declining drainage.',
+      ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingChylo = db.prepare('SELECT id FROM neonatal_chylothorax_episodes WHERE episode_code = ?').get('CHYLO-20261108-101') as { id: number } | undefined;
+  if (existingChylo) {
+    const chyloLogs = [
+      { d: 1, dr: 68.4, rate: 24.0, oct: 1.0, glu: 86.0, na: 138.0, app: 'milky_chylous' as const, notes: 'Milky chest tube drainage post-coarctation repair. Diagnostic thoracentesis sent. Octreotide started at 1 mcg/kg/hr.' },
+      { d: 2, dr: 45.6, rate: 16.0, oct: 2.0, glu: 92.0, na: 137.0, app: 'serosanguinous' as const, notes: 'Titrated octreotide to 2 mcg/kg/hr. Drainage volume down by 33%. Blood glucose stable on continuous D10W infusion.' },
+      { d: 3, dr: 22.8, rate: 8.0, oct: 3.0, glu: 98.0, na: 139.0, app: 'straw_colored_serous' as const, notes: 'Octreotide 3 mcg/kg/hr. Drainage cleared to straw-colored serous. Fluid output down to 8.0 mL/kg/day (< 10 threshold).' },
+    ];
+    for (const cl of chyloLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_chylothorax_flowsheet_logs (
+          chylothorax_episode_id, patient_id, log_datetime, days_from_diagnosis,
+          drainage_24h_ml, drainage_ml_kg_day, octreotide_dose_mcg_kg_hr,
+          blood_glucose_mg_dl, serum_sodium_mmol_l, fluid_appearance,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T06:00:00', ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingChylo.id, babyId, cl.d, cl.dr, cl.rate, cl.oct, cl.glu, cl.na, cl.app, cl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 27B: Obstetric Umbilical Cord Prolapse & Emergent Decompression Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_cord_prolapse_episodes (
+      patient_id, admission_id, episode_code, detection_datetime,
+      maternal_age, gestational_age_weeks, cervical_dilation_cm, membrane_status,
+      fetal_presentation, prolapse_type, cord_pulsation_present, baseline_fhr_bpm,
+      fhr_deceleration_type, manual_elevation_performed, maternal_positioning,
+      bladder_filling_performed, bladder_saline_volume_ml, tocolysis_administered,
+      tocolysis_agent, cord_manipulation_avoided, cord_wrapped_warm_saline,
+      delivery_mode, decision_to_delivery_minutes, apgar_1min, apgar_5min,
+      umbilical_arterial_ph, status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'PROLAPSE-20261108-101', '2026-11-08T08:15:00',
+      28, 38.2, 5.0, 'ruptured_spontaneous',
+      'cephalic_vertex', 'overt_cord_visible_or_in_vagina', 1, 85,
+      'prolonged_bradycardia', 1, 'knee_chest_genupectoral',
+      1, 500, 1,
+      'terbutaline_sc', 1, 1,
+      'category_1_emergency_cesarean', 18, 7, 9,
+      7.24, 'postpartum_surveillance_stable', ?,
+      'Acute overt umbilical cord prolapse diagnosed immediately following spontaneous rupture of membranes at 5 cm cervical dilation with sudden deep fetal bradycardia to 85 bpm. Emergent digital elevation of the fetal vertex maintained continuously, patient placed into knee-chest position, 500 mL sterile warm saline instilled into urinary bladder via Foley catheter, and subcutaneous Terbutaline 0.25 mg administered for rapid uterine relaxation. Transferred to OT with elevated vertex. Emergency Category-1 Cesarean section performed with decision-to-delivery interval of 18 minutes. Vigorous male neonate delivered with Apgars 7 and 9, umbilical cord pH 7.24.',
+      ?, ?
+    )
+  `).run(anitaId, docId, now, now);
+
+  const existingProlapse = db.prepare('SELECT id FROM obstetric_cord_prolapse_episodes WHERE episode_code = ?').get('PROLAPSE-20261108-101') as { id: number } | undefined;
+  if (existingProlapse) {
+    const prolapseLogs = [
+      { min: 2, fhr: 85, puls: 1, elev: 1, sbp: 118, dbp: 76, notes: 'Overt cord prolapsed loop palpable in vagina with bradycardia 85 bpm. Manual digital vertex elevation commenced, knee-chest positioning initiated.' },
+      { min: 8, fhr: 110, puls: 1, elev: 1, sbp: 112, dbp: 70, notes: 'Foley inserted and bladder filled with 500 mL warm saline (Vago maneuver). Terbutaline 0.25 mg SC given. FHR recovering to 110 bpm.' },
+      { min: 14, fhr: 135, puls: 1, elev: 1, sbp: 116, dbp: 72, notes: 'Patient in OT, spinal anesthesia administered. Elevation maintained until surgeon extracted vertex. FHR normalized to 135 bpm.' },
+    ];
+    for (const pl of prolapseLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_cord_prolapse_flowsheet_logs (
+          cord_prolapse_episode_id, patient_id, log_datetime, minutes_from_detection,
+          fetal_heart_rate_bpm, cord_pulsation_palpable, manual_elevation_maintained,
+          maternal_blood_pressure_sys, maternal_blood_pressure_dia,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T08:15:00', ?,
+          ?, ?, ?,
+          ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingProlapse.id, anitaId, pl.min, pl.fhr, pl.puls, pl.elev, pl.sbp, pl.dbp, pl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 27C: Pediatric Intussusception & Pneumatic / Hydrostatic Reduction Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_intussusception_episodes (
+      patient_id, admission_id, episode_code, presentation_datetime,
+      age_months, weight_kg, symptom_duration_hours,
+      intermittent_colicky_pain, vomiting_bilious, red_currant_jelly_stool,
+      palpable_abdominal_mass, lethargy_altered_sensorium,
+      ultrasound_target_sign_detected, ultrasound_outer_diameter_mm, pseudokidney_sign_present,
+      pathologic_lead_point_suspected, lead_point_type,
+      peritonitis_signs_present, pneumoperitoneum_on_xray,
+      reduction_attempted, reduction_method, maximum_pressure_mmhg, reduction_attempts_count,
+      reduction_successful, cecal_ileal_reflux_visualized, surgical_exploration_required,
+      surgical_findings, status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'INTUSS-20261108-101', '2026-11-08T09:00:00',
+      9, 8.8, 14.0,
+      1, 1, 1,
+      1, 0,
+      1, 28.5, 1,
+      0, 'none_idiopathic',
+      0, 0,
+      1, 'pneumatic_air_enema', 100.0, 2,
+      1, 1, 0,
+      NULL, 'reduction_successful_observation', ?,
+      '9-month-old infant presenting with acute classical triad of intermittent severe colicky abdominal pain with legs drawn up, bilious emesis, and "red currant jelly" stool. Abdominal ultrasound confirmed ileocolic intussusception with classic target sign (outer diameter 28.5 mm) and pseudokidney sign. No peritonitis or free air on radiograph. Pneumatic air enema reduction performed under fluoroscopy with surgical stand-by: column advanced at 80 mmHg, intussusceptum unraveled on second attempt at 100 mmHg with free reflux of air into multiple small bowel terminal ileal loops. Successfully reduced non-operatively without complication. Admitted for 24h surveillance and gradual refeeding.',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingIntuss = db.prepare('SELECT id FROM pediatric_intussusception_episodes WHERE episode_code = ?').get('INTUSS-20261108-101') as { id: number } | undefined;
+  if (existingIntuss) {
+    const intussLogs = [
+      { min: 30, hr: 112, sbp: 94, dbp: 56, soft: 1, pain: 0, oral: 0, notes: 'Post-reduction observation room. Abdomen soft and non-tender. Infant sleeping comfortably between parent arms. IV maintenance fluids running.' },
+      { min: 120, hr: 104, sbp: 96, dbp: 58, soft: 1, pain: 0, oral: 1, notes: 'Child awake, playful, smiling. Trial of small volume oral rehydration solution tolerated well with no vomiting or irritability.' },
+      { min: 240, hr: 98, sbp: 98, dbp: 60, soft: 1, pain: 0, oral: 1, notes: 'Full breastfeed tolerated well. Passed normal yellow transitional stool with no bloody component. Abdomen soft, no distension.' },
+    ];
+    for (const il of intussLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_intussusception_flowsheet_logs (
+          intussusception_episode_id, patient_id, log_datetime, minutes_from_procedure,
+          heart_rate_bpm, blood_pressure_sys, blood_pressure_dia,
+          abdominal_soft_non_tender, colicky_pain_recurrence, oral_intake_tolerated,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T09:00:00', ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingIntuss.id, aaravId, il.min, il.hr, il.sbp, il.dbp, il.soft, il.pain, il.oral, il.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },
