@@ -9,9 +9,13 @@ $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIden
 if (-not $isAdmin) { Write-Host 'ERROR: Run this in an administrator PowerShell.' -ForegroundColor Red; exit 1 }
 
 if (-not (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue)) {
-  Write-Host "No '$TaskName' task is installed. Nothing to do."
-  exit 0
+  Write-Host "No '$TaskName' task is installed."
+} else {
+  Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+  Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
+  Write-Host "Removed '$TaskName' scheduled task." -ForegroundColor Green
 }
-Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
-Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
-Write-Host "Removed '$TaskName'. The clinic app will no longer start with Windows. Your data was not touched." -ForegroundColor Green
+
+# Stop any running clinic processes
+Stop-Process -Name clinic -Force -ErrorAction SilentlyContinue
+Write-Host "The clinic app is stopped and will no longer start automatically with Windows. Your data was not touched." -ForegroundColor Green
