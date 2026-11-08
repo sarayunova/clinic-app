@@ -526,6 +526,28 @@ export const ACTION_LABELS: Record<string, string> = {
   'pediatric_appendicitis.flowsheet_delete': 'Deleted pediatric appendicitis flowsheet log',
   'pediatric_appendicitis.print': 'Printed pediatric acute appendicitis & Samuel PAS protocol clinical dossier',
 
+  // SERIES 29: Neonatal TTN, Obstetric PDPH, Pediatric Bacterial Meningitis
+  'neonatal_ttn.create': 'Initiated neonatal TTN evaluation & Silverman-Anderson retraction score calculation',
+  'neonatal_ttn.status_update': 'Updated neonatal TTN episode status, CPAP support or feeding route',
+  'neonatal_ttn.delete': 'Deleted neonatal TTN episode record',
+  'neonatal_ttn.flowsheet_add': 'Logged neonatal TTN respiratory rate, SpO2, CPAP & retraction checkpoint',
+  'neonatal_ttn.flowsheet_delete': 'Deleted neonatal TTN flowsheet log',
+  'neonatal_ttn.print': 'Printed neonatal TTN & delayed lung fluid clearance clinical dossier',
+
+  'obstetric_pdph.create': 'Initiated obstetric PDPH evaluation & postdural headache protocol',
+  'obstetric_pdph.status_update': 'Updated obstetric PDPH episode, EBP procedure or clinical status',
+  'obstetric_pdph.delete': 'Deleted obstetric PDPH episode record',
+  'obstetric_pdph.flowsheet_add': 'Logged obstetric PDPH postural pain score, vitals & neuro checkpoint',
+  'obstetric_pdph.flowsheet_delete': 'Deleted obstetric PDPH flowsheet log',
+  'obstetric_pdph.print': 'Printed obstetric PDPH & epidural blood patch clinical dossier',
+
+  'pediatric_meningitis.create': 'Initiated pediatric bacterial meningitis Nigrovic BMS score calculation',
+  'pediatric_meningitis.status_update': 'Updated pediatric meningitis episode, antibiotic therapy or PICU status',
+  'pediatric_meningitis.delete': 'Deleted pediatric bacterial meningitis episode record',
+  'pediatric_meningitis.flowsheet_add': 'Logged pediatric meningitis serial GCS, pupil reactivity & neuro checkpoint',
+  'pediatric_meningitis.flowsheet_delete': 'Deleted pediatric meningitis flowsheet log',
+  'pediatric_meningitis.print': 'Printed pediatric bacterial meningitis & Nigrovic BMS clinical dossier',
+
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

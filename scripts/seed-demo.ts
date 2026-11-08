@@ -4055,6 +4055,170 @@ async function seed() {
     }
   }
 
+  // --- SERIES 29A: Neonatal Transient Tachypnea (TTN) Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_ttn_episodes (
+      patient_id, admission_id, episode_code, diagnosis_datetime,
+      gestational_age_weeks, birth_weight_kg, delivery_mode,
+      maternal_diabetes, maternal_asthma, maternal_fluid_overload,
+      initial_respiratory_rate, silverman_anderson_score,
+      chest_retraction_upper, chest_retraction_lower, xiphoid_retraction,
+      nasal_flaring, expiratory_grunt,
+      cxr_findings, initial_fio2_percent, respiratory_support_initial,
+      cpap_peep_cmh2o, feeding_status,
+      blood_gas_ph, blood_gas_pco2, blood_gas_pao2,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'TTN-20261108-101', '2026-11-08T07:15:00',
+      38.2, 3.35, 'elective_cesarean_no_labor',
+      1, 0, 0,
+      82, 4,
+      1, 1, 1,
+      1, 0,
+      'perihilar_streaking_sunburst', 28.0, 'bubble_cpap',
+      5.0, 'npo_iv_fluids',
+      7.34, 46.0, 68.0,
+      'active_monitoring', ?,
+      'Late-term infant delivered via elective C-section without labor to mother with GDM. Developed transient tachypnea (RR 82 bpm) with mild-to-moderate intercostal and subcostal retractions. Silverman-Anderson score 4/10. CXR confirms prominent perihilar streaking sunburst pattern and fluid in minor fissure. Placed on Bubble CPAP 5 cmH2O at 28% FiO2 with IV 10% Dextrose infusion.',
+      ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingTtn = db.prepare('SELECT id FROM neonatal_ttn_episodes WHERE episode_code = ?').get('TTN-20261108-101') as any;
+  if (existingTtn) {
+    const ttnLogs = [
+      { rr: 80, hr: 144, spo2: 95, fio2: 28, peep: 5.0, score: 4, grunt: 0, feed: 'npo_iv', ph: 7.35, pco2: 45, notes: 'Initiated Bubble CPAP 5 cmH2O with heated humidification.' },
+      { rr: 68, hr: 136, spo2: 97, fio2: 25, peep: 5.0, score: 2, grunt: 0, feed: 'gavage_tube', ph: 7.38, pco2: 42, notes: 'Respiratory rate dropping; retractions significantly improved. Initiated gentle gavage feeds.' },
+      { rr: 54, hr: 130, spo2: 98, fio2: 21, peep: 4.0, score: 1, grunt: 0, feed: 'oral_breast', ph: 7.40, pco2: 39, notes: 'Weaned to low-pressure CPAP 4 cmH2O on room air. Successful direct breastfeeding trial.' },
+    ];
+    for (const tl of ttnLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_ttn_flowsheet_logs (
+          ttn_episode_id, patient_id, log_datetime,
+          respiratory_rate, heart_rate, spo2_percent, fio2_percent,
+          cpap_peep_cmh2o, silverman_anderson_score, grunting_present,
+          feeding_route, blood_gas_ph, blood_gas_pco2, notes,
+          logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T07:30:00',
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?
+        )
+      `).run(existingTtn.id, babyId, tl.rr, tl.hr, tl.spo2, tl.fio2, tl.peep, tl.score, tl.grunt, tl.feed, tl.ph, tl.pco2, tl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 29B: Obstetric Postdural Puncture Headache (PDPH) Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_pdph_episodes (
+      patient_id, admission_id, episode_code, procedure_type,
+      puncture_datetime, needle_gauge, headache_onset_datetime,
+      initial_vas_score, postural_component, neck_stiffness,
+      auditory_symptoms, visual_symptoms_diplopia,
+      conservative_hydration_ml_24h, caffeine_administered, analgesics_prescribed,
+      ebp_indicated, ebp_performed, ebp_datetime,
+      ebp_blood_volume_ml, ebp_interspace, post_ebp_vas_score,
+      red_flags_present, red_flag_notes, status,
+      consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'PDPH-20261108-101', 'labor_epidural_adp',
+      '2026-11-06T14:00:00', '16G_tuohy', '2026-11-07T10:00:00',
+      8, 1, 1,
+      1, 0,
+      3000, 1, 'Paracetamol 1000mg PO Q6H + Ibuprofen 400mg PO Q8H + Oral Caffeine 200mg',
+      1, 1, '2026-11-08T08:30:00',
+      18.0, 'L3-L4', 1,
+      0, NULL, 'ebp_completed_resolving', ?,
+      'Postpartum G1P1 patient experienced accidental dural puncture during labor analgesia with 16G Tuohy needle. Developed incapacitating orthostatic fronto-occipital headache (VAS 8/10) with tinnitus and neck stiffness on sitting up to nurse. Trial of conservative therapy for 24h was unsuccessful. Autologous Epidural Blood Patch performed under strict sterile technique (18 mL autologous venous blood injected at L3-L4). Immediate relief with post-procedure VAS 1/10.',
+      ?, ?
+    )
+  `).run(poojaId, docId, now, now);
+
+  const existingPdph = db.prepare('SELECT id FROM obstetric_pdph_episodes WHERE episode_code = ?').get('PDPH-20261108-101') as any;
+  if (existingPdph) {
+    const pdphLogs = [
+      { posture: 'sitting_upright', vas: 8, relief: 1, sbp: 116, dbp: 74, hr: 82, temp: 36.8, neuro: 0, rx: 'Caffeine 200mg + Paracetamol 1g', notes: 'Severe frontal pain on sitting; completely relieved lying supine.' },
+      { posture: 'standing_ambulating', vas: 8, relief: 1, sbp: 118, dbp: 76, hr: 86, temp: 36.7, neuro: 0, rx: 'IV crystalloid 1000mL', notes: 'Unable to stand or care for infant. Proceeding to EBP counseling.' },
+      { posture: 'sitting_upright', vas: 1, relief: 1, sbp: 114, dbp: 70, hr: 74, temp: 36.9, neuro: 0, rx: 'Post-EBP supine rest completed', notes: 'Sitting upright comfortably post-EBP with minimal discomfort. Infant rooming-in restored.' },
+    ];
+    for (const pl of pdphLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_pdph_flowsheet_logs (
+          pdph_episode_id, patient_id, log_datetime,
+          posture_assessed, vas_pain_score, headache_relief_on_lying,
+          blood_pressure_sys, blood_pressure_dia, heart_rate,
+          temperature_celsius, neurological_symptoms_present,
+          interventions_given, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T08:00:00',
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingPdph.id, poojaId, pl.posture, pl.vas, pl.relief, pl.sbp, pl.dbp, pl.hr, pl.temp, pl.neuro, pl.rx, pl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 29C: Pediatric Bacterial Meningitis & Nigrovic BMS Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_bacterial_meningitis_episodes (
+      patient_id, admission_id, episode_code, triage_datetime,
+      age_months, weight_kg, prior_antibiotic_exposure_72h,
+      seizure_at_presentation, gcs_score, kernig_brudzinski_sign,
+      fontanelle_bulging, purpuric_rash, csf_wbc_count,
+      csf_neutrophil_percent, csf_anc_calculated, csf_protein_mg_dl,
+      csf_glucose_mg_dl, blood_glucose_mg_dl, csf_to_blood_glucose_ratio,
+      csf_gram_stain_positive, csf_gram_stain_organism,
+      peripheral_wbc, peripheral_anc, bms_score, risk_tier,
+      empiric_ceftriaxone_ordered, empiric_vancomycin_ordered,
+      dexamethasone_given_pre_antibiotic, isolation_precautions,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'MEN-20261108-101', '2026-11-08T05:45:00',
+      22, 12.0, 0,
+      1, 14, 1,
+      0, 0, 1100,
+      85.0, 935, 135.0,
+      24.0, 108.0, 0.22,
+      1, 'gram_positive_cocci_pairs',
+      18.8, 13200, 5, 'high_risk',
+      1, 1,
+      1, 'droplet_precautions',
+      'picu_critical_care', ?,
+      '22-month-old male presenting with high fever (39.2°C), brief generalized tonic-clonic seizure, and pronounced nuchal rigidity. Lumbar puncture revealed turbid CSF with 1,100 WBCs (85% neutrophils), elevated protein 135 mg/dL, and marked hypoglycorrhachia (CSF:Blood glucose ratio 0.22). CSF Gram stain positive for Gram-positive diplococci (Streptococcus pneumoniae). Nigrovic BMS score 5/6 (High Risk). Administered IV Dexamethasone 1.8 mg followed immediately by empiric IV Ceftriaxone 600 mg Q12H and Vancomycin 180 mg Q6H under strict droplet precautions.',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingMen = db.prepare('SELECT id FROM pediatric_bacterial_meningitis_episodes WHERE episode_code = ?').get('MEN-20261108-101') as any;
+  if (existingMen) {
+    const menLogs = [
+      { gcs: 14, pupils: 'brisk_bilateral', hr: 130, sbp: 100, dbp: 62, temp: 39.1, rr: 28, seizure: 0, notes: 'Irritable, resisting neck flexion. Droplet isolation established.', abx: 'Dexamethasone 1.8mg IV + Ceftriaxone 600mg IV' },
+      { gcs: 14, pupils: 'brisk_bilateral', hr: 122, sbp: 102, dbp: 64, temp: 38.3, rr: 24, seizure: 0, notes: 'Vancomycin 180mg IV infusion completed over 60 min. No allergic reaction.', abx: 'Vancomycin 180mg IV' },
+      { gcs: 15, pupils: 'brisk_bilateral', hr: 110, sbp: 104, dbp: 66, temp: 37.6, rr: 22, seizure: 0, notes: 'Alert, recognizing parents, taking oral sips. No further seizure activity.', abx: 'Ceftriaxone Dose 2 scheduled' },
+    ];
+    for (const ml of menLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_bacterial_meningitis_flowsheet_logs (
+          meningitis_episode_id, patient_id, log_datetime,
+          gcs_score, pupil_reactivity, heart_rate,
+          blood_pressure_sys, blood_pressure_dia, temperature_celsius,
+          respiratory_rate, seizure_activity_observed, neurological_notes,
+          antibiotic_dose_administered, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T06:00:00',
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingMen.id, aaravId, ml.gcs, ml.pupils, ml.hr, ml.sbp, ml.dbp, ml.temp, ml.rr, ml.seizure, ml.notes, ml.abx, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

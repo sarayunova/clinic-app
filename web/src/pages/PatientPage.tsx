@@ -101,6 +101,9 @@ import { PediatricIntussusceptionTab } from '../components/PediatricIntussuscept
 import { NeonatalMasTab } from '../components/NeonatalMasTab';
 import { ObstetricUterineInversionTab } from '../components/ObstetricUterineInversionTab';
 import { PediatricAppendicitisTab } from '../components/PediatricAppendicitisTab';
+import { NeonatalTtnTab } from '../components/NeonatalTtnTab';
+import { ObstetricPdphTab } from '../components/ObstetricPdphTab';
+import { PediatricBacterialMeningitisTab } from '../components/PediatricBacterialMeningitisTab';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -211,7 +214,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'abdm' | 'pediatric' | 'pediatric_growth' | 'pediatric_renal' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'pac' | 'blood_bank' | 'risk' | 'postnatal' | 'maternity_admission' | 'ams' | 'mgso4' | 'pews_pals' | 'nicu_tpn' | 'maternal_comorbidities' | 'pediatric_allergy' | 'neonatal_hie' | 'maternal_sepsis' | 'pediatric_dka' | 'neonatal_rds' | 'maternal_vte' | 'pediatric_seizures' | 'neonatal_sepsis' | 'obstetric_hypertension' | 'pediatric_septic_shock' | 'neonatal_hypoglycemia' | 'obstetric_pph' | 'pediatric_pards' | 'neonatal_bind' | 'obstetric_icp' | 'pediatric_status_epilepticus' | 'neonatal_nec' | 'obstetric_pas' | 'pediatric_tbi' | 'neonatal_pphn' | 'obstetric_afe' | 'pediatric_asthma_status' | 'neonatal_bpd' | 'obstetric_aflp' | 'pediatric_polytrauma' | 'neonatal_hspda' | 'obstetric_dka' | 'pediatric_anaphylaxis' | 'neonatal_ivh' | 'obstetric_pprom' | 'pediatric_svt' | 'neonatal_hypocalcemia' | 'obstetric_postterm' | 'pediatric_croup' | 'neonatal_polycythemia' | 'obstetric_shoulder_dystocia' | 'pediatric_foreign_body' | 'neonatal_hypomagnesemia' | 'obstetric_ppcm' | 'pediatric_septic_arthritis' | 'neonatal_chylothorax' | 'obstetric_cord_prolapse' | 'pediatric_intussusception' | 'neonatal_mas' | 'obstetric_uterine_inversion' | 'pediatric_appendicitis' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'abdm' | 'pediatric' | 'pediatric_growth' | 'pediatric_renal' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'pac' | 'blood_bank' | 'risk' | 'postnatal' | 'maternity_admission' | 'ams' | 'mgso4' | 'pews_pals' | 'nicu_tpn' | 'maternal_comorbidities' | 'pediatric_allergy' | 'neonatal_hie' | 'maternal_sepsis' | 'pediatric_dka' | 'neonatal_rds' | 'maternal_vte' | 'pediatric_seizures' | 'neonatal_sepsis' | 'obstetric_hypertension' | 'pediatric_septic_shock' | 'neonatal_hypoglycemia' | 'obstetric_pph' | 'pediatric_pards' | 'neonatal_bind' | 'obstetric_icp' | 'pediatric_status_epilepticus' | 'neonatal_nec' | 'obstetric_pas' | 'pediatric_tbi' | 'neonatal_pphn' | 'obstetric_afe' | 'pediatric_asthma_status' | 'neonatal_bpd' | 'obstetric_aflp' | 'pediatric_polytrauma' | 'neonatal_hspda' | 'obstetric_dka' | 'pediatric_anaphylaxis' | 'neonatal_ivh' | 'obstetric_pprom' | 'pediatric_svt' | 'neonatal_hypocalcemia' | 'obstetric_postterm' | 'pediatric_croup' | 'neonatal_polycythemia' | 'obstetric_shoulder_dystocia' | 'pediatric_foreign_body' | 'neonatal_hypomagnesemia' | 'obstetric_ppcm' | 'pediatric_septic_arthritis' | 'neonatal_chylothorax' | 'obstetric_cord_prolapse' | 'pediatric_intussusception' | 'neonatal_mas' | 'obstetric_uterine_inversion' | 'pediatric_appendicitis' | 'neonatal_ttn' | 'obstetric_pdph' | 'pediatric_meningitis' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -1198,6 +1201,27 @@ export function PatientPage() {
                 </button>
                 <button
                   type="button"
+                  className={`btn small ${viewMode === 'neonatal_ttn' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('neonatal_ttn')}
+                >
+                  🫁 Neonatal TTN
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'obstetric_pdph' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('obstetric_pdph')}
+                >
+                  💉 Obstetric PDPH
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'pediatric_meningitis' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('pediatric_meningitis')}
+                >
+                  🧠 Pediatric Meningitis
+                </button>
+                <button
+                  type="button"
                   className={`btn small ${viewMode === 'list' ? 'primary' : ''}`}
                   onClick={() => setViewMode('list')}
                 >
@@ -1575,6 +1599,18 @@ export function PatientPage() {
             />
           ) : viewMode === 'pediatric_appendicitis' ? (
             <PediatricAppendicitisTab
+              patientId={patient!.id}
+            />
+          ) : viewMode === 'neonatal_ttn' ? (
+            <NeonatalTtnTab
+              patientId={patient!.id}
+            />
+          ) : viewMode === 'obstetric_pdph' ? (
+            <ObstetricPdphTab
+              patientId={patient!.id}
+            />
+          ) : viewMode === 'pediatric_meningitis' ? (
+            <PediatricBacterialMeningitisTab
               patientId={patient!.id}
             />
           ) : (

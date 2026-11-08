@@ -9847,6 +9847,262 @@ export const deletePediatricAppendicitisFlowsheet = (episodeId: number, logId: n
 export const calculatePediatricAppendicitis = (payload: any): Promise<{ evalResult: any }> =>
   api('POST', '/api/pediatric-appendicitis/evaluate', payload);
 
+// ==========================================
+// SERIES 29: NEONATAL TTN & DELAYED LUNG FLUID CLEARANCE
+// ==========================================
+
+export interface NeonatalTtnRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  diagnosis_datetime: string;
+  gestational_age_weeks: number;
+  birth_weight_kg: number;
+  delivery_mode: 'elective_cesarean_no_labor' | 'emergency_cesarean_in_labor' | 'vaginal_spontaneous' | 'vaginal_instrumental';
+  maternal_diabetes: boolean;
+  maternal_asthma: boolean;
+  maternal_fluid_overload: boolean;
+  initial_respiratory_rate: number;
+  silverman_anderson_score: number;
+  chest_retraction_upper: number;
+  chest_retraction_lower: number;
+  xiphoid_retraction: number;
+  nasal_flaring: number;
+  expiratory_grunt: number;
+  cxr_findings: 'perihilar_streaking_sunburst' | 'fissural_fluid_line' | 'prominent_vascularity' | 'hyperaeration' | 'normal_or_equivocal' | 'ground_glass_rds_overlap';
+  initial_fio2_percent: number;
+  respiratory_support_initial: 'room_air' | 'nasal_cannula_low_flow' | 'hfnc' | 'bubble_cpap' | 'mechanical_ventilation';
+  cpap_peep_cmh2o: number | null;
+  feeding_status: 'npo_iv_fluids' | 'orogastric_gavage' | 'oral_breast_bottle';
+  blood_gas_ph: number | null;
+  blood_gas_pco2: number | null;
+  blood_gas_pao2: number | null;
+  status: 'active_monitoring' | 'weaning_support' | 'resolved_discharged' | 'escalated_to_rds_surfactant' | 'escalated_to_pphn';
+  consultant_id: number;
+  consultant_name?: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NeonatalTtnFlowsheetRecord {
+  id: number;
+  ttn_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  respiratory_rate: number;
+  heart_rate: number;
+  spo2_percent: number;
+  fio2_percent: number;
+  cpap_peep_cmh2o: number | null;
+  silverman_anderson_score: number;
+  grunting_present: boolean;
+  feeding_route: string | null;
+  blood_gas_ph: number | null;
+  blood_gas_pco2: number | null;
+  notes: string | null;
+  logged_by_id: number;
+  logged_by_name?: string;
+  created_at: string;
+}
+
+export const getNeonatalTtnEpisodes = (params?: { patientId?: number }): Promise<{ episodes: NeonatalTtnRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/neonatal-ttn/episodes${query}`);
+};
+
+export const getNeonatalTtnEpisode = (id: number): Promise<{ episode: NeonatalTtnRecord; evaluation: any; flowsheet: NeonatalTtnFlowsheetRecord[] }> =>
+  api('GET', `/api/neonatal-ttn/episodes/${id}`);
+
+export const createNeonatalTtnEpisode = (payload: any): Promise<{ episodeId: number; episodeCode: string; silvermanScore: number; success: boolean }> =>
+  api('POST', '/api/neonatal-ttn/episodes', payload);
+
+export const updateNeonatalTtnStatus = (id: number, payload: { status: string; clinicalNotes?: string }): Promise<{ success: boolean }> =>
+  api('PATCH', `/api/neonatal-ttn/episodes/${id}/status`, payload);
+
+export const addNeonatalTtnFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number; success: boolean }> =>
+  api('POST', `/api/neonatal-ttn/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteNeonatalTtnFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-ttn/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const evaluateNeonatalTtnApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/neonatal-ttn/evaluate', payload);
+
+// ==========================================
+// SERIES 29: OBSTETRIC PDPH & EPIDURAL BLOOD PATCH
+// ==========================================
+
+export interface ObstetricPdphRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  procedure_type: 'labor_epidural_adp' | 'spinal_anesthesia' | 'combined_spinal_epidural' | 'diagnostic_lumbar_puncture';
+  puncture_datetime: string;
+  needle_gauge: string;
+  headache_onset_datetime: string;
+  initial_vas_score: number;
+  postural_component: boolean;
+  neck_stiffness: boolean;
+  auditory_symptoms: boolean;
+  visual_symptoms_diplopia: boolean;
+  conservative_hydration_ml_24h: number;
+  caffeine_administered: boolean;
+  analgesics_prescribed: string | null;
+  ebp_indicated: boolean;
+  ebp_performed: boolean;
+  ebp_datetime: string | null;
+  ebp_blood_volume_ml: number | null;
+  ebp_interspace: string | null;
+  post_ebp_vas_score: number | null;
+  red_flags_present: boolean;
+  red_flag_notes: string | null;
+  status: 'conservative_management' | 'ebp_scheduled' | 'ebp_completed_resolving' | 'headache_resolved' | 'referred_neurology_imaging';
+  consultant_id: number;
+  consultant_name?: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ObstetricPdphFlowsheetRecord {
+  id: number;
+  pdph_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  posture_assessed: 'supine' | 'sitting_upright' | 'standing_ambulating';
+  vas_pain_score: number;
+  headache_relief_on_lying: boolean;
+  blood_pressure_sys: number | null;
+  blood_pressure_dia: number | null;
+  heart_rate: number | null;
+  temperature_celsius: number | null;
+  neurological_symptoms_present: boolean;
+  interventions_given: string | null;
+  notes: string | null;
+  logged_by_id: number;
+  logged_by_name?: string;
+  created_at: string;
+}
+
+export const getObstetricPdphEpisodes = (params?: { patientId?: number }): Promise<{ episodes: ObstetricPdphRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/obstetric-pdph/episodes${query}`);
+};
+
+export const getObstetricPdphEpisode = (id: number): Promise<{ episode: ObstetricPdphRecord; evaluation: any; flowsheet: ObstetricPdphFlowsheetRecord[] }> =>
+  api('GET', `/api/obstetric-pdph/episodes/${id}`);
+
+export const createObstetricPdphEpisode = (payload: any): Promise<{ episodeId: number; episodeCode: string; evaluation: any; success: boolean }> =>
+  api('POST', '/api/obstetric-pdph/episodes', payload);
+
+export const updateObstetricPdphStatus = (id: number, payload: any): Promise<{ success: boolean }> =>
+  api('PATCH', `/api/obstetric-pdph/episodes/${id}/status`, payload);
+
+export const addObstetricPdphFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number; success: boolean }> =>
+  api('POST', `/api/obstetric-pdph/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteObstetricPdphFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-pdph/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const evaluateObstetricPdphApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/obstetric-pdph/evaluate', payload);
+
+// ==========================================
+// SERIES 29: PEDIATRIC BACTERIAL MENINGITIS & NIGROVIC BMS SCORE
+// ==========================================
+
+export interface PediatricBacterialMeningitisRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  triage_datetime: string;
+  age_months: number;
+  weight_kg: number;
+  prior_antibiotic_exposure_72h: boolean;
+  seizure_at_presentation: boolean;
+  gcs_score: number;
+  kernig_brudzinski_sign: boolean;
+  fontanelle_bulging: boolean;
+  purpuric_rash: boolean;
+  csf_wbc_count: number;
+  csf_neutrophil_percent: number;
+  csf_anc_calculated: number;
+  csf_protein_mg_dl: number;
+  csf_glucose_mg_dl: number;
+  blood_glucose_mg_dl: number;
+  csf_to_blood_glucose_ratio: number;
+  csf_gram_stain_positive: boolean;
+  csf_gram_stain_organism: 'none_seen' | 'gram_positive_cocci_pairs' | 'gram_negative_diplococci' | 'gram_negative_bacilli' | 'other';
+  peripheral_wbc: number;
+  peripheral_anc: number;
+  bms_score: number;
+  risk_tier: 'very_low_risk' | 'high_risk';
+  empiric_ceftriaxone_ordered: boolean;
+  empiric_vancomycin_ordered: boolean;
+  dexamethasone_given_pre_antibiotic: boolean;
+  isolation_precautions: 'droplet_precautions' | 'standard';
+  status: 'active_triage' | 'picu_critical_care' | 'ward_antimicrobial_therapy' | 'aseptic_meningitis_weaning' | 'resolved_discharged';
+  consultant_id: number;
+  consultant_name?: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PediatricBacterialMeningitisFlowsheetRecord {
+  id: number;
+  meningitis_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  gcs_score: number;
+  pupil_reactivity: 'brisk_bilateral' | 'sluggish' | 'unequal_fixed';
+  heart_rate: number;
+  blood_pressure_sys: number;
+  blood_pressure_dia: number;
+  temperature_celsius: number;
+  respiratory_rate: number;
+  seizure_activity_observed: boolean;
+  neurological_notes: string | null;
+  antibiotic_dose_administered: string | null;
+  logged_by_id: number;
+  logged_by_name?: string;
+  created_at: string;
+}
+
+export const getPediatricMeningitisEpisodes = (params?: { patientId?: number }): Promise<{ episodes: PediatricBacterialMeningitisRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/pediatric-bacterial-meningitis/episodes${query}`);
+};
+
+export const getPediatricMeningitisEpisode = (id: number): Promise<{ episode: PediatricBacterialMeningitisRecord; evaluation: any; flowsheet: PediatricBacterialMeningitisFlowsheetRecord[] }> =>
+  api('GET', `/api/pediatric-bacterial-meningitis/episodes/${id}`);
+
+export const createPediatricMeningitisEpisode = (payload: any): Promise<{ episodeId: number; episodeCode: string; evaluation: any; success: boolean }> =>
+  api('POST', '/api/pediatric-bacterial-meningitis/episodes', payload);
+
+export const updatePediatricMeningitisStatus = (id: number, payload: any): Promise<{ success: boolean }> =>
+  api('PATCH', `/api/pediatric-bacterial-meningitis/episodes/${id}/status`, payload);
+
+export const addPediatricMeningitisFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number; success: boolean }> =>
+  api('POST', `/api/pediatric-bacterial-meningitis/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deletePediatricMeningitisFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-bacterial-meningitis/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const evaluatePediatricMeningitisApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/pediatric-bacterial-meningitis/evaluate', payload);
+
+
 
 
 
