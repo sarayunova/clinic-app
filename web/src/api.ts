@@ -12232,6 +12232,300 @@ export const deletePediatricAcuteScrotumFlowsheet = (episodeId: number, flowshee
 export const evaluatePediatricAcuteScrotumApi = (payload: any): Promise<{ evaluation: any }> =>
   api('POST', '/api/pediatric-acute-scrotum/evaluate', payload);
 
+// ==========================================
+// SERIES 38A: Neonatal Spontaneous Intestinal Perforation (SIP) & Primary Peritoneal Drainage (PPD) Protocol
+// ==========================================
+export interface NeonatalSipRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  age_days: number;
+  birth_weight_grams: number;
+  gestational_age_weeks: number;
+  antenatal_or_early_steroids_exposed: number;
+  indomethacin_or_ibuprofen_pda_exposed: number;
+  pneumoperitoneum_confirmed: number;
+  pneumatosis_intestinalis_absent: number;
+  portal_venous_gas_absent: number;
+  abdominal_wall_bluish_discoloration: number;
+  peritoneal_drainage_performed: number;
+  drain_type: 'penrose_drain' | 'chest_tube_10fr' | 'pigtail_catheter' | 'none_laparotomy_primary';
+  peritoneal_fluid_yeast_candida_positive: number;
+  surgical_approach: 'bedside_primary_peritoneal_drainage' | 'urgent_exploratory_laparotomy' | 'delayed_laparotomy_post_drain_failure';
+  status:
+    | 'acute_perforation_triage'
+    | 'bedside_peritoneal_drain_active'
+    | 'laparotomy_resection_enterostomy'
+    | 'drain_weaning_resolution'
+    | 'convalescent_enteral_feeding'
+    | 'resolved_discharged_home';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  consultant_name?: string;
+}
+
+export interface NeonatalSipFlowsheetRecord {
+  id: number;
+  sip_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_intervention: number;
+  drain_output_ml_24h: number;
+  drain_output_character: 'serosanguinous' | 'bilious' | 'feculent_meconium' | 'purulent' | 'minimal_clear';
+  abdominal_girth_cm: number;
+  mean_airway_pressure_cmh2o: number;
+  inotropic_support_active: number;
+  platelet_count_k_ul: number;
+  crp_mg_l: number;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getNeonatalSipEpisodes = (params?: { patientId?: number }): Promise<{ episodes: NeonatalSipRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/neonatal-sip/episodes${query}`);
+};
+
+export const getNeonatalSipEpisode = (id: number): Promise<{ episode: NeonatalSipRecord; evaluation: any; flowsheetLogs: NeonatalSipFlowsheetRecord[] }> =>
+  api('GET', `/api/neonatal-sip/episodes/${id}`);
+
+export const createNeonatalSipEpisode = (payload: any): Promise<{ episode: NeonatalSipRecord }> =>
+  api('POST', '/api/neonatal-sip/episodes', payload);
+
+export const updateNeonatalSipEpisode = (id: number, payload: any): Promise<{ episode: NeonatalSipRecord }> =>
+  api('PUT', `/api/neonatal-sip/episodes/${id}`, payload);
+
+export const patchNeonatalSipStatus = (id: number, status: string): Promise<{ ok: boolean }> =>
+  api('PATCH', `/api/neonatal-sip/episodes/${id}/status`, { status });
+
+export const deleteNeonatalSipEpisode = (id: number): Promise<{ ok: boolean }> =>
+  api('DELETE', `/api/neonatal-sip/episodes/${id}`);
+
+export const addNeonatalSipFlowsheet = (episodeId: number, payload: any): Promise<{ flowsheetLog: NeonatalSipFlowsheetRecord }> =>
+  api('POST', `/api/neonatal-sip/episodes/${episodeId}/flowsheet`, payload);
+
+export const deleteNeonatalSipFlowsheet = (episodeId: number, flowsheetId: number): Promise<{ ok: boolean }> =>
+  api('DELETE', `/api/neonatal-sip/flowsheet/${flowsheetId}`);
+
+export const evaluateNeonatalSipApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/neonatal-sip/evaluate', payload);
+
+// ==========================================
+// SERIES 38B: Obstetric Perimortem Cesarean Delivery (PMCD) / Resuscitative Hysterotomy Protocol
+// ==========================================
+export interface ObstetricPmcdRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  arrest_datetime: string;
+  gestational_age_weeks: number;
+  initial_arrest_rhythm: 'asystole' | 'pea' | 'ventricular_fibrillation' | 'pulseless_vt';
+  cpr_initiated_datetime: string;
+  continuous_left_uterine_displacement: number;
+  pmcd_decision_minute: number;
+  incision_datetime: string | null;
+  infant_delivery_datetime: string | null;
+  elapsed_arrest_to_delivery_minutes: number | null;
+  rosc_achieved_post_delivery: number;
+  rosc_datetime: string | null;
+  primary_etiology_beau_chops:
+    | 'bleeding_dic'
+    | 'embolism_afe_pte'
+    | 'anesthetic_complication_last'
+    | 'uterine_atony'
+    | 'cardiac_underlying'
+    | 'hypertension_preeclampsia'
+    | 'other_toxic_metabolic'
+    | 'placenta_abruption_accreta'
+    | 'sepsis_shock';
+  uterine_closure_method:
+    | 'rapid_single_layer_in_situ'
+    | 'hemostatic_packing_temporary_closure'
+    | 'emergent_hysterectomy';
+  maternal_survival_status:
+    | 'active_icu_targeted_temperature_management'
+    | 'post_cardiac_arrest_stable'
+    | 'neurologically_intact_recovery'
+    | 'maternal_demise';
+  neonatal_survival_status:
+    | 'nicu_active_hypothermia_hie'
+    | 'stable_nicu_survivor'
+    | 'neonatal_demise';
+  status:
+    | 'cardiac_arrest_resuscitation'
+    | 'hysterotomy_evacuation_active'
+    | 'post_rosc_intensive_care'
+    | 'surgical_hemostasis_icu'
+    | 'convalescent_rehabilitation'
+    | 'case_closed';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  consultant_name?: string;
+}
+
+export interface ObstetricPmcdFlowsheetRecord {
+  id: number;
+  pmcd_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  minutes_post_arrest: number;
+  heart_rate_bpm: number;
+  systolic_bp: number;
+  diastolic_bp: number;
+  end_tidal_co2_mmhg: number;
+  pupillary_response: 'reactive_equal' | 'sluggish' | 'fixed_dilated';
+  chest_compressions_quality: 'optimal_etco2_gt_20' | 'suboptimal_etco2_lt_10' | 'rosc_sustained';
+  epinephrine_cumulative_doses: number;
+  defibrillation_shocks_count: number;
+  blood_products_transfused_units: number;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getObstetricPmcdEpisodes = (params?: { patientId?: number }): Promise<{ episodes: ObstetricPmcdRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/obstetric-pmcd/episodes${query}`);
+};
+
+export const getObstetricPmcdEpisode = (id: number): Promise<{ episode: ObstetricPmcdRecord; evaluation: any; flowsheetLogs: ObstetricPmcdFlowsheetRecord[] }> =>
+  api('GET', `/api/obstetric-pmcd/episodes/${id}`);
+
+export const createObstetricPmcdEpisode = (payload: any): Promise<{ episode: ObstetricPmcdRecord }> =>
+  api('POST', '/api/obstetric-pmcd/episodes', payload);
+
+export const updateObstetricPmcdEpisode = (id: number, payload: any): Promise<{ episode: ObstetricPmcdRecord }> =>
+  api('PUT', `/api/obstetric-pmcd/episodes/${id}`, payload);
+
+export const patchObstetricPmcdStatus = (id: number, status: string): Promise<{ ok: boolean }> =>
+  api('PATCH', `/api/obstetric-pmcd/episodes/${id}/status`, { status });
+
+export const deleteObstetricPmcdEpisode = (id: number): Promise<{ ok: boolean }> =>
+  api('DELETE', `/api/obstetric-pmcd/episodes/${id}`);
+
+export const addObstetricPmcdFlowsheet = (episodeId: number, payload: any): Promise<{ flowsheetLog: ObstetricPmcdFlowsheetRecord }> =>
+  api('POST', `/api/obstetric-pmcd/episodes/${episodeId}/flowsheet`, payload);
+
+export const deleteObstetricPmcdFlowsheet = (episodeId: number, flowsheetId: number): Promise<{ ok: boolean }> =>
+  api('DELETE', `/api/obstetric-pmcd/flowsheet/${flowsheetId}`);
+
+export const evaluateObstetricPmcdApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/obstetric-pmcd/evaluate', payload);
+
+// ==========================================
+// SERIES 38C: Pediatric Guillain-Barré Syndrome (GBS) & Brighton Diagnostic Criteria Protocol
+// ==========================================
+export interface PediatricGbsRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  age_years: number;
+  weight_kg: number;
+  antecedent_infection_type:
+    | 'campylobacter_gastroenteritis'
+    | 'upper_respiratory_viral'
+    | 'ebv_cmv_infection'
+    | 'none_identified';
+  brighton_criteria_level:
+    | 'level_1_highest_certainty_csf_ncs'
+    | 'level_2_csf_or_ncs'
+    | 'level_3_clinical_only'
+    | 'level_4_unclassifiable';
+  hughes_disability_score: number;
+  ascending_symmetric_weakness: number;
+  areflexia_or_hyporeflexia: number;
+  csf_protein_mg_dl: number;
+  csf_wbc_count_per_ul: number;
+  vital_capacity_ml_kg: number;
+  negative_inspiratory_force_cmh2o: number;
+  peak_expiratory_pressure_cmh2o: number;
+  dysautonomia_signs_present: number;
+  immunotherapy_regimen:
+    | 'ivig_2g_kg_over_2_days'
+    | 'ivig_2g_kg_over_5_days'
+    | 'plasma_exchange_tpe'
+    | 'supportive_care_only';
+  corticosteroids_avoided: number;
+  status:
+    | 'acute_diagnostic_evaluation'
+    | 'picu_ventilatory_support'
+    | 'immunotherapy_infusion_active'
+    | 'dysautonomia_telemetry_monitoring'
+    | 'subacute_rehabilitation_weaning'
+    | 'resolved_full_motor_recovery';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  consultant_name?: string;
+}
+
+export interface PediatricGbsFlowsheetRecord {
+  id: number;
+  gbs_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  day_of_illness: number;
+  hughes_score_current: number;
+  vital_capacity_ml_kg: number;
+  single_breath_count: number;
+  cranial_nerve_palsy_facial_bulbar: number;
+  neck_flexion_power_mrc: number;
+  heart_rate_bpm: number;
+  systolic_bp: number;
+  diastolic_bp: number;
+  urinary_retention_catheterized: number;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getPediatricGbsEpisodes = (params?: { patientId?: number }): Promise<{ episodes: PediatricGbsRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/pediatric-gbs/episodes${query}`);
+};
+
+export const getPediatricGbsEpisode = (id: number): Promise<{ episode: PediatricGbsRecord; evaluation: any; flowsheetLogs: PediatricGbsFlowsheetRecord[] }> =>
+  api('GET', `/api/pediatric-gbs/episodes/${id}`);
+
+export const createPediatricGbsEpisode = (payload: any): Promise<{ episode: PediatricGbsRecord }> =>
+  api('POST', '/api/pediatric-gbs/episodes', payload);
+
+export const updatePediatricGbsEpisode = (id: number, payload: any): Promise<{ episode: PediatricGbsRecord }> =>
+  api('PUT', `/api/pediatric-gbs/episodes/${id}`, payload);
+
+export const patchPediatricGbsStatus = (id: number, status: string): Promise<{ ok: boolean }> =>
+  api('PATCH', `/api/pediatric-gbs/episodes/${id}/status`, { status });
+
+export const deletePediatricGbsEpisode = (id: number): Promise<{ ok: boolean }> =>
+  api('DELETE', `/api/pediatric-gbs/episodes/${id}`);
+
+export const addPediatricGbsFlowsheet = (episodeId: number, payload: any): Promise<{ flowsheetLog: PediatricGbsFlowsheetRecord }> =>
+  api('POST', `/api/pediatric-gbs/episodes/${episodeId}/flowsheet`, payload);
+
+export const deletePediatricGbsFlowsheet = (episodeId: number, flowsheetId: number): Promise<{ ok: boolean }> =>
+  api('DELETE', `/api/pediatric-gbs/flowsheet/${flowsheetId}`);
+
+export const evaluatePediatricGbsApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/pediatric-gbs/evaluate', payload);
+
+
 
 
 

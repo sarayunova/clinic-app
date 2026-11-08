@@ -5415,6 +5415,144 @@ async function seed() {
     }
   }
 
+  // --- SERIES 38A: Neonatal Spontaneous Intestinal Perforation (SIP) & Primary Peritoneal Drainage Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_sip_episodes (
+      patient_id, admission_id, episode_code, onset_datetime, age_days, birth_weight_grams,
+      gestational_age_weeks, antenatal_or_early_steroids_exposed, indomethacin_or_ibuprofen_pda_exposed,
+      pneumoperitoneum_confirmed, pneumatosis_intestinalis_absent, portal_venous_gas_absent,
+      abdominal_wall_bluish_discoloration, peritoneal_drainage_performed, drain_type,
+      peritoneal_fluid_yeast_candida_positive, surgical_approach, status, consultant_id,
+      clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'SIP-20261108-101', '2026-11-08T01:30:00', 8, 740,
+      25.4, 1, 1,
+      1, 1, 1,
+      1, 1, 'penrose_drain',
+      0, 'bedside_primary_peritoneal_drainage', 'bedside_peritoneal_drain_active', ?,
+      'Extremely low birth weight infant (740g, 25.4 weeks GA) on day 8 of life with acute abdominal distension and bluish discoloration of the right hemiscrotum and lower abdominal wall. Cross-table abdominal radiograph demonstrates massive pneumoperitoneum ("football sign") without pneumatosis intestinalis or portal venous gas, pathognomonic for isolated Spontaneous Intestinal Perforation (SIP). The infant had prior exposure to early dexamethasone for BPD prophylaxis and indomethacin for patent ductus arteriosus closure (steroid-NSAID synergy hazard). Due to extreme hemodynamic instability on dopamine/epinephrine, bedside Right Lower Quadrant primary peritoneal drainage (PPD) under 1% lidocaine local anesthesia was performed. A sterile Penrose drain was inserted into the pelvis, yielding an immediate rush of pressurized air and 25 mL of bilious peritoneal fluid. Triple antimicrobial coverage (Ampicillin, Gentamicin, Metronidazole) initiated alongside strict NPO and Replogle continuous gastric sump decompression.',
+      ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingSip = db.prepare('SELECT id FROM neonatal_sip_episodes WHERE episode_code = ?').get('SIP-20261108-101') as any;
+  if (existingSip) {
+    const sipLogs = [
+      { hrs: 4, t: '2026-11-08T05:30:00', out: 18.5, char: 'bilious', girth: 23.2, map: 9.5, ino: 1, plt: 118, crp: 36.2, notes: 'Penrose drain active on dependent gravity drainage. Rush of gas relieved tense abdominal pressure. Inotropic support weaning.' },
+      { hrs: 12, t: '2026-11-08T13:30:00', out: 12.0, char: 'serosanguinous', girth: 22.0, map: 8.5, ino: 1, plt: 135, crp: 24.5, notes: 'Abdominal wall softness improved. Drain effluent clearing to serosanguinous. Enteric focal perforation sealing.' },
+      { hrs: 24, t: '2026-11-08T21:30:00', out: 4.2, char: 'minimal_clear', girth: 21.0, map: 7.5, ino: 0, plt: 165, crp: 12.0, notes: 'Minimal clear drainage. Off all inotropes. Spontaneous diuresis brisk. Drain advancing protocol initiated.' },
+    ];
+    for (const sl of sipLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_sip_flowsheet_logs (
+          sip_episode_id, patient_id, log_datetime, hours_from_intervention,
+          drain_output_ml_24h, drain_output_character, abdominal_girth_cm,
+          mean_airway_pressure_cmh2o, inotropic_support_active, platelet_count_k_ul,
+          crp_mg_l, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingSip.id, babyId, sl.t, sl.hrs, sl.out, sl.char, sl.girth, sl.map, sl.ino, sl.plt, sl.crp, sl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 38B: Obstetric Perimortem Cesarean Delivery (PMCD) / Resuscitative Hysterotomy Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_pmcd_episodes (
+      patient_id, admission_id, episode_code, arrest_datetime, gestational_age_weeks,
+      initial_arrest_rhythm, cpr_initiated_datetime, continuous_left_uterine_displacement,
+      pmcd_decision_minute, incision_datetime, infant_delivery_datetime, elapsed_arrest_to_delivery_minutes,
+      rosc_achieved_post_delivery, rosc_datetime, primary_etiology_beau_chops, uterine_closure_method,
+      maternal_survival_status, neonatal_survival_status, status, consultant_id, clinical_notes,
+      created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'PMCD-20261108-101', '2026-11-08T06:15:00', 35.2,
+      'pea', '2026-11-08T06:15:30', 1,
+      3.5, '2026-11-08T06:18:30', '2026-11-08T06:19:45', 4.75,
+      1, '2026-11-08T06:20:15', 'embolism_afe_pte', 'rapid_single_layer_in_situ',
+      'active_icu_targeted_temperature_management', 'nicu_active_hypothermia_hie', 'post_rosc_intensive_care', ?,
+      '35.2 weeks gravid female suffered sudden cardiovascular collapse, cyanosis, and pulseless electrical activity (PEA) arrest in labor and delivery triage secondary to suspected catastrophic Amniotic Fluid Embolism (AFE). High-quality chest compressions initiated immediately with manual Left Uterine Displacement (LUD >= 30 degrees). Adhering to the AHA/SOAP 4-to-5 Minute Rule, resuscitative hysterotomy was called at minute 3.5 of arrest with bedside scalpel incision initiated without transporting to the OT. Midline vertical laparotomy and rapid hysterotomy evacuated a vigorous 2.45 kg male infant handed off to awaiting NICU team at minute 4.75. Immediate relief of aortocaval compression resulted in instantaneous maternal ROSC at minute 5.25 with palpable carotid pulse and EtCO2 jumping from 12 to 34 mmHg. Rapid single-layer in situ uterine hemostatic closure completed. Patient transferred to ICU for targeted temperature management (36.0 deg C) and mechanical ventilation.',
+      ?, ?
+    )
+  `).run(sunitaId, docId, now, now);
+
+  const existingPmcd = db.prepare('SELECT id FROM obstetric_pmcd_episodes WHERE episode_code = ?').get('PMCD-20261108-101') as any;
+  if (existingPmcd) {
+    const pmcdLogs = [
+      { min: 5.0, t: '2026-11-08T06:20:00', hr: 112, sbp: 88, dbp: 52, etco2: 34.0, pupil: 'sluggish', qual: 'rosc_sustained', epi: 2, defib: 0, blood: 2, notes: 'Immediate post-delivery ROSC. Sinus tachycardia restored. Palpable femoral and carotid pulses. EtCO2 surged > 30 mmHg.' },
+      { min: 20.0, t: '2026-11-08T06:35:00', hr: 98, sbp: 102, dbp: 64, etco2: 38.5, pupil: 'reactive_equal', qual: 'rosc_sustained', epi: 2, defib: 0, blood: 4, notes: 'ICU transfer complete. Targeted temperature management initiated at 36.0°C. Arterial line and central line functioning.' },
+      { min: 60.0, t: '2026-11-08T07:15:00', hr: 86, sbp: 114, dbp: 72, etco2: 40.0, pupil: 'reactive_equal', qual: 'rosc_sustained', epi: 2, defib: 0, blood: 6, notes: 'Hemodynamically stable on low-dose norepinephrine. Consumptive coagulopathy managed with cryoprecipitate and platelets.' },
+    ];
+    for (const pl of pmcdLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_pmcd_flowsheet_logs (
+          pmcd_episode_id, patient_id, log_datetime, minutes_post_arrest,
+          heart_rate_bpm, systolic_bp, diastolic_bp, end_tidal_co2_mmhg,
+          pupillary_response, chest_compressions_quality, epinephrine_cumulative_doses,
+          defibrillation_shocks_count, blood_products_transfused_units,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingPmcd.id, sunitaId, pl.t, pl.min, pl.hr, pl.sbp, pl.dbp, pl.etco2, pl.pupil, pl.qual, pl.epi, pl.defib, pl.blood, pl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 38C: Pediatric Guillain-Barré Syndrome (GBS) & Brighton Diagnostic Criteria Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_gbs_episodes (
+      patient_id, admission_id, episode_code, onset_datetime, age_years, weight_kg,
+      antecedent_infection_type, brighton_criteria_level, hughes_disability_score,
+      ascending_symmetric_weakness, areflexia_or_hyporeflexia, csf_protein_mg_dl,
+      csf_wbc_count_per_ul, vital_capacity_ml_kg, negative_inspiratory_force_cmh2o,
+      peak_expiratory_pressure_cmh2o, dysautonomia_signs_present, immunotherapy_regimen,
+      corticosteroids_avoided, status, consultant_id, clinical_notes,
+      created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'GBS-20261108-101', '2026-11-08T08:00:00', 7.5, 25.0,
+      'campylobacter_gastroenteritis', 'level_1_highest_certainty_csf_ncs', 4,
+      1, 1, 145.0,
+      3, 16.5, -22.0,
+      32.0, 1, 'ivig_2g_kg_over_2_days',
+      1, 'picu_ventilatory_support', ?,
+      '7.5-year-old child presenting with a 4-day history of rapidly ascending bilateral lower and upper extremity flaccid paralysis following a severe episode of Campylobacter jejuni gastroenteritis 2 weeks prior. Neurological examination reveals bilateral symmetric proximal and distal flaccidity with complete absence of deep tendon reflexes (Brighton Level 1 diagnostic certainty, Hughes Disability Score 4). Lumbar puncture confirms classical albuminocytological dissociation (CSF protein 145 mg/dL, WBC count 3/uL). Pulmonary function evaluation triggers the strict "20/30/40 Rule" indicating impending neuromuscular respiratory arrest: Vital Capacity 16.5 mL/kg (< 20 mL/kg), NIF -22 cmH2O (> -30 cmH2O threshold), and PEP 32 cmH2O (< 40 cmH2O). The patient was electively admitted to the PICU and intubated using non-depolarizing agents (Succinylcholine strictly contraindicated). Initiated weight-based IVIG at 2 g/kg total (50 grams total divided over 2 days at 25 g/day). Systemic corticosteroids strictly avoided as contraindicated. Continuous telemetry active for autonomic blood pressure fluctuations.',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingGbs = db.prepare('SELECT id FROM pediatric_gbs_episodes WHERE episode_code = ?').get('GBS-20261108-101') as any;
+  if (existingGbs) {
+    const gbsLogs = [
+      { day: 4, t: '2026-11-08T09:00:00', hughes: 4, vc: 16.5, sbc: 12, cn: 1, neck: 2, hr: 124, sbp: 132, dbp: 86, cath: 1, notes: 'PICU elective intubation completed before hypercapnic arrest. IVIG Day 1 running (25g). Labile blood pressure on telemetry.' },
+      { day: 5, t: '2026-11-08T15:00:00', hughes: 4, vc: 17.0, sbc: 14, cn: 1, neck: 2, hr: 110, sbp: 118, dbp: 74, cath: 1, notes: 'IVIG Day 2 complete (50g total administered). Neurological nadir plateau achieved. Autonomic swings stabilizing.' },
+      { day: 7, t: '2026-11-08T20:00:00', hughes: 3, vc: 22.5, sbc: 20, cn: 0, neck: 4, hr: 92, sbp: 108, dbp: 68, cath: 0, notes: 'Successful extubation criteria met: VC > 20 mL/kg, SBC > 15. Hughes score improved to 3. Foley removed with spontaneous voiding.' },
+    ];
+    for (const gl of gbsLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_gbs_flowsheet_logs (
+          gbs_episode_id, patient_id, log_datetime, day_of_illness,
+          hughes_score_current, vital_capacity_ml_kg, single_breath_count,
+          cranial_nerve_palsy_facial_bulbar, neck_flexion_power_mrc,
+          heart_rate_bpm, systolic_bp, diastolic_bp,
+          urinary_retention_catheterized, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingGbs.id, aaravId, gl.t, gl.day, gl.hughes, gl.vc, gl.sbc, gl.cn, gl.neck, gl.hr, gl.sbp, gl.dbp, gl.cath, gl.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },
