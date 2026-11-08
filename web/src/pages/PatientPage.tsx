@@ -131,6 +131,9 @@ import { PediatricAcuteScrotumTab } from '../components/PediatricAcuteScrotumTab
 import { NeonatalSipTab } from '../components/NeonatalSipTab';
 import { ObstetricPmcdTab } from '../components/ObstetricPmcdTab';
 import { PediatricGbsTab } from '../components/PediatricGbsTab';
+import { PediatricToxicologyTab } from '../components/PediatricToxicologyTab';
+import { ObstetricMassivePeTab } from '../components/ObstetricMassivePeTab';
+import { NeonatalHyperammonemiaTab } from '../components/NeonatalHyperammonemiaTab';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -241,7 +244,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'abdm' | 'pediatric' | 'pediatric_growth' | 'pediatric_renal' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'pac' | 'blood_bank' | 'risk' | 'postnatal' | 'maternity_admission' | 'ams' | 'mgso4' | 'pews_pals' | 'nicu_tpn' | 'maternal_comorbidities' | 'pediatric_allergy' | 'neonatal_hie' | 'maternal_sepsis' | 'pediatric_dka' | 'neonatal_rds' | 'maternal_vte' | 'pediatric_seizures' | 'neonatal_sepsis' | 'obstetric_hypertension' | 'pediatric_septic_shock' | 'neonatal_hypoglycemia' | 'obstetric_pph' | 'pediatric_pards' | 'neonatal_bind' | 'obstetric_icp' | 'pediatric_status_epilepticus' | 'neonatal_nec' | 'obstetric_pas' | 'pediatric_tbi' | 'neonatal_pphn' | 'obstetric_afe' | 'pediatric_asthma_status' | 'neonatal_bpd' | 'obstetric_aflp' | 'pediatric_polytrauma' | 'neonatal_hspda' | 'obstetric_dka' | 'pediatric_anaphylaxis' | 'neonatal_ivh' | 'obstetric_pprom' | 'pediatric_svt' | 'neonatal_hypocalcemia' | 'obstetric_postterm' | 'pediatric_croup' | 'neonatal_polycythemia' | 'obstetric_shoulder_dystocia' | 'pediatric_foreign_body' | 'neonatal_hypomagnesemia' | 'obstetric_ppcm' | 'pediatric_septic_arthritis' | 'neonatal_chylothorax' | 'obstetric_cord_prolapse' | 'pediatric_intussusception' | 'neonatal_mas' | 'obstetric_uterine_inversion' | 'pediatric_appendicitis' | 'neonatal_ttn' | 'obstetric_pdph' | 'pediatric_meningitis' | 'neonatal_aop' | 'obstetric_retained_placenta' | 'pediatric_pyloric_stenosis' | 'neonatal_sgh' | 'obstetric_tolac' | 'pediatric_kawasaki' | 'neonatal_volvulus' | 'obstetric_ecv' | 'pediatric_dka_ce' | 'neonatal_meconium_ileus' | 'obstetric_placental_abruption' | 'pediatric_hus' | 'neonatal_ea_tef' | 'obstetric_vasa_previa' | 'pediatric_empyema' | 'neonatal_abdominal_defects' | 'obstetric_spt' | 'pediatric_osteomyelitis' | 'neonatal_intestinal_atresia' | 'obstetric_hellp' | 'pediatric_scfe' | 'neonatal_cdh' | 'obstetric_hyperemesis' | 'pediatric_acute_scrotum' | 'neonatal_sip' | 'obstetric_pmcd' | 'pediatric_gbs' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'abdm' | 'pediatric' | 'pediatric_growth' | 'pediatric_renal' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'pac' | 'blood_bank' | 'risk' | 'postnatal' | 'maternity_admission' | 'ams' | 'mgso4' | 'pews_pals' | 'nicu_tpn' | 'maternal_comorbidities' | 'pediatric_allergy' | 'neonatal_hie' | 'maternal_sepsis' | 'pediatric_dka' | 'neonatal_rds' | 'maternal_vte' | 'pediatric_seizures' | 'neonatal_sepsis' | 'obstetric_hypertension' | 'pediatric_septic_shock' | 'neonatal_hypoglycemia' | 'obstetric_pph' | 'pediatric_pards' | 'neonatal_bind' | 'obstetric_icp' | 'pediatric_status_epilepticus' | 'neonatal_nec' | 'obstetric_pas' | 'pediatric_tbi' | 'neonatal_pphn' | 'obstetric_afe' | 'pediatric_asthma_status' | 'neonatal_bpd' | 'obstetric_aflp' | 'pediatric_polytrauma' | 'neonatal_hspda' | 'obstetric_dka' | 'pediatric_anaphylaxis' | 'neonatal_ivh' | 'obstetric_pprom' | 'pediatric_svt' | 'neonatal_hypocalcemia' | 'obstetric_postterm' | 'pediatric_croup' | 'neonatal_polycythemia' | 'obstetric_shoulder_dystocia' | 'pediatric_foreign_body' | 'neonatal_hypomagnesemia' | 'obstetric_ppcm' | 'pediatric_septic_arthritis' | 'neonatal_chylothorax' | 'obstetric_cord_prolapse' | 'pediatric_intussusception' | 'neonatal_mas' | 'obstetric_uterine_inversion' | 'pediatric_appendicitis' | 'neonatal_ttn' | 'obstetric_pdph' | 'pediatric_meningitis' | 'neonatal_aop' | 'obstetric_retained_placenta' | 'pediatric_pyloric_stenosis' | 'neonatal_sgh' | 'obstetric_tolac' | 'pediatric_kawasaki' | 'neonatal_volvulus' | 'obstetric_ecv' | 'pediatric_dka_ce' | 'neonatal_meconium_ileus' | 'obstetric_placental_abruption' | 'pediatric_hus' | 'neonatal_ea_tef' | 'obstetric_vasa_previa' | 'pediatric_empyema' | 'neonatal_abdominal_defects' | 'obstetric_spt' | 'pediatric_osteomyelitis' | 'neonatal_intestinal_atresia' | 'obstetric_hellp' | 'pediatric_scfe' | 'neonatal_cdh' | 'obstetric_hyperemesis' | 'pediatric_acute_scrotum' | 'neonatal_sip' | 'obstetric_pmcd' | 'pediatric_gbs' | 'pediatric_toxicology' | 'obstetric_massive_pe' | 'neonatal_hyperammonemia' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -306,7 +309,7 @@ export function PatientPage() {
   useEffect(() => {
     if (!patient) return;
     const tabParam = new URLSearchParams(window.location.search).get('tab');
-    if (tabParam && ['ams', 'mgso4', 'pews_pals', 'pediatric_renal', 'nicu_tpn', 'maternal_comorbidities', 'pediatric_allergy', 'neonatal_meconium_ileus', 'obstetric_placental_abruption', 'pediatric_hus', 'neonatal_ea_tef', 'obstetric_vasa_previa', 'pediatric_empyema', 'neonatal_abdominal_defects', 'obstetric_spt', 'pediatric_osteomyelitis', 'neonatal_intestinal_atresia', 'obstetric_hellp', 'pediatric_scfe', 'neonatal_cdh', 'obstetric_hyperemesis', 'pediatric_acute_scrotum', 'neonatal_sip', 'obstetric_pmcd', 'pediatric_gbs'].includes(tabParam)) {
+    if (tabParam && ['ams', 'mgso4', 'pews_pals', 'pediatric_renal', 'nicu_tpn', 'maternal_comorbidities', 'pediatric_allergy', 'neonatal_meconium_ileus', 'obstetric_placental_abruption', 'pediatric_hus', 'neonatal_ea_tef', 'obstetric_vasa_previa', 'pediatric_empyema', 'neonatal_abdominal_defects', 'obstetric_spt', 'pediatric_osteomyelitis', 'neonatal_intestinal_atresia', 'obstetric_hellp', 'pediatric_scfe', 'neonatal_cdh', 'obstetric_hyperemesis', 'pediatric_acute_scrotum', 'neonatal_sip', 'obstetric_pmcd', 'pediatric_gbs', 'pediatric_toxicology', 'obstetric_massive_pe', 'neonatal_hyperammonemia'].includes(tabParam)) {
       setViewMode(tabParam as any);
       return;
     }
@@ -1438,6 +1441,27 @@ export function PatientPage() {
                 </button>
                 <button
                   type="button"
+                  className={`btn small ${viewMode === 'pediatric_toxicology' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('pediatric_toxicology')}
+                >
+                  🧪 Pediatric Toxicology
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'obstetric_massive_pe' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('obstetric_massive_pe')}
+                >
+                  🫀 Massive PE
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'neonatal_hyperammonemia' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('neonatal_hyperammonemia')}
+                >
+                  🧬 Neonatal Hyperammonemia
+                </button>
+                <button
+                  type="button"
                   className={`btn small ${viewMode === 'list' ? 'primary' : ''}`}
                   onClick={() => setViewMode('list')}
                 >
@@ -1935,6 +1959,18 @@ export function PatientPage() {
             />
           ) : viewMode === 'pediatric_gbs' ? (
             <PediatricGbsTab
+              patientId={patient!.id}
+            />
+          ) : viewMode === 'pediatric_toxicology' ? (
+            <PediatricToxicologyTab
+              patientId={patient!.id}
+            />
+          ) : viewMode === 'obstetric_massive_pe' ? (
+            <ObstetricMassivePeTab
+              patientId={patient!.id}
+            />
+          ) : viewMode === 'neonatal_hyperammonemia' ? (
+            <NeonatalHyperammonemiaTab
               patientId={patient!.id}
             />
           ) : (

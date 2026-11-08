@@ -12525,6 +12525,252 @@ export const deletePediatricGbsFlowsheet = (episodeId: number, flowsheetId: numb
 export const evaluatePediatricGbsApi = (payload: any): Promise<{ evaluation: any }> =>
   api('POST', '/api/pediatric-gbs/evaluate', payload);
 
+// ==========================================
+// SERIES 39: Pediatric Toxicology, Obstetric Massive PE, Neonatal Hyperammonemia
+// ==========================================
+
+export interface PediatricToxicologyRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  ingestion_datetime: string;
+  presentation_datetime: string;
+  age_years: number;
+  weight_kg: number;
+  substance_category: 'acetaminophen_paracetamol' | 'iron_elemental_supplement' | 'organophosphate_carbamate' | 'caustic_alkali_acid_battery' | 'hydrocarbon_petroleum' | 'other_unidentified_toxin';
+  ingested_dose_mg_kg: number;
+  hours_post_ingestion: number;
+  serum_level_value: number;
+  rumack_matthew_line_breached: number;
+  alt_u_l: number;
+  ast_u_l: number;
+  total_bilirubin_mg_dl: number;
+  prothrombin_time_inr: number;
+  antidote_indicated: number;
+  antidote_administered: 'iv_n_acetylcysteine_nac_protocol' | 'iv_deferoxamine_chelation' | 'atropine_pralidoxime_regimen' | 'activated_charcoal_single_dose' | 'whole_bowel_irrigation_peg' | 'supportive_care_only';
+  gastric_decontamination_contraindicated: number;
+  status: string;
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  consultant_name?: string;
+}
+
+export interface PediatricToxicologyFlowsheetRecord {
+  id: number;
+  episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_ingestion: number;
+  heart_rate_bpm: number;
+  systolic_bp_mmhg: number;
+  respiratory_rate: number;
+  spo2_percent: number;
+  alt_u_l: number;
+  ast_u_l: number;
+  toxin_serum_level: number;
+  vin_rose_urine_observed: number;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getPediatricToxicologyEpisodes = (params?: { patientId?: number }): Promise<{ episodes: PediatricToxicologyRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/pediatric-toxicology/episodes${query}`);
+};
+
+export const getPediatricToxicologyEpisode = (id: number): Promise<{ episode: PediatricToxicologyRecord; evaluation: any; flowsheet: PediatricToxicologyFlowsheetRecord[] }> =>
+  api('GET', `/api/pediatric-toxicology/episodes/${id}`);
+
+export const createPediatricToxicologyEpisode = (payload: any): Promise<{ episode: PediatricToxicologyRecord }> =>
+  api('POST', '/api/pediatric-toxicology/episodes', payload);
+
+export const updatePediatricToxicologyEpisode = (id: number, payload: any): Promise<{ episode: PediatricToxicologyRecord }> =>
+  api('PUT', `/api/pediatric-toxicology/episodes/${id}`, payload);
+
+export const patchPediatricToxicologyStatus = (id: number, status: string): Promise<{ episode: PediatricToxicologyRecord }> =>
+  api('PATCH', `/api/pediatric-toxicology/episodes/${id}/status`, { status });
+
+export const deletePediatricToxicologyEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-toxicology/episodes/${id}`);
+
+export const addPediatricToxicologyFlowsheet = (episodeId: number, payload: any): Promise<{ flowsheetLog: PediatricToxicologyFlowsheetRecord }> =>
+  api('POST', `/api/pediatric-toxicology/episodes/${episodeId}/flowsheet`, payload);
+
+export const deletePediatricToxicologyFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-toxicology/episodes/${episodeId}/flowsheet/${logId}`);
+
+export const evaluatePediatricToxicologyApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/pediatric-toxicology/evaluate', payload);
+
+export interface ObstetricMassivePeRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  gestational_age_weeks: number;
+  clinical_setting: 'antenatal_antepartum' | 'intrapartum_labor' | 'immediate_postpartum_puerperium' | 'post_cesarean_section';
+  systolic_bp_mmhg: number;
+  heart_rate_bpm: number;
+  respiratory_rate: number;
+  spo2_percent: number;
+  hemodynamic_instability_shock: number;
+  rv_dysfunction_echo_confirmed: number;
+  cardiac_biomarkers_elevated: number;
+  pe_risk_stratification: 'high_risk_massive_pe' | 'intermediate_high_risk_submassive' | 'intermediate_low_risk' | 'low_risk_nonmassive';
+  thrombolytic_therapy_administered: number;
+  thrombolytic_agent_dose: string;
+  systemic_ufh_infusion_active: number;
+  target_aptt_seconds: number;
+  catheter_directed_or_surgical_embolectomy: number;
+  inferior_vena_cava_filter_placed: number;
+  status: string;
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  consultant_name?: string;
+}
+
+export interface ObstetricMassivePeFlowsheetRecord {
+  id: number;
+  episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_presentation: number;
+  systolic_bp_mmhg: number;
+  diastolic_bp_mmhg: number;
+  heart_rate_bpm: number;
+  spo2_percent: number;
+  aptt_seconds: number;
+  heparin_infusion_rate_units_hr: number;
+  vasopressor_norepinephrine_mcg_min: number;
+  bleeding_complication_observed: number;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getObstetricMassivePeEpisodes = (params?: { patientId?: number }): Promise<{ episodes: ObstetricMassivePeRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/obstetric-massive-pe/episodes${query}`);
+};
+
+export const getObstetricMassivePeEpisode = (id: number): Promise<{ episode: ObstetricMassivePeRecord; evaluation: any; flowsheet: ObstetricMassivePeFlowsheetRecord[] }> =>
+  api('GET', `/api/obstetric-massive-pe/episodes/${id}`);
+
+export const createObstetricMassivePeEpisode = (payload: any): Promise<{ episode: ObstetricMassivePeRecord }> =>
+  api('POST', '/api/obstetric-massive-pe/episodes', payload);
+
+export const updateObstetricMassivePeEpisode = (id: number, payload: any): Promise<{ episode: ObstetricMassivePeRecord }> =>
+  api('PUT', `/api/obstetric-massive-pe/episodes/${id}`, payload);
+
+export const patchObstetricMassivePeStatus = (id: number, status: string): Promise<{ episode: ObstetricMassivePeRecord }> =>
+  api('PATCH', `/api/obstetric-massive-pe/episodes/${id}/status`, { status });
+
+export const deleteObstetricMassivePeEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-massive-pe/episodes/${id}`);
+
+export const addObstetricMassivePeFlowsheet = (episodeId: number, payload: any): Promise<{ flowsheetLog: ObstetricMassivePeFlowsheetRecord }> =>
+  api('POST', `/api/obstetric-massive-pe/episodes/${episodeId}/flowsheet`, payload);
+
+export const deleteObstetricMassivePeFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-massive-pe/episodes/${episodeId}/flowsheet/${logId}`);
+
+export const evaluateObstetricMassivePeApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/obstetric-massive-pe/evaluate', payload);
+
+
+export interface NeonatalHyperammonemiaRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  age_hours: number;
+  birth_weight_grams: number;
+  gestational_age_weeks: number;
+  plasma_ammonia_umol_l: number;
+  blood_gas_acid_base_pattern: 'respiratory_alkalosis' | 'high_anion_gap_metabolic_acidosis' | 'normal_compensated' | 'mixed_acid_base';
+  plasma_lactate_mmol_l: number;
+  anion_gap_meq_l: number;
+  urine_ketones_present: number;
+  suspected_disorder_category: 'urea_cycle_disorder_ucd' | 'organic_acidemia_oa' | 'fatty_acid_oxidation_faod' | 'undifferentiated_hyperammonemia';
+  protein_intake_halted: number;
+  high_calorie_dextrose_active: number;
+  gir_mg_kg_min: number;
+  nitrogen_scavenger_ammonul_active: number;
+  iv_l_arginine_active: number;
+  iv_l_carnitine_active: number;
+  crrt_dialysis_indicated: number;
+  crrt_dialysis_active: number;
+  status: string;
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  consultant_name?: string;
+}
+
+export interface NeonatalHyperammonemiaFlowsheetRecord {
+  id: number;
+  episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_crisis_onset: number;
+  plasma_ammonia_umol_l: number;
+  ph_value: number;
+  pco2_mmhg: number;
+  bicarbonate_meq_l: number;
+  glucose_mg_dl: number;
+  gir_mg_kg_min: number;
+  dialysis_blood_flow_ml_min: number;
+  encephalopathy_grade: 'grade_1_mild_lethargy_poor_feeding' | 'grade_2_moderate_somnolence_hyperreflexia' | 'grade_3_severe_stupor_decerebrate_posturing' | 'grade_4_deep_coma_fixed_dilated_pupils';
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getNeonatalHyperammonemiaEpisodes = (params?: { patientId?: number }): Promise<{ episodes: NeonatalHyperammonemiaRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/neonatal-hyperammonemia/episodes${query}`);
+};
+
+export const getNeonatalHyperammonemiaEpisode = (id: number): Promise<{ episode: NeonatalHyperammonemiaRecord; evaluation: any; flowsheet: NeonatalHyperammonemiaFlowsheetRecord[] }> =>
+  api('GET', `/api/neonatal-hyperammonemia/episodes/${id}`);
+
+export const createNeonatalHyperammonemiaEpisode = (payload: any): Promise<{ episode: NeonatalHyperammonemiaRecord }> =>
+  api('POST', '/api/neonatal-hyperammonemia/episodes', payload);
+
+export const updateNeonatalHyperammonemiaEpisode = (id: number, payload: any): Promise<{ episode: NeonatalHyperammonemiaRecord }> =>
+  api('PUT', `/api/neonatal-hyperammonemia/episodes/${id}`, payload);
+
+export const patchNeonatalHyperammonemiaStatus = (id: number, status: string): Promise<{ episode: NeonatalHyperammonemiaRecord }> =>
+  api('PATCH', `/api/neonatal-hyperammonemia/episodes/${id}/status`, { status });
+
+export const deleteNeonatalHyperammonemiaEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-hyperammonemia/episodes/${id}`);
+
+export const addNeonatalHyperammonemiaFlowsheet = (episodeId: number, payload: any): Promise<{ flowsheetLog: NeonatalHyperammonemiaFlowsheetRecord }> =>
+  api('POST', `/api/neonatal-hyperammonemia/episodes/${episodeId}/flowsheet`, payload);
+
+export const deleteNeonatalHyperammonemiaFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-hyperammonemia/episodes/${episodeId}/flowsheet/${logId}`);
+
+export const evaluateNeonatalHyperammonemiaApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/neonatal-hyperammonemia/evaluate', payload);
+
+
 
 
 

@@ -5553,6 +5553,144 @@ async function seed() {
     }
   }
 
+  // --- SERIES 39A: Pediatric Acute Toxic Ingestion & Antidote Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_toxic_ingestion_episodes (
+      patient_id, admission_id, episode_code, ingestion_datetime, presentation_datetime,
+      age_years, weight_kg, substance_category, ingested_dose_mg_kg, hours_post_ingestion,
+      serum_level_value, rumack_matthew_line_breached, alt_u_l, ast_u_l,
+      total_bilirubin_mg_dl, prothrombin_time_inr, antidote_indicated, antidote_administered,
+      gastric_decontamination_contraindicated, status, consultant_id, clinical_notes,
+      created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'TOX-20261108-101', '2026-11-08T06:00:00', '2026-11-08T10:30:00',
+      3.5, 15.0, 'acetaminophen_paracetamol', 186.7, 4.5,
+      195.0, 1, 32.0, 38.0,
+      0.6, 1.0, 1, 'iv_n_acetylcysteine_nac_protocol',
+      0, 'antidote_infusion_active', ?,
+      '3.5-year-old child presenting 4.5 hours after accidental acute ingestion of liquid acetaminophen suspension (~2800 mg, ~186.7 mg/kg). Serum acetaminophen concentration drawn at 4.5 hours post-ingestion is 195 mcg/mL, significantly exceeding the Rumack-Matthew 150 mcg/mL treatment threshold line. Initiated 3-bag intravenous N-Acetylcysteine (NAC) protocol immediately: Bag 1 (150 mg/kg in 100 mL D5W over 60 min), Bag 2 (50 mg/kg in 250 mL D5W over 4 hours), and Bag 3 (100 mg/kg in 500 mL D5W over 16 hours). Baseline hepatic enzymes AST 38 U/L, ALT 32 U/L, INR 1.0. Child is hemodynamically stable under PICU monitoring with serial LFT and APAP level tracking.',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingTox = db.prepare('SELECT id FROM pediatric_toxic_ingestion_episodes WHERE episode_code = ?').get('TOX-20261108-101') as any;
+  if (existingTox) {
+    const toxLogs = [
+      { t: '2026-11-08T11:45:00', hrs: 5.75, hr: 112, sbp: 104, rr: 24, spo2: 99.0, alt: 32.0, ast: 38.0, tox: 180.0, vin: 0, notes: 'NAC Bag 1 completed without anaphylactoid flushing or bronchospasm. Bag 2 infusing smoothly. Vitals stable.' },
+      { t: '2026-11-08T15:45:00', hrs: 9.75, hr: 104, sbp: 102, rr: 22, spo2: 99.0, alt: 35.0, ast: 40.0, tox: 92.0, vin: 0, notes: 'NAC Bag 2 complete. Bag 3 initiated (100 mg/kg over 16 hrs). Acetaminophen level down trending significantly. Good oral hydration.' },
+      { t: '2026-11-08T20:00:00', hrs: 14.0, hr: 98, sbp: 100, rr: 20, spo2: 100.0, alt: 30.0, ast: 34.0, tox: 38.0, vin: 0, notes: 'NAC Bag 3 infusing at 8 hours mark. Serum APAP clearing rapidly. Liver enzymes remain normal. Asymptomatic and alert.' },
+    ];
+    for (const tl of toxLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_toxic_ingestion_flowsheet_logs (
+          episode_id, patient_id, log_datetime, hours_from_ingestion,
+          heart_rate_bpm, systolic_bp_mmhg, respiratory_rate, spo2_percent,
+          alt_u_l, ast_u_l, toxin_serum_level, vin_rose_urine_observed,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingTox.id, aaravId, tl.t, tl.hrs, tl.hr, tl.sbp, tl.rr, tl.spo2, tl.alt, tl.ast, tl.tox, tl.vin, tl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 39B: Obstetric Massive Pulmonary Embolism (PE) & Acute Right Heart Failure Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_massive_pe_episodes (
+      patient_id, admission_id, episode_code, onset_datetime, gestational_age_weeks,
+      clinical_setting, systolic_bp_mmhg, heart_rate_bpm, respiratory_rate, spo2_percent,
+      hemodynamic_instability_shock, rv_dysfunction_echo_confirmed, cardiac_biomarkers_elevated,
+      pe_risk_stratification, thrombolytic_therapy_administered, thrombolytic_agent_dose,
+      systemic_ufh_infusion_active, target_aptt_seconds, catheter_directed_or_surgical_embolectomy,
+      inferior_vena_cava_filter_placed, status, consultant_id, clinical_notes,
+      created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'PE-20261108-101', '2026-11-08T07:15:00', 39.0,
+      'post_cesarean_section', 78, 128, 34, 87.0,
+      1, 1, 1,
+      'high_risk_massive_pe', 1, 'alteplase_100mg_over_2hr',
+      1, 70.0, 0,
+      0, 'thrombolytic_infusion_icu', ?,
+      'Postpartum Day 3 following cesarean delivery, patient suffered sudden catastrophic collapse with dyspnea, pleuritic substernal pain, and cyanosis. Sustained severe hypotension SBP 78 mmHg (Shock Index 1.64). Bedside echocardiography demonstrated severe acute right ventricular strain with RV dilation (RV/LV diameter ratio 1.35), TAPSE 11 mm (< 16 mm threshold), and positive McConnell sign. Troponin I elevated at 0.85 ng/mL and NT-proBNP 1620 pg/mL confirming acute cor pulmonale. Multidisciplinary PE Response Team (PERT) activated. High-risk Massive PE diagnosed. Systemic thrombolysis with recombinant tissue plasminogen activator (Alteplase / rtPA 100 mg IV over 2 hours) initiated concurrently with therapeutic Unfractionated Heparin (5,000 U bolus followed by 1,000 U/hr targeting aPTT 1.5-2.5x control [60-80s]). Strict warning: Neuraxial anesthesia and puncture procedures strictly contraindicated within 24 hours of thrombolysis.',
+      ?, ?
+    )
+  `).run(sunitaId, docId, now, now);
+
+  const existingPe = db.prepare('SELECT id FROM obstetric_massive_pe_episodes WHERE episode_code = ?').get('PE-20261108-101') as any;
+  if (existingPe) {
+    const peLogs = [
+      { t: '2026-11-08T08:00:00', hrs: 0.75, sbp: 84, dbp: 52, hr: 120, spo2: 92.0, aptt: 55.0, ufh: 1000.0, norepi: 0.08, bleed: 0, notes: 'Alteplase infusion running at 45 min mark. Supplemental high-flow O2 active. Low-dose norepinephrine running to support RV coronary perfusion.' },
+      { t: '2026-11-08T09:30:00', hrs: 2.25, sbp: 98, dbp: 64, hr: 104, spo2: 96.0, aptt: 66.0, ufh: 1100.0, norepi: 0.02, bleed: 0, notes: 'Alteplase 100 mg infusion completed. Shock index improved to 1.06. Vasopressor successfully weaned down. Repeat bedside echo shows improving RV contractility (TAPSE 14 mm).' },
+      { t: '2026-11-08T13:30:00', hrs: 6.25, sbp: 114, dbp: 72, hr: 88, spo2: 98.0, aptt: 72.0, ufh: 1100.0, norepi: 0.0, bleed: 0, notes: 'Vasopressor completely weaned. Target therapeutic aPTT achieved (72s). Patient resting comfortably in ICU. No obstetric hemorrhage or site bleeding.' },
+    ];
+    for (const pl of peLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_massive_pe_flowsheet_logs (
+          episode_id, patient_id, log_datetime, hours_from_presentation,
+          systolic_bp_mmhg, diastolic_bp_mmhg, heart_rate_bpm, spo2_percent,
+          aptt_seconds, heparin_infusion_rate_units_hr, vasopressor_norepinephrine_mcg_min,
+          bleeding_complication_observed, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingPe.id, sunitaId, pl.t, pl.hrs, pl.sbp, pl.dbp, pl.hr, pl.spo2, pl.aptt, pl.ufh, pl.norepi, pl.bleed, pl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 39C: Neonatal Inborn Errors of Metabolism (IEM) Hyperammonemic Crisis Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_hyperammonemia_iem_episodes (
+      patient_id, admission_id, episode_code, onset_datetime, age_hours,
+      birth_weight_grams, gestational_age_weeks, plasma_ammonia_umol_l,
+      blood_gas_acid_base_pattern, plasma_lactate_mmol_l, anion_gap_meq_l,
+      urine_ketones_present, suspected_disorder_category, protein_intake_halted,
+      high_calorie_dextrose_active, gir_mg_kg_min, nitrogen_scavenger_ammonul_active,
+      iv_l_arginine_active, iv_l_carnitine_active, crrt_dialysis_indicated,
+      crrt_dialysis_active, status, consultant_id, clinical_notes,
+      created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'IEM-20261108-101', '2026-11-08T04:30:00', 68,
+      3200, 39.5, 385.0,
+      'respiratory_alkalosis', 1.8, 11.0,
+      0, 'urea_cycle_disorder_ucd', 1,
+      1, 11.5, 1,
+      1, 0, 0,
+      0, 'medical_scavenger_infusion', ?,
+      'Term infant on Day 3 of life presenting with progressive lethargy, tachypnea, vomiting, and irritability after initiation of breastfeeds. ABG reveals marked primary respiratory alkalosis (pH 7.52, pCO2 26 mmHg) with normal anion gap (11 mEq/L) and normal lactate (1.8 mmol/L), classic for Urea Cycle Disorder (OTC / CPS1 deficiency). Emergency STAT plasma ammonia returned critically elevated at 385 umol/L (Critical Tier 2, Encephalopathy threshold). Immediate emergency protocol enacted: complete cessation of all protein feeds; central hyperinfusion of D12.5W at Glucose Infusion Rate (GIR) 11.5 mg/kg/min + 20% IV lipids at 2 g/kg/day to suppress catabolism; intravenous nitrogen scavenger Ammonul (Sodium Phenylacetate 250 mg/kg + Sodium Benzoate 250 mg/kg) loading dose infused over 90 minutes followed by identical continuous 24-hour maintenance infusion; plus IV L-Arginine HCl 250 mg/kg. Pediatric nephrology and CRRT hemodiafiltration team placed on active standby for dialytic escalation if ammonia exceeds 400-500 umol/L or fails to drop within 4-6 hours.',
+      ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingIem = db.prepare('SELECT id FROM neonatal_hyperammonemia_iem_episodes WHERE episode_code = ?').get('IEM-20261108-101') as any;
+  if (existingIem) {
+    const iemLogs = [
+      { t: '2026-11-08T06:30:00', hrs: 2.0, nh3: 310.0, ph: 7.48, pco2: 29.0, hco3: 21.0, glu: 138.0, gir: 11.5, crrt: 0.0, enc: 'grade_2_moderate_somnolence_hyperreflexia', notes: 'Ammonul loading dose completed without hypotension. Maintenance infusion commenced. GIR 11.5 mg/kg/min running smoothly.' },
+      { t: '2026-11-08T10:30:00', hrs: 6.0, nh3: 215.0, ph: 7.44, pco2: 33.0, hco3: 22.0, glu: 124.0, gir: 11.5, crrt: 0.0, enc: 'grade_2_moderate_somnolence_hyperreflexia', notes: 'Significant biochemical response to scavenger therapy: ammonia decreased from 385 to 215 umol/L. Hemodialysis safely avoided.' },
+      { t: '2026-11-08T16:30:00', hrs: 12.0, nh3: 112.0, ph: 7.40, pco2: 37.0, hco3: 23.0, glu: 110.0, gir: 10.0, crrt: 0.0, enc: 'grade_1_mild_lethargy_poor_feeding', notes: 'Ammonia down to 112 umol/L (< 150 umol/L safe threshold). Neonatal tone and suck reflex significantly improved. Planning gradual essential amino acid reintroduction at 24 hours.' },
+    ];
+    for (const il of iemLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_hyperammonemia_iem_flowsheet_logs (
+          episode_id, patient_id, log_datetime, hours_from_crisis_onset,
+          plasma_ammonia_umol_l, ph_value, pco2_mmhg, bicarbonate_meq_l,
+          glucose_mg_dl, gir_mg_kg_min, dialysis_blood_flow_ml_min,
+          encephalopathy_grade, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingIem.id, babyId, il.t, il.hrs, il.nh3, il.ph, il.pco2, il.hco3, il.glu, il.gir, il.crrt, il.enc, il.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

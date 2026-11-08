@@ -221,6 +221,12 @@ import { ObstetricPmcdPage } from './pages/ObstetricPmcdPage';
 import { ObstetricPmcdPrint } from './pages/ObstetricPmcdPrint';
 import { PediatricGbsPage } from './pages/PediatricGbsPage';
 import { PediatricGbsPrint } from './pages/PediatricGbsPrint';
+import { PediatricToxicologyPage } from './pages/PediatricToxicologyPage';
+import { PediatricToxicologyPrint } from './pages/PediatricToxicologyPrint';
+import { ObstetricMassivePePage } from './pages/ObstetricMassivePePage';
+import { ObstetricMassivePePrint } from './pages/ObstetricMassivePePrint';
+import { NeonatalHyperammonemiaPage } from './pages/NeonatalHyperammonemiaPage';
+import { NeonatalHyperammonemiaPrint } from './pages/NeonatalHyperammonemiaPrint';
 import { DeliveryWardPage } from './pages/DeliveryWardPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditPage } from './pages/AuditPage';
@@ -376,6 +382,9 @@ function Shell() {
     ...(can('patient:read_clinical') ? [{ to: '/neonatal-sip', label: 'Neonatal SIP', icon: '🍼', end: false }] : []),
     ...(can('patient:read_clinical') ? [{ to: '/obstetric-pmcd', label: 'Obstetric PMCD', icon: '⚡', end: false }] : []),
     ...(can('patient:read_clinical') ? [{ to: '/pediatric-gbs', label: 'Pediatric GBS', icon: '🧠', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/pediatric-toxicology', label: 'Pediatric Toxicology', icon: '🧪', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/obstetric-massive-pe', label: 'Massive PE & RV', icon: '🫀', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/neonatal-hyperammonemia', label: 'Neonatal IEM Ammonia', icon: '🧬', end: false }] : []),
     ...(can('ipd:read_basic') || can('station:read') ? [{ to: '/delivery-ward', label: 'Delivery ward', icon: '👶', end: false }] : []),
     ...(can('billing:read') ? [{ to: '/billing', label: 'Billing', icon: '💳', end: false }] : []),
     ...(can('settings:manage') ? [{ to: '/settings', label: 'Clinic', icon: '🏥', end: false }] : []),
@@ -697,6 +706,18 @@ function Shell() {
           <Route path="/pediatric-gbs/:id/print" element={can('patient:read_clinical') ? <PediatricGbsPrint /> : <Navigate to="/pediatric-gbs" replace />} />
           <Route path="/pediatric-gbs/print/:id" element={can('patient:read_clinical') ? <PediatricGbsPrint /> : <Navigate to="/pediatric-gbs" replace />} />
           <Route path="/patients/:patientId/pediatric-gbs/:episodeId/print" element={can('patient:read_clinical') ? <PediatricGbsPrint /> : <Navigate to="/pediatric-gbs" replace />} />
+          <Route path="/pediatric-toxicology" element={can('patient:read_clinical') ? <PediatricToxicologyPage /> : <Navigate to="/" replace />} />
+          <Route path="/pediatric-toxicology/:id/print" element={can('patient:read_clinical') ? <PediatricToxicologyPrint /> : <Navigate to="/pediatric-toxicology" replace />} />
+          <Route path="/pediatric-toxicology/print/:id" element={can('patient:read_clinical') ? <PediatricToxicologyPrint /> : <Navigate to="/pediatric-toxicology" replace />} />
+          <Route path="/patients/:patientId/pediatric-toxicology/:episodeId/print" element={can('patient:read_clinical') ? <PediatricToxicologyPrint /> : <Navigate to="/pediatric-toxicology" replace />} />
+          <Route path="/obstetric-massive-pe" element={can('patient:read_clinical') ? <ObstetricMassivePePage /> : <Navigate to="/" replace />} />
+          <Route path="/obstetric-massive-pe/:id/print" element={can('patient:read_clinical') ? <ObstetricMassivePePrint /> : <Navigate to="/obstetric-massive-pe" replace />} />
+          <Route path="/obstetric-massive-pe/print/:id" element={can('patient:read_clinical') ? <ObstetricMassivePePrint /> : <Navigate to="/obstetric-massive-pe" replace />} />
+          <Route path="/patients/:patientId/obstetric-massive-pe/:episodeId/print" element={can('patient:read_clinical') ? <ObstetricMassivePePrint /> : <Navigate to="/obstetric-massive-pe" replace />} />
+          <Route path="/neonatal-hyperammonemia" element={can('patient:read_clinical') ? <NeonatalHyperammonemiaPage /> : <Navigate to="/" replace />} />
+          <Route path="/neonatal-hyperammonemia/:id/print" element={can('patient:read_clinical') ? <NeonatalHyperammonemiaPrint /> : <Navigate to="/neonatal-hyperammonemia" replace />} />
+          <Route path="/neonatal-hyperammonemia/print/:id" element={can('patient:read_clinical') ? <NeonatalHyperammonemiaPrint /> : <Navigate to="/neonatal-hyperammonemia" replace />} />
+          <Route path="/patients/:patientId/neonatal-hyperammonemia/:episodeId/print" element={can('patient:read_clinical') ? <NeonatalHyperammonemiaPrint /> : <Navigate to="/neonatal-hyperammonemia" replace />} />
           <Route path="/delivery-ward" element={can('ipd:read_basic') || can('station:read') ? <DeliveryWardPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id" element={can('visit:read') ? <VisitPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id/print" element={can('visit:read') ? <PrescriptionPrint /> : <Navigate to="/" replace />} />
