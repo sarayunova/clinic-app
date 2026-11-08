@@ -548,6 +548,28 @@ export const ACTION_LABELS: Record<string, string> = {
   'pediatric_meningitis.flowsheet_delete': 'Deleted pediatric meningitis flowsheet log',
   'pediatric_meningitis.print': 'Printed pediatric bacterial meningitis & Nigrovic BMS clinical dossier',
 
+  // SERIES 30: Neonatal AOP, Obstetric Retained Placenta MROP, Pediatric Pyloric Stenosis IHPS
+  'neonatal_aop.create': 'Initiated neonatal AOP evaluation & caffeine citrate therapy calculation',
+  'neonatal_aop.status_update': 'Updated neonatal AOP episode status, caffeine dose or weaning criteria',
+  'neonatal_aop.delete': 'Deleted neonatal AOP episode record',
+  'neonatal_aop.flowsheet_add': 'Logged neonatal AOP apnea, bradycardia, SpO2 & caffeine checkpoint',
+  'neonatal_aop.flowsheet_delete': 'Deleted neonatal AOP flowsheet log',
+  'neonatal_aop.print': 'Printed neonatal AOP & caffeine citrate protocol clinical dossier',
+
+  'obstetric_retained_placenta.create': 'Initiated obstetric retained placenta evaluation & MROP protocol',
+  'obstetric_retained_placenta.status_update': 'Updated obstetric retained placenta episode, IUV oxytocin or MROP status',
+  'obstetric_retained_placenta.delete': 'Deleted obstetric retained placenta episode record',
+  'obstetric_retained_placenta.flowsheet_add': 'Logged obstetric retained placenta blood loss, vitals & tone checkpoint',
+  'obstetric_retained_placenta.flowsheet_delete': 'Deleted obstetric retained placenta flowsheet log',
+  'obstetric_retained_placenta.print': 'Printed obstetric retained placenta & MROP clinical dossier',
+
+  'pediatric_pyloric_stenosis.create': 'Initiated pediatric pyloric stenosis IHPS evaluation & metabolic resuscitation calculation',
+  'pediatric_pyloric_stenosis.status_update': 'Updated pediatric pyloric stenosis episode, electrolyte status or surgical clearance',
+  'pediatric_pyloric_stenosis.delete': 'Deleted pediatric pyloric stenosis episode record',
+  'pediatric_pyloric_stenosis.flowsheet_add': 'Logged pediatric pyloric stenosis electrolytes, UOP & fluid rate checkpoint',
+  'pediatric_pyloric_stenosis.flowsheet_delete': 'Deleted pediatric pyloric stenosis flowsheet log',
+  'pediatric_pyloric_stenosis.print': 'Printed pediatric pyloric stenosis IHPS & Ramstedt pyloromyotomy clinical dossier',
+
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

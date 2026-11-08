@@ -10102,6 +10102,257 @@ export const deletePediatricMeningitisFlowsheet = (episodeId: number, logId: num
 export const evaluatePediatricMeningitisApi = (payload: any): Promise<{ evaluation: any }> =>
   api('POST', '/api/pediatric-bacterial-meningitis/evaluate', payload);
 
+// ==========================================
+// SERIES 30A: NEONATAL APNEA OF PREMATURITY (AOP)
+// ==========================================
+export interface NeonatalAopRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  gestational_age_weeks: number;
+  chronological_age_days: number;
+  post_conceptional_age_weeks: number;
+  current_weight_kg: number;
+  apnea_subtype: 'mixed' | 'central' | 'obstructive';
+  apnea_frequency_per_24h: number;
+  bradycardia_present: boolean;
+  lowest_heart_rate_bpm: number | null;
+  desaturation_present: boolean;
+  lowest_spo2_percent: number | null;
+  stimulation_required: 'self_resolved' | 'tactile_gentle' | 'vigorous_stimulation' | 'bag_mask_positive_pressure';
+  caffeine_citrate_active: boolean;
+  caffeine_loading_dose_mg_kg: number;
+  caffeine_maintenance_dose_mg_kg_day: number;
+  serum_caffeine_level_mcg_ml: number | null;
+  secondary_causes_excluded: boolean;
+  respiratory_support_mode: 'room_air' | 'low_flow_nasal_cannula' | 'high_flow_hfnc' | 'bubble_cpap' | 'niv_nava' | 'invasive_mechanical_ventilation';
+  cpap_peep_cmh2o: number | null;
+  weaning_eligible: boolean;
+  apnea_free_days_count: number;
+  status: 'active_treatment' | 'dose_escalation_refractory' | 'weaning_phase' | 'caffeine_discontinued_monitoring' | 'resolved_discharged';
+  consultant_id: number;
+  consultant_name?: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NeonatalAopFlowsheetRecord {
+  id: number;
+  aop_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  apnea_events_count_in_shift: number;
+  bradycardia_events_count: number;
+  desaturation_events_count: number;
+  lowest_heart_rate_bpm: number | null;
+  lowest_spo2_percent: number | null;
+  stimulation_mode_used: 'none' | 'tactile_rubbing' | 'repositioning' | 'bag_valve_mask' | null;
+  caffeine_dose_given_mg: number | null;
+  current_respiratory_support: string | null;
+  caffeine_toxicity_signs: boolean;
+  notes: string | null;
+  logged_by_id: number;
+  logged_by_name?: string;
+  created_at: string;
+}
+
+export const getNeonatalAopEpisodes = (params?: { patientId?: number }): Promise<{ episodes: NeonatalAopRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/neonatal-aop/episodes${query}`);
+};
+
+export const getNeonatalAopEpisode = (id: number): Promise<{ episode: NeonatalAopRecord; evaluation: any; flowsheet: NeonatalAopFlowsheetRecord[] }> =>
+  api('GET', `/api/neonatal-aop/episodes/${id}`);
+
+export const createNeonatalAopEpisode = (payload: any): Promise<{ episodeId: number; episodeCode: string; evaluation: any; success: boolean }> =>
+  api('POST', '/api/neonatal-aop/episodes', payload);
+
+export const updateNeonatalAopStatus = (id: number, payload: any): Promise<{ success: boolean }> =>
+  api('PATCH', `/api/neonatal-aop/episodes/${id}/status`, payload);
+
+export const addNeonatalAopFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number; success: boolean }> =>
+  api('POST', `/api/neonatal-aop/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteNeonatalAopFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-aop/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const evaluateNeonatalAopApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/neonatal-aop/evaluate', payload);
+
+// ==========================================
+// SERIES 30B: OBSTETRIC RETAINED PLACENTA & MROP
+// ==========================================
+export interface ObstetricRetainedPlacentaRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  delivery_datetime: string;
+  third_stage_duration_minutes: number;
+  active_management_third_stage: boolean;
+  estimated_blood_loss_ml: number;
+  hemodynamic_stability: 'stable' | 'borderline_tachycardic' | 'decompensated_hypotensive_shock';
+  bladder_catheterized: boolean;
+  retained_placenta_type: 'placenta_adherens' | 'trapped_incarcerated_placenta' | 'partial_accreta_suspected';
+  iuv_oxytocin_attempted: boolean;
+  iuv_oxytocin_dose_iu: number;
+  iuv_oxytocin_successful: boolean;
+  mrop_indicated: boolean;
+  mrop_performed: boolean;
+  mrop_datetime: string | null;
+  anesthesia_type: 'spinal_regional' | 'epidural_topup' | 'general_anesthesia' | 'iv_sedation_analgesia' | null;
+  placenta_complete_post_removal: boolean;
+  prophylactic_antibiotics_given: boolean;
+  post_removal_oxytocin_infusion: boolean;
+  status: 'under_conservative_management' | 'iuv_oxytocin_in_progress' | 'mrop_in_theater' | 'post_removal_recovery' | 'resolved_discharged' | 'escalated_to_laparotomy_hysterectomy';
+  consultant_id: number;
+  consultant_name?: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ObstetricRetainedPlacentaFlowsheetRecord {
+  id: number;
+  retained_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  minutes_from_delivery: number;
+  blood_pressure_sys: number | null;
+  blood_pressure_dia: number | null;
+  heart_rate: number | null;
+  cumulative_blood_loss_ml: number;
+  uterine_fundus_tone: 'firm_contracted' | 'soft_boggy' | 'contracted_with_lower_spasm';
+  active_vaginal_bleeding: 'minimal_trickle' | 'moderate_lochia' | 'brisk_hemorrhage';
+  cord_lengthening_observed: boolean;
+  intervention_applied: string | null;
+  notes: string | null;
+  logged_by_id: number;
+  logged_by_name?: string;
+  created_at: string;
+}
+
+export const getObstetricRetainedPlacentaEpisodes = (params?: { patientId?: number }): Promise<{ episodes: ObstetricRetainedPlacentaRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/obstetric-retained-placenta/episodes${query}`);
+};
+
+export const getObstetricRetainedPlacentaEpisode = (id: number): Promise<{ episode: ObstetricRetainedPlacentaRecord; evaluation: any; flowsheet: ObstetricRetainedPlacentaFlowsheetRecord[] }> =>
+  api('GET', `/api/obstetric-retained-placenta/episodes/${id}`);
+
+export const createObstetricRetainedPlacentaEpisode = (payload: any): Promise<{ episodeId: number; episodeCode: string; evaluation: any; success: boolean }> =>
+  api('POST', '/api/obstetric-retained-placenta/episodes', payload);
+
+export const updateObstetricRetainedPlacentaStatus = (id: number, payload: any): Promise<{ success: boolean }> =>
+  api('PATCH', `/api/obstetric-retained-placenta/episodes/${id}/status`, payload);
+
+export const addObstetricRetainedPlacentaFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number; success: boolean }> =>
+  api('POST', `/api/obstetric-retained-placenta/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteObstetricRetainedPlacentaFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-retained-placenta/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const evaluateObstetricRetainedPlacentaApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/obstetric-retained-placenta/evaluate', payload);
+
+// ==========================================
+// SERIES 30C: PEDIATRIC PYLORIC STENOSIS (IHPS)
+// ==========================================
+export interface PediatricPyloricStenosisRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  presentation_datetime: string;
+  age_weeks: number;
+  weight_kg: number;
+  birth_weight_kg: number;
+  vomiting_projectile_non_bilious: boolean;
+  hungry_vomiter_behavior: boolean;
+  palpable_olive_mass: boolean;
+  visible_gastric_peristalsis: boolean;
+  dehydration_percentage: number;
+  ultrasound_performed: boolean;
+  pyloric_muscle_thickness_mm: number | null;
+  pyloric_channel_length_mm: number | null;
+  pyloric_transverse_diameter_mm: number | null;
+  ultrasound_diagnostic_target_sign: boolean;
+  serum_sodium_meq_l: number;
+  serum_potassium_meq_l: number;
+  serum_chloride_meq_l: number;
+  serum_bicarbonate_meq_l: number;
+  blood_ph: number;
+  urine_output_ml_kg_hr: number;
+  fluid_resuscitation_rate_ml_hr: number | null;
+  potassium_supplementation_started: boolean;
+  preop_electrolytes_normalized: boolean;
+  surgical_clearance_granted: boolean;
+  surgery_performed: boolean;
+  pyloromyotomy_technique: 'laparoscopic_ramstedt' | 'open_right_upper_quadrant' | 'open_circumumbilical_tan_bianchi' | null;
+  postop_feeding_started: boolean;
+  status: 'preop_fluid_resuscitation' | 'metabolically_cleared_for_or' | 'surgery_in_progress' | 'postop_feeding_advancement' | 'resolved_discharged';
+  consultant_id: number;
+  consultant_name?: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PediatricPyloricStenosisFlowsheetRecord {
+  id: number;
+  pyloric_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_admission: number;
+  serum_sodium_meq_l: number | null;
+  serum_potassium_meq_l: number | null;
+  serum_chloride_meq_l: number | null;
+  serum_bicarbonate_meq_l: number | null;
+  blood_ph: number | null;
+  urine_output_ml_kg_hr: number;
+  iv_fluid_rate_ml_hr: number;
+  capillary_refill_seconds: number | null;
+  vomiting_episodes_count: number;
+  gastric_decompression_output_ml: number | null;
+  notes: string | null;
+  logged_by_id: number;
+  logged_by_name?: string;
+  created_at: string;
+}
+
+export const getPediatricPyloricStenosisEpisodes = (params?: { patientId?: number }): Promise<{ episodes: PediatricPyloricStenosisRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/pediatric-pyloric-stenosis/episodes${query}`);
+};
+
+export const getPediatricPyloricStenosisEpisode = (id: number): Promise<{ episode: PediatricPyloricStenosisRecord; evaluation: any; flowsheet: PediatricPyloricStenosisFlowsheetRecord[] }> =>
+  api('GET', `/api/pediatric-pyloric-stenosis/episodes/${id}`);
+
+export const createPediatricPyloricStenosisEpisode = (payload: any): Promise<{ episodeId: number; episodeCode: string; evaluation: any; success: boolean }> =>
+  api('POST', '/api/pediatric-pyloric-stenosis/episodes', payload);
+
+export const updatePediatricPyloricStenosisStatus = (id: number, payload: any): Promise<{ success: boolean }> =>
+  api('PATCH', `/api/pediatric-pyloric-stenosis/episodes/${id}/status`, payload);
+
+export const addPediatricPyloricStenosisFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number; success: boolean }> =>
+  api('POST', `/api/pediatric-pyloric-stenosis/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deletePediatricPyloricStenosisFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-pyloric-stenosis/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const evaluatePediatricPyloricStenosisApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/pediatric-pyloric-stenosis/evaluate', payload);
+
+
 
 
 

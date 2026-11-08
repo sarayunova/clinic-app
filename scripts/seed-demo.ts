@@ -4219,6 +4219,175 @@ async function seed() {
     }
   }
 
+  // =========================================================================
+  // SERIES 30 DEMO DATA: NEONATAL AOP, OBSTETRIC RETAINED PLACENTA & PEDIATRIC PYLORIC STENOSIS
+  // =========================================================================
+
+  // --- SERIES 30A: Neonatal Apnea of Prematurity (AOP) & Caffeine Citrate ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_aop_episodes (
+      patient_id, admission_id, episode_code, onset_datetime,
+      gestational_age_weeks, chronological_age_days, post_conceptional_age_weeks,
+      current_weight_kg, apnea_subtype, apnea_frequency_per_24h,
+      bradycardia_present, lowest_heart_rate_bpm, desaturation_present,
+      lowest_spo2_percent, stimulation_required,
+      caffeine_citrate_active, caffeine_loading_dose_mg_kg, caffeine_maintenance_dose_mg_kg_day,
+      serum_caffeine_level_mcg_ml, secondary_causes_excluded,
+      respiratory_support_mode, cpap_peep_cmh2o,
+      weaning_eligible, apnea_free_days_count,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'AOP-20261108-101', '2026-11-08T04:30:00',
+      30.2, 9, 31.5,
+      1.28, 'mixed', 4,
+      1, 74, 1,
+      82, 'tactile_gentle',
+      1, 20.0, 7.5,
+      12.5, 1,
+      'bubble_cpap', 5.0,
+      0, 1,
+      'active_treatment', ?,
+      'Preterm 30+2 week infant experiencing recurrent mixed apnea events accompanied by bradycardia (HR 74 bpm) and desaturations (SpO2 82%). Sepsis screen negative. Administered Caffeine Citrate IV loading dose 25.6 mg (20 mg/kg), maintained on 9.6 mg/day (7.5 mg/kg/day q24h). On Bubble CPAP +5 cmH2O. Serum caffeine level 12.5 mcg/mL in optimal therapeutic range (8-20 mcg/mL).',
+      ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingAop = db.prepare('SELECT id FROM neonatal_aop_episodes WHERE episode_code = ?').get('AOP-20261108-101') as any;
+  if (existingAop) {
+    const aopLogs = [
+      { ap: 2, br: 2, des: 2, hr: 74, spo2: 82, stim: 'tactile_rubbing', dose: 25.6, supp: 'Bubble CPAP 5 cmH2O, FiO2 25%', tox: 0, notes: 'Loading dose caffeine citrate 25.6 mg IV given over 30 min. Gentle sole stimulation for apnea.' },
+      { ap: 1, br: 1, des: 1, hr: 78, spo2: 85, stim: 'tactile_rubbing', dose: 9.6, supp: 'Bubble CPAP 5 cmH2O, FiO2 23%', tox: 0, notes: 'Maintenance caffeine 9.6 mg daily given. Frequency of desaturations reduced.' },
+      { ap: 0, br: 0, des: 0, hr: 138, spo2: 96, stim: 'none', dose: null, supp: 'Bubble CPAP 5 cmH2O, Room Air', tox: 0, notes: 'Stable through morning shift. No apnea or bradycardia. Good gut tolerance on trophic feeds.' },
+    ];
+    for (const al of aopLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_aop_flowsheet_logs (
+          aop_episode_id, patient_id, log_datetime,
+          apnea_events_count_in_shift, bradycardia_events_count, desaturation_events_count,
+          lowest_heart_rate_bpm, lowest_spo2_percent, stimulation_mode_used,
+          caffeine_dose_given_mg, current_respiratory_support, caffeine_toxicity_signs,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T05:00:00',
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingAop.id, babyId, al.ap, al.br, al.des, al.hr, al.spo2, al.stim, al.dose, al.supp, al.tox, al.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 30B: Obstetric Retained Placenta & MROP Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_retained_placenta_episodes (
+      patient_id, admission_id, episode_code, delivery_datetime,
+      third_stage_duration_minutes, active_management_third_stage, estimated_blood_loss_ml,
+      hemodynamic_stability, bladder_catheterized, retained_placenta_type,
+      iuv_oxytocin_attempted, iuv_oxytocin_dose_iu, iuv_oxytocin_successful,
+      mrop_indicated, mrop_performed, mrop_datetime,
+      anesthesia_type, placenta_complete_post_removal,
+      prophylactic_antibiotics_given, post_removal_oxytocin_infusion,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'RET-20261108-101', '2026-11-08T08:15:00',
+      42, 1, 450,
+      'stable', 1, 'placenta_adherens',
+      1, 20, 0,
+      1, 1, '2026-11-08T09:10:00',
+      'spinal_regional', 1,
+      1, 1,
+      'post_removal_recovery', ?,
+      'Third stage exceeded 40 minutes despite active management. Foley catheterization performed draining 350 mL clear urine. Trial of intra-umbilical vein (IUV) oxytocin 20 IU in 20 mL normal saline yielded no separation after 20 minutes. Transferred to Operating Theatre for emergent MROP under spinal anesthesia. Successful manual extraction of complete intact placenta along natural cleavage plane. Prophylactic Ampicillin 2g + Metronidazole 500mg IV administered. High-dose oxytocin infusion ongoing. Uterus well contracted.',
+      ?, ?
+    )
+  `).run(anitaId, docId, now, now);
+
+  const existingRet = db.prepare('SELECT id FROM obstetric_retained_placenta_episodes WHERE episode_code = ?').get('RET-20261108-101') as any;
+  if (existingRet) {
+    const retLogs = [
+      { min: 35, sbp: 118, dbp: 74, hr: 84, loss: 300, tone: 'firm_contracted', bleed: 'minimal_trickle', cord: 0, interv: 'Bladder catheterized, IUV oxytocin 20 IU trial injected into umbilical vein', notes: 'Awaiting placental detachment. Vital signs stable.' },
+      { min: 55, sbp: 112, dbp: 70, hr: 92, loss: 420, tone: 'contracted_with_lower_spasm', bleed: 'moderate_lochia', cord: 0, interv: 'Transferred to OT for MROP under spinal block', notes: 'IUV oxytocin unsuccessful. Anesthesia team in theater.' },
+      { min: 80, sbp: 116, dbp: 72, hr: 80, loss: 450, tone: 'firm_contracted', bleed: 'minimal_trickle', cord: 1, interv: 'MROP completed, Ampicillin 2g + Metronidazole 500mg given, Oxytocin infusion 20 IU running', notes: 'Placenta complete. Fundus hard and centrally positioned.' },
+    ];
+    for (const rl of retLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_retained_placenta_flowsheet_logs (
+          retained_episode_id, patient_id, log_datetime,
+          minutes_from_delivery, blood_pressure_sys, blood_pressure_dia,
+          heart_rate, cumulative_blood_loss_ml, uterine_fundus_tone,
+          active_vaginal_bleeding, cord_lengthening_observed,
+          intervention_applied, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T08:50:00',
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingRet.id, anitaId, rl.min, rl.sbp, rl.dbp, rl.hr, rl.loss, rl.tone, rl.bleed, rl.cord, rl.interv, rl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 30C: Pediatric Infantile Hypertrophic Pyloric Stenosis (IHPS) Resuscitation Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_pyloric_stenosis_episodes (
+      patient_id, admission_id, episode_code, presentation_datetime,
+      age_weeks, weight_kg, birth_weight_kg,
+      vomiting_projectile_non_bilious, hungry_vomiter_behavior,
+      palpable_olive_mass, visible_gastric_peristalsis, dehydration_percentage,
+      ultrasound_performed, pyloric_muscle_thickness_mm, pyloric_channel_length_mm, pyloric_transverse_diameter_mm,
+      ultrasound_diagnostic_target_sign, serum_sodium_meq_l, serum_potassium_meq_l,
+      serum_chloride_meq_l, serum_bicarbonate_meq_l, blood_ph,
+      urine_output_ml_kg_hr, fluid_resuscitation_rate_ml_hr,
+      potassium_supplementation_started, preop_electrolytes_normalized,
+      surgical_clearance_granted, surgery_performed, pyloromyotomy_technique,
+      postop_feeding_started, status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'PYL-20261108-101', '2026-11-08T03:30:00',
+      5.5, 3.85, 3.30,
+      1, 1,
+      1, 1, 7.0,
+      1, 4.1, 17.2, 13.0,
+      1, 136.0, 3.8,
+      102.0, 26.0, 7.43,
+      1.5, 24.0,
+      1, 1,
+      1, 1, 'laparoscopic_ramstedt',
+      1, 'postop_feeding_advancement', ?,
+      '5.5-week-old male infant presented with classic hungry-vomiter projectile non-bilious emesis. Palpable olive mass in right upper quadrant. Ultrasound diagnostic for IHPS with muscle thickness 4.1 mm and channel length 17.2 mm. Initial hypochloremic metabolic alkalosis successfully resuscitated over 18 hours with D5 0.45% NS + 20 mEq/L KCl at 1.5x maintenance. Pre-op clearance criteria met: Cl 102 mEq/L, HCO3 26 mEq/L, K 3.8 mEq/L, and UOP 1.5 mL/kg/h. Uneventful laparoscopic Ramstedt pyloromyotomy performed. Post-op feeding advancement initiated with oral Pedialyte transitioning to breast milk.',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingPyl = db.prepare('SELECT id FROM pediatric_pyloric_stenosis_episodes WHERE episode_code = ?').get('PYL-20261108-101') as any;
+  if (existingPyl) {
+    const pylLogs = [
+      { h: 0, na: 133, k: 3.2, cl: 88, hco3: 34, ph: 7.52, uop: 0.6, rate: 24, cr: 3.0, vom: 2, ng: 25, notes: 'Severe hypochloremic hypokalemic metabolic alkalosis on presentation. Started D5 0.45% NS.' },
+      { h: 8, na: 135, k: 3.5, cl: 96, hco3: 30, ph: 7.47, uop: 1.2, rate: 24, cr: 2.0, vom: 0, ng: 15, notes: 'UOP established >1 mL/kg/h. KCl 20 mEq/L added to infusion. Alkalosis resolving.' },
+      { h: 16, na: 136, k: 3.8, cl: 102, hco3: 26, ph: 7.43, uop: 1.5, rate: 16, cr: 1.8, vom: 0, ng: 5, notes: 'Strict pre-op criteria satisfied (Cl 102, HCO3 26, K 3.8, UOP 1.5). Surgical clearance signed.' },
+    ];
+    for (const pl of pylLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_pyloric_stenosis_flowsheet_logs (
+          pyloric_episode_id, patient_id, log_datetime,
+          hours_from_admission, serum_sodium_meq_l, serum_potassium_meq_l,
+          serum_chloride_meq_l, serum_bicarbonate_meq_l, blood_ph,
+          urine_output_ml_kg_hr, iv_fluid_rate_ml_hr, capillary_refill_seconds,
+          vomiting_episodes_count, gastric_decompression_output_ml,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T04:00:00',
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingPyl.id, aaravId, pl.h, pl.na, pl.k, pl.cl, pl.hco3, pl.ph, pl.uop, pl.rate, pl.cr, pl.vom, pl.ng, pl.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },
