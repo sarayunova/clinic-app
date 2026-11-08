@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { api, type BackupStatus, type SecurityStatus } from './api';
 import { useAuth, useMe } from './auth';
 import { AuthScreens, ChangePasswordPage } from './pages/AuthScreens';
+import { HelpPage } from './pages/HelpPage';
 import { Dashboard } from './pages/Dashboard';
 import { PatientsPage } from './pages/Patients';
 import { PatientPage } from './pages/PatientPage';
@@ -319,6 +320,7 @@ const primaryLinks = [
     ...(can('user:manage') ? [{ to: '/users', label: 'Staff', icon: '🔑', end: false }] : []),
     ...(can('audit:read') ? [{ to: '/audit', label: 'Audit', icon: '🔍', end: false }] : []),
     { to: '/account', label: 'Account', icon: '⚙️', end: false },
+    { to: '/help', label: 'Help & Guide', icon: '📖', end: false },
   ];
 
   return (
@@ -791,6 +793,7 @@ const primaryLinks = [
           <Route path="/audit" element={can('audit:read') ? <AuditPage /> : <Navigate to="/" replace />} />
           <Route path="/tv" element={<TvQueuePage />} />
           <Route path="/account" element={<ChangePasswordPage />} />
+          <Route path="/help" element={<HelpPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
