@@ -9,7 +9,9 @@ export type DB = DatabaseSync;
 // Packaged as a single executable (Node SEA), there is no source file next to `migrations/` —
 // the migration .sql files ship as a plain folder beside the .exe instead of beside this module.
 const MIGRATIONS_DIR = isSea()
-  ? path.join(path.dirname(process.execPath), 'migrations')
+  ? (fs.existsSync(path.join(path.dirname(process.execPath), 'migrations'))
+      ? path.join(path.dirname(process.execPath), 'migrations')
+      : path.join(path.dirname(process.execPath), '..', 'server', 'migrations'))
   : path.join(path.dirname(fileURLToPath(import.meta.url)), 'migrations');
 
 export function openDb(file: string): DB {

@@ -32,7 +32,9 @@ async function main() {
   // Packaged as a single executable (Node SEA), there is no source file next to `dist/web` — the
   // built app's own files live beside the .exe instead of beside this module.
   const webRoot = isSea()
-    ? path.join(path.dirname(process.execPath), 'dist', 'web')
+    ? (fs.existsSync(path.join(path.dirname(process.execPath), 'dist', 'web'))
+        ? path.join(path.dirname(process.execPath), 'dist', 'web')
+        : path.join(path.dirname(process.execPath), '..', 'dist', 'web'))
     : path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'web');
   const hasUi = fs.existsSync(path.join(webRoot, 'index.html'));
   if (!hasUi) console.warn('Web UI not built (run `npm run build`). Serving the API only.');

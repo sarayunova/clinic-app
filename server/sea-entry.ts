@@ -5,13 +5,32 @@ async function main() {
   const cmd = process.argv[2];
   switch (cmd) {
     case 'backup':
+      process.argv.splice(2, 1);
       await import('./cli/backup.js');
       break;
     case 'restore':
+      process.argv.splice(2, 1);
       await import('./cli/restore.js');
       break;
     case 'cert':
+      process.argv.splice(2, 1);
       await import('./cli/cert.js');
+      break;
+    case '--help':
+    case '-h':
+    case 'help':
+      console.log(`Clinic App - Desktop & Inpatient Management System
+
+Usage:
+  clinic.exe [options]           Start the clinic web server
+  clinic.exe backup              Run a verified encrypted backup snapshot
+  clinic.exe restore <file.cbk>  Verify or restore a backup snapshot (--replace)
+  clinic.exe cert [options]      Configure TLS certificates & CA
+
+Options for server:
+  Set environment variables CLINIC_DATA_DIR, PORT, HOST, CLINIC_BACKUP_DIR, etc.
+  See docs/ for full configuration and deployment options.`);
+      process.exit(0);
       break;
     default:
       await import('./index.js');
