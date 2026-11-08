@@ -9018,6 +9018,270 @@ export const deletePediatricForeignBodyFlowsheet = (episodeId: number, logId: nu
 export const calculatePediatricForeignBody = (payload: any): Promise<{ evalResult: any }> =>
   api('POST', '/api/pediatric-foreign-body/evaluate', payload);
 
+// -------------------------------------------------------------
+// SERIES 26A: Neonatal Hypomagnesemia & Refractory Seizures
+// -------------------------------------------------------------
+export interface NeonatalHypomagnesemiaRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  patient_number?: string | null;
+  date_of_birth?: string | null;
+  admission_id?: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  gestational_age_weeks: number;
+  birth_weight_grams: number;
+  chronological_age_hours: number;
+  current_weight_kg: number;
+  serum_magnesium_mg_dl: number;
+  serum_calcium_mg_dl?: number | null;
+  ionized_calcium_mmol_l?: number | null;
+  serum_potassium_meq_l?: number | null;
+  neuromuscular_symptoms: 'none_asymptomatic' | 'jitteriness_tremors' | 'hyperreflexia_clonus' | 'tetany_carpopedal' | 'clonic_seizures_refractory' | 'apnea_bradycardia';
+  seizures_observed: number;
+  calcium_refractory_tetany: number;
+  ecg_abnormalities: 'none' | 'prolonged_pr_interval' | 'widened_qrs' | 'ventricular_arrhythmias_torsades' | 'sinus_bradycardia';
+  renal_impairment_present: number;
+  magnesium_sulfate_bolus_ml: number;
+  administration_route: 'slow_iv_infusion' | 'deep_intramuscular' | 'oral_maintenance';
+  continuous_ecg_monitored: number;
+  status: 'acute_resuscitation' | 'maintenance_infusion' | 'monitoring_stabilized' | 'resolved_eumagnesemic';
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NeonatalHypomagnesemiaFlowsheetRecord {
+  id: number;
+  hypomagnesemia_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_onset: number;
+  serum_magnesium_mg_dl?: number | null;
+  ionized_calcium_mmol_l?: number | null;
+  heart_rate_bpm: number;
+  respiratory_rate: number;
+  deep_tendon_reflexes: 'normal_2_plus' | 'brisk_3_plus_clonus' | 'diminished_1_plus' | 'absent_areflexia_toxicity';
+  seizure_activity_present: number;
+  magnesium_infusion_rate_ml_hr: number;
+  ecg_rhythm_strip: 'normal_sinus' | 'sinus_bradycardia' | 'pr_prolongation' | 'heart_block' | 'arrhythmia';
+  toxicity_warning: number;
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getNeonatalHypomagnesemiaEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: NeonatalHypomagnesemiaRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: NeonatalHypomagnesemiaRecord[] }>('GET', `/api/neonatal-hypomagnesemia/episodes${queryStr}`);
+};
+
+export const getNeonatalHypomagnesemiaEpisode = (id: number): Promise<{ episode: NeonatalHypomagnesemiaRecord; logs: NeonatalHypomagnesemiaFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/neonatal-hypomagnesemia/episodes/${id}`);
+
+export const createNeonatalHypomagnesemiaEpisode = (payload: any): Promise<{ episode: NeonatalHypomagnesemiaRecord; evalResult: any }> =>
+  api('POST', '/api/neonatal-hypomagnesemia/episodes', payload);
+
+export const updateNeonatalHypomagnesemiaEpisode = (id: number, payload: any): Promise<{ episode: NeonatalHypomagnesemiaRecord }> =>
+  api('PATCH', `/api/neonatal-hypomagnesemia/episodes/${id}`, payload);
+
+export const deleteNeonatalHypomagnesemiaEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-hypomagnesemia/episodes/${id}`);
+
+export const addNeonatalHypomagnesemiaFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/neonatal-hypomagnesemia/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteNeonatalHypomagnesemiaFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-hypomagnesemia/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateNeonatalHypomagnesemia = (payload: any): Promise<{ evalResult: any }> =>
+  api('POST', '/api/neonatal-hypomagnesemia/evaluate', payload);
+
+// -------------------------------------------------------------
+// SERIES 26B: Obstetric Peripartum Cardiomyopathy (PPCM)
+// -------------------------------------------------------------
+export interface ObstetricPpcmRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  patient_number?: string | null;
+  date_of_birth?: string | null;
+  admission_id?: number | null;
+  episode_code: string;
+  presentation_datetime: string;
+  timing_category: 'antepartum_late_third_trimester' | 'postpartum_first_month' | 'postpartum_months_2_to_5';
+  maternal_age?: number | null;
+  gestational_age_weeks?: number | null;
+  days_postpartum?: number | null;
+  nyha_class: 'class_i' | 'class_ii' | 'class_iii' | 'class_iv';
+  lvef_percent: number;
+  lvedd_mm?: number | null;
+  nt_probnp_pg_ml?: number | null;
+  troponin_i_ng_ml?: number | null;
+  pulmonary_edema_present: number;
+  cardiogenic_shock_present: number;
+  bromocriptine_regimen: 'none' | 'standard_2_5mg_daily_1week' | 'intensive_2_5mg_bid_2weeks_then_daily_6weeks';
+  bromocriptine_initiated: number;
+  anticoagulation_prescribed: number;
+  anticoagulation_agent: 'none' | 'lmwh_prophylactic' | 'lmwh_therapeutic' | 'warfarin_therapeutic_postpartum_only' | 'unfractionated_heparin';
+  loop_diuretic_given: number;
+  beta_blocker_given: number;
+  vasodilator_agent: 'none' | 'hydralazine_nitrates_pregnancy_safe' | 'acei_arb_arni_strictly_postpartum_non_lactating' | 'nitroprusside_icu_only';
+  status: 'acute_decompensation' | 'icu_mechanical_support' | 'stabilized_on_board_protocol' | 'recovered_ejection_fraction';
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ObstetricPpcmFlowsheetRecord {
+  id: number;
+  ppcm_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_presentation: number;
+  heart_rate_bpm: number;
+  blood_pressure_sys: number;
+  blood_pressure_dia: number;
+  respiratory_rate: number;
+  spo2_percent: number;
+  oxygen_requirement_l_min: number;
+  urine_output_ml_hr: number;
+  fluid_balance_cumulative_ml: number;
+  orthopnea_pillows: number;
+  inotropic_support: 'none' | 'dobutamine' | 'milrinone' | 'norepinephrine';
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getObstetricPpcmEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: ObstetricPpcmRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: ObstetricPpcmRecord[] }>('GET', `/api/obstetric-ppcm/episodes${queryStr}`);
+};
+
+export const getObstetricPpcmEpisode = (id: number): Promise<{ episode: ObstetricPpcmRecord; logs: ObstetricPpcmFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/obstetric-ppcm/episodes/${id}`);
+
+export const createObstetricPpcmEpisode = (payload: any): Promise<{ episode: ObstetricPpcmRecord; evalResult: any }> =>
+  api('POST', '/api/obstetric-ppcm/episodes', payload);
+
+export const updateObstetricPpcmEpisode = (id: number, payload: any): Promise<{ episode: ObstetricPpcmRecord }> =>
+  api('PATCH', `/api/obstetric-ppcm/episodes/${id}`, payload);
+
+export const deleteObstetricPpcmEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-ppcm/episodes/${id}`);
+
+export const addObstetricPpcmFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/obstetric-ppcm/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteObstetricPpcmFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-ppcm/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateObstetricPpcm = (payload: any): Promise<{ evalResult: any }> =>
+  api('POST', '/api/obstetric-ppcm/evaluate', payload);
+
+// -------------------------------------------------------------
+// SERIES 26C: Pediatric Septic Arthritis & Kocher Protocol
+// -------------------------------------------------------------
+export interface PediatricSepticArthritisRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  patient_number?: string | null;
+  date_of_birth?: string | null;
+  admission_id?: number | null;
+  episode_code: string;
+  evaluation_datetime: string;
+  age_months: number;
+  weight_kg: number;
+  affected_joint: 'right_hip' | 'left_hip' | 'right_knee' | 'left_knee' | 'right_ankle' | 'left_ankle' | 'other_joint';
+  non_weight_bearing: number;
+  temperature_celsius: number;
+  fever_gt_38_5: number;
+  esr_mm_hr: number;
+  esr_ge_40: number;
+  wbc_count_per_microliter: number;
+  wbc_gt_12000: number;
+  crp_mg_l?: number | null;
+  kocher_criteria_met_count: number;
+  predicted_probability_percent: number;
+  ultrasound_effusion_detected: number;
+  arthrocentesis_performed: number;
+  synovial_wbc_count?: number | null;
+  synovial_pmb_pct?: number | null;
+  synovial_gram_stain: 'pending' | 'gram_positive_cocci' | 'gram_negative_bacilli' | 'no_organisms_seen';
+  surgical_drainage_required: number;
+  surgical_approach: 'none' | 'arthrotomy_open_capsulotomy' | 'arthroscopic_lavage' | 'needle_aspiration_serial';
+  empiric_antibiotic_regimen: 'none' | 'cefazolin_iv' | 'vancomycin_iv' | 'ceftriaxone_plus_vancomycin' | 'clindamycin_iv';
+  status: 'evaluation_pending' | 'operating_room_arthrotomy' | 'postoperative_iv_antibiotics' | 'transient_synovitis_observed' | 'infection_resolved_discharged';
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PediatricSepticArthritisFlowsheetRecord {
+  id: number;
+  septic_arthritis_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_triage: number;
+  temperature_celsius: number;
+  heart_rate_bpm: number;
+  joint_range_of_motion: 'severely_restricted_pseudoparalysis' | 'moderate_guarding' | 'mild_limitation' | 'full_painless_rom';
+  weight_bearing_ability: 'non_weight_bearing' | 'limping_antalgic' | 'full_independent';
+  crp_mg_l?: number | null;
+  drain_output_ml_24h: number;
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getPediatricSepticArthritisEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: PediatricSepticArthritisRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: PediatricSepticArthritisRecord[] }>('GET', `/api/pediatric-septic-arthritis/episodes${queryStr}`);
+};
+
+export const getPediatricSepticArthritisEpisode = (id: number): Promise<{ episode: PediatricSepticArthritisRecord; logs: PediatricSepticArthritisFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/pediatric-septic-arthritis/episodes/${id}`);
+
+export const createPediatricSepticArthritisEpisode = (payload: any): Promise<{ episode: PediatricSepticArthritisRecord; evalResult: any }> =>
+  api('POST', '/api/pediatric-septic-arthritis/episodes', payload);
+
+export const updatePediatricSepticArthritisEpisode = (id: number, payload: any): Promise<{ episode: PediatricSepticArthritisRecord }> =>
+  api('PATCH', `/api/pediatric-septic-arthritis/episodes/${id}`, payload);
+
+export const deletePediatricSepticArthritisEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-septic-arthritis/episodes/${id}`);
+
+export const addPediatricSepticArthritisFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/pediatric-septic-arthritis/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deletePediatricSepticArthritisFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-septic-arthritis/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculatePediatricSepticArthritis = (payload: any): Promise<{ evalResult: any }> =>
+  api('POST', '/api/pediatric-septic-arthritis/evaluate', payload);
+
+
 
 
 

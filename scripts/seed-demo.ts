@@ -3592,6 +3592,149 @@ async function seed() {
     }
   }
 
+  // --- SERIES 26A: Neonatal Hypomagnesemia & Refractory Seizures Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_hypomagnesemia_episodes (
+      patient_id, admission_id, episode_code, onset_datetime,
+      gestational_age_weeks, birth_weight_grams, chronological_age_hours, current_weight_kg,
+      serum_magnesium_mg_dl, serum_calcium_mg_dl, ionized_calcium_mmol_l, serum_potassium_meq_l,
+      neuromuscular_symptoms, seizures_observed, calcium_refractory_tetany, ecg_abnormalities,
+      renal_impairment_present, magnesium_sulfate_bolus_ml, administration_route,
+      continuous_ecg_monitored, status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'HYPOMAG-20261108-101', '2026-11-08T06:30:00',
+      37.5, 2950, 36, 2.85,
+      1.05, 6.8, 0.82, 4.2,
+      'clonic_seizures_refractory', 1, 1, 'prolonged_pr_interval',
+      0, 0.57, 'slow_iv_infusion',
+      1, 'maintenance_infusion', ?,
+      'Late preterm male infant at 36 hours of life developed focal clonic twitches progressing to multifocal refractory seizures. Initial IV 10% calcium gluconate failed to abort seizure activity (refractory hypocalcemia). Serum Mg confirmed 1.05 mg/dL. 50% MgSO4 (0.2 mL/kg = 0.57 mL) diluted to 1% and infused over 45 minutes under continuous ECG telemetry. Prompt cessation of convulsions observed post-bolus. Maintenance infusion 0.1 mL/kg/day started.',
+      ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingHypomag = db.prepare('SELECT id FROM neonatal_hypomagnesemia_episodes WHERE episode_code = ?').get('HYPOMAG-20261108-101') as { id: number } | undefined;
+  if (existingHypomag) {
+    const hypomagLogs = [
+      { h: 0, mg: 1.05, ica: 0.82, hr: 146, rr: 46, dtr: 'normal_2_plus' as const, sz: 1, inf: 0, ecg: 'pr_prolongation' as const, tox: 0, notes: 'Initiating slow IV infusion of diluted MgSO4 over 45 min. Rhythm shows PR interval 138 ms.' },
+      { h: 2, mg: 1.58, ica: 1.05, hr: 138, rr: 42, dtr: 'normal_2_plus' as const, sz: 0, inf: 0.29, ecg: 'normal_sinus' as const, tox: 0, notes: 'Seizures ceased. Serum Mg recovered to 1.58 mg/dL. DTRs 2+ symmetric. PR interval normalized to 110 ms.' },
+      { h: 6, mg: 1.75, ica: 1.15, hr: 132, rr: 38, dtr: 'normal_2_plus' as const, sz: 0, inf: 0.29, ecg: 'normal_sinus' as const, tox: 0, notes: 'Infant alert, feeding well via NG tube. No jitteriness or twitches. Patellar reflexes active 2+.' },
+    ];
+    for (const hl of hypomagLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_hypomagnesemia_flowsheet_logs (
+          hypomagnesemia_episode_id, patient_id, log_datetime, hours_from_onset,
+          serum_magnesium_mg_dl, ionized_calcium_mmol_l, heart_rate_bpm, respiratory_rate,
+          deep_tendon_reflexes, seizure_activity_present, magnesium_infusion_rate_ml_hr,
+          ecg_rhythm_strip, toxicity_warning, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T06:30:00', ?,
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?, ?
+        )
+      `).run(existingHypomag.id, babyId, hl.h, hl.mg, hl.ica, hl.hr, hl.rr, hl.dtr, hl.sz, hl.inf, hl.ecg, hl.tox, hl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 26B: Obstetric Peripartum Cardiomyopathy (PPCM) & Acute Heart Failure Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_ppcm_episodes (
+      patient_id, admission_id, episode_code, presentation_datetime,
+      timing_category, maternal_age, gestational_age_weeks, days_postpartum,
+      nyha_class, lvef_percent, lvedd_mm, nt_probnp_pg_ml, troponin_i_ng_ml,
+      pulmonary_edema_present, cardiogenic_shock_present,
+      bromocriptine_regimen, bromocriptine_initiated,
+      anticoagulation_prescribed, anticoagulation_agent,
+      loop_diuretic_given, beta_blocker_given, vasodilator_agent,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'PPCM-20261108-101', '2026-11-08T05:00:00',
+      'postpartum_first_month', 28, NULL, 7,
+      'class_iv', 28.0, 59.0, 5420.0, 0.08,
+      1, 0,
+      'intensive_2_5mg_bid_2weeks_then_daily_6weeks', 1,
+      1, 'lmwh_therapeutic',
+      1, 1, 'hydralazine_nitrates_pregnancy_safe',
+      'stabilized_on_board_protocol', ?,
+      'Postpartum Day 7 presenting with acute orthopnea, paroxysmal nocturnal dyspnea, and bibasilar crackles. Bedside echocardiogram demonstrated severe LV systolic dysfunction (LVEF 28%, LVEDD 59mm, apical hypokinesis). NT-proBNP 5,420 pg/mL. ESC BOARD Protocol instituted: Intensive Bromocriptine (2.5 mg BID), therapeutic enoxaparin (1 mg/kg SC q12h), IV furosemide decongestion, low-dose carvedilol, and hydralazine/nitrates. Marked symptomatic stabilization.',
+      ?, ?
+    )
+  `).run(anitaId, docId, now, now);
+
+  const existingPpcm = db.prepare('SELECT id FROM obstetric_ppcm_episodes WHERE episode_code = ?').get('PPCM-20261108-101') as { id: number } | undefined;
+  if (existingPpcm) {
+    const ppcmLogs = [
+      { h: 0, hr: 112, sbp: 142, dbp: 92, rr: 28, spo2: 91.0, o2: 4, uo: 35, fb: 0, pil: 3, inot: 'none' as const, notes: 'Severe orthopnea, bilateral coarse crepitations. IV Furosemide 40 mg given. Bromocriptine 2.5 mg initiated.' },
+      { h: 4, hr: 88, sbp: 118, dbp: 74, rr: 18, spo2: 98.0, o2: 1, uo: 90, fb: -1200, pil: 2, inot: 'none' as const, notes: 'Good diuresis. Orthopnea improved significantly. Dyspnea at rest resolved.' },
+      { h: 12, hr: 78, sbp: 112, dbp: 70, rr: 16, spo2: 99.0, o2: 0, uo: 65, fb: -2400, pil: 1, inot: 'none' as const, notes: 'Euvolemic. LMWH administered on schedule. Tolerating carvedilol 3.125 mg BD.' },
+    ];
+    for (const pl of ppcmLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_ppcm_flowsheet_logs (
+          ppcm_episode_id, patient_id, log_datetime, hours_from_presentation,
+          heart_rate_bpm, blood_pressure_sys, blood_pressure_dia, respiratory_rate,
+          spo2_percent, oxygen_requirement_l_min, urine_output_ml_hr, fluid_balance_cumulative_ml,
+          orthopnea_pillows, inotropic_support, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T05:00:00', ?,
+          ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?, ?, ?
+        )
+      `).run(existingPpcm.id, anitaId, pl.h, pl.hr, pl.sbp, pl.dbp, pl.rr, pl.spo2, pl.o2, pl.uo, pl.fb, pl.pil, pl.inot, pl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 26C: Pediatric Septic Arthritis & Kocher Diagnostic Criteria Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_septic_arthritis_episodes (
+      patient_id, admission_id, episode_code, evaluation_datetime,
+      age_months, weight_kg, affected_joint,
+      non_weight_bearing, temperature_celsius, fever_gt_38_5,
+      esr_mm_hr, esr_ge_40, wbc_count_per_microliter, wbc_gt_12000,
+      crp_mg_l, kocher_criteria_met_count, predicted_probability_percent,
+      ultrasound_effusion_detected, arthrocentesis_performed,
+      synovial_wbc_count, synovial_pmb_pct, synovial_gram_stain,
+      surgical_drainage_required, surgical_approach, empiric_antibiotic_regimen,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'SEPTICARTH-20261108-101', '2026-11-08T07:30:00',
+      24, 12.4, 'right_hip',
+      1, 39.1, 1,
+      54.0, 1, 16800, 1,
+      46.5, 4, 99.6,
+      1, 1,
+      94000, 92.0, 'gram_positive_cocci',
+      1, 'arthrotomy_open_capsulotomy', 'cefazolin_iv',
+      'postoperative_iv_antibiotics', ?,
+      '2-year-old boy presenting with acute refusal to bear weight on right leg, held in characteristic flexion, abduction, and external rotation (position of maximal intracapsular capacity). Temperature 39.1°C, ESR 54, WBC 16,800 (Kocher score 4/4 = 99.6% probability). Emergency point-of-care hip ultrasound demonstrated 4.2mm anterior recess capsular distension (effusion). Emergent open arthrotomy & capsulotomy performed within 3 hours to relieve retinacular vascular tamponade and prevent avascular necrosis of the femoral capital epiphysis. 3 mL frank purulent fluid evacuated, Gram-positive cocci seen. High-dose IV Cefazolin commenced.',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingSepticArth = db.prepare('SELECT id FROM pediatric_septic_arthritis_episodes WHERE episode_code = ?').get('SEPTICARTH-20261108-101') as { id: number } | undefined;
+  if (existingSepticArth) {
+    const arthLogs = [
+      { h: 2, t: 39.0, hr: 148, rom: 'severely_restricted_pseudoparalysis' as const, wb: 'non_weight_bearing' as const, crp: 46.5, dr: 0, notes: 'Right hip held in flexion and external rotation. Any attempted passive internal rotation produces severe distress.' },
+      { h: 6, t: 38.0, hr: 118, rom: 'moderate_guarding' as const, wb: 'non_weight_bearing' as const, crp: 44.0, dr: 12, notes: 'Post-capsulotomy in recovery. Suction drain in situ active. IV Cefazolin 50 mg/kg infused.' },
+      { h: 16, t: 37.3, hr: 102, rom: 'mild_limitation' as const, wb: 'limping_antalgic' as const, crp: 28.0, dr: 25, notes: 'Afebrile. Pain controlled on oral paracetamol. Child sitting up in bed and moving leg spontaneously.' },
+    ];
+    for (const al of arthLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_septic_arthritis_flowsheet_logs (
+          septic_arthritis_episode_id, patient_id, log_datetime, hours_from_triage,
+          temperature_celsius, heart_rate_bpm, joint_range_of_motion, weight_bearing_ability,
+          crp_mg_l, drain_output_ml_24h, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T07:30:00', ?,
+          ?, ?, ?, ?,
+          ?, ?, ?, ?, ?
+        )
+      `).run(existingSepticArth.id, aaravId, al.h, al.t, al.hr, al.rom, al.wb, al.crp, al.dr, al.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

@@ -460,6 +460,28 @@ export const ACTION_LABELS: Record<string, string> = {
   'pediatric_foreign_body.flowsheet_delete': 'Deleted pediatric choking flowsheet log',
   'pediatric_foreign_body.print': 'Printed pediatric foreign body airway obstruction & resuscitation dossier',
 
+  // SERIES 26: Neonatal Hypomagnesemia, Obstetric PPCM, Pediatric Septic Arthritis
+  'neonatal_hypomagnesemia.create': 'Initiated neonatal hypomagnesemia evaluation & 50% MgSO4 bolus calculation',
+  'neonatal_hypomagnesemia.update': 'Updated neonatal hypomagnesemia episode, status or infusion rate',
+  'neonatal_hypomagnesemia.delete': 'Deleted neonatal hypomagnesemia episode record',
+  'neonatal_hypomagnesemia.flowsheet_log': 'Logged neonatal hypomagnesemia serial Mg, DTR & toxicity monitoring checkpoint',
+  'neonatal_hypomagnesemia.flowsheet_delete': 'Deleted neonatal hypomagnesemia flowsheet log',
+  'neonatal_hypomagnesemia.print': 'Printed neonatal hypomagnesemia & refractory seizures clinical dossier',
+
+  'obstetric_ppcm.create': 'Initiated obstetric peripartum cardiomyopathy (PPCM) BOARD protocol evaluation',
+  'obstetric_ppcm.update': 'Updated obstetric PPCM episode, LVEF, Bromocriptine or anticoagulation status',
+  'obstetric_ppcm.delete': 'Deleted obstetric PPCM episode record',
+  'obstetric_ppcm.flowsheet_log': 'Logged obstetric PPCM hemodynamics, fluid balance & inotropic checkpoint',
+  'obstetric_ppcm.flowsheet_delete': 'Deleted obstetric PPCM flowsheet log',
+  'obstetric_ppcm.print': 'Printed obstetric PPCM & BOARD protocol clinical dossier',
+
+  'pediatric_septic_arthritis.create': 'Initiated pediatric septic arthritis Kocher criteria diagnostic calculation',
+  'pediatric_septic_arthritis.update': 'Updated pediatric septic arthritis episode, surgery or antibiotic regimen',
+  'pediatric_septic_arthritis.delete': 'Deleted pediatric septic arthritis episode record',
+  'pediatric_septic_arthritis.flowsheet_log': 'Logged pediatric septic arthritis joint ROM, weight-bearing & temp checkpoint',
+  'pediatric_septic_arthritis.flowsheet_delete': 'Deleted pediatric septic arthritis flowsheet log',
+  'pediatric_septic_arthritis.print': 'Printed pediatric septic arthritis & Kocher diagnostic criteria dossier',
+
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };
