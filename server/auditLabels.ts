@@ -504,6 +504,28 @@ export const ACTION_LABELS: Record<string, string> = {
   'pediatric_intussusception.flowsheet_delete': 'Deleted pediatric intussusception flowsheet log',
   'pediatric_intussusception.print': 'Printed pediatric intussusception & reduction protocol clinical dossier',
 
+  // SERIES 28: Neonatal MAS, Obstetric Uterine Inversion, Pediatric Acute Appendicitis
+  'neonatal_mas.create': 'Initiated neonatal meconium aspiration syndrome (MAS) & oxygenation index calculation',
+  'neonatal_mas.update': 'Updated neonatal MAS episode, HFOV, iNO or surfactant therapy status',
+  'neonatal_mas.delete': 'Deleted neonatal MAS episode record',
+  'neonatal_mas.flowsheet_add': 'Logged neonatal MAS blood gas, OI, pre/post ductal SpO2 & MAP checkpoint',
+  'neonatal_mas.flowsheet_delete': 'Deleted neonatal MAS flowsheet log',
+  'neonatal_mas.print': 'Printed neonatal MAS & PPHN rescue protocol clinical dossier',
+
+  'obstetric_uterine_inversion.create': 'Initiated obstetric acute uterine inversion emergent reduction protocol',
+  'obstetric_uterine_inversion.update': 'Updated obstetric uterine inversion episode, Johnson maneuver or laparotomy status',
+  'obstetric_uterine_inversion.delete': 'Deleted obstetric uterine inversion episode record',
+  'obstetric_uterine_inversion.flowsheet_add': 'Logged obstetric uterine inversion blood pressure, shock index & tone checkpoint',
+  'obstetric_uterine_inversion.flowsheet_delete': 'Deleted obstetric uterine inversion flowsheet log',
+  'obstetric_uterine_inversion.print': 'Printed obstetric uterine inversion & emergency reduction clinical dossier',
+
+  'pediatric_appendicitis.create': 'Initiated pediatric acute appendicitis Samuel PAS score calculation',
+  'pediatric_appendicitis.update': 'Updated pediatric appendicitis episode, ultrasound, antibiotic or operative status',
+  'pediatric_appendicitis.delete': 'Deleted pediatric appendicitis episode record',
+  'pediatric_appendicitis.flowsheet_add': 'Logged pediatric appendicitis serial abdominal exam, FLACC pain & temp checkpoint',
+  'pediatric_appendicitis.flowsheet_delete': 'Deleted pediatric appendicitis flowsheet log',
+  'pediatric_appendicitis.print': 'Printed pediatric acute appendicitis & Samuel PAS protocol clinical dossier',
+
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

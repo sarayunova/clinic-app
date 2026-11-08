@@ -9545,6 +9545,309 @@ export const deletePediatricIntussusceptionFlowsheet = (episodeId: number, logId
 export const calculatePediatricIntussusception = (payload: any): Promise<{ evalResult: any }> =>
   api('POST', '/api/pediatric-intussusception/evaluate', payload);
 
+// ==========================================
+// SERIES 28: Neonatal MAS, Obstetric Uterine Inversion, Pediatric Acute Appendicitis
+// ==========================================
+
+// --- SERIES 28A: Neonatal Meconium Aspiration Syndrome (MAS) Protocol ---
+export interface NeonatalMasRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  diagnosis_datetime: string;
+  gestational_age_weeks: number;
+  birth_weight_grams: number;
+  chronological_age_hours: number;
+  current_weight_kg: number;
+
+  amniotic_fluid_meconium_consistency: 'thick_particulate_pea_soup' | 'moderate_meconium' | 'thin_light_meconium';
+  delivery_room_vigor: 'non_vigorous_depressed' | 'vigorous_active';
+  endotracheal_suctioning_performed: number;
+  meconium_cleared_below_cords: number;
+  apgar_1min: number | null;
+  apgar_5min: number | null;
+
+  respiratory_support_mode: 'room_air_low_flow_o2' | 'nasal_cpap_bubble' | 'non_invasive_nipv' | 'conventional_mechanical_ventilation' | 'high_frequency_oscillatory_ventilation' | 'ecmo_rescue';
+  fio2_percent: number;
+  mean_airway_pressure_cmh2o: number;
+  pao2_mmhg: number | null;
+  paco2_mmhg: number | null;
+  arterial_ph: number | null;
+  oxygenation_index: number | null;
+
+  pre_post_ductal_spo2_diff_percent: number | null;
+  echocardiogram_pphn_confirmed: number;
+  pphn_severity: 'none_or_not_assessed' | 'mild_right_ventricular_strain' | 'moderate_suprasystemic_shunting' | 'severe_refractory_right_to_left';
+  pulmonary_air_leak_present: number;
+  air_leak_type: 'none' | 'pneumothorax_tension' | 'pneumothorax_simple' | 'pneumomediastinum' | 'pulmonary_interstitial_emphysema';
+
+  surfactant_administered: number;
+  surfactant_delivery_method: 'none' | 'bolus_endotracheal' | 'dilute_surfactant_bronchoalveolar_lavage';
+  surfactant_dose_mg_kg: number;
+  inhaled_nitric_oxide_prescribed: number;
+  ino_dose_ppm: number;
+  empiric_antibiotics_active: number;
+
+  status: 'acute_respiratory_failure' | 'hfov_ino_escalation' | 'weaning_recovering' | 'resolved_extubated' | 'ecmo_transferred';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+
+  patient_name?: string;
+  consultant_name?: string;
+}
+
+export interface NeonatalMasFlowsheetRecord {
+  id: number;
+  mas_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_admission: number;
+
+  respiratory_rate: number;
+  heart_rate_bpm: number;
+  pre_ductal_spo2_percent: number;
+  post_ductal_spo2_percent: number;
+  fio2_percent: number;
+  mean_airway_pressure_cmh2o: number;
+  pao2_mmhg: number | null;
+  paco2_mmhg: number | null;
+  arterial_ph: number | null;
+  oxygenation_index: number | null;
+  ino_dose_ppm: number;
+  mean_blood_pressure_mmhg: number;
+  chest_tube_drainage_active: number;
+  notes: string | null;
+  logged_by_id: number;
+  logged_by_name?: string;
+  created_at: string;
+}
+
+export const getNeonatalMasEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: NeonatalMasRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: NeonatalMasRecord[] }>('GET', `/api/neonatal-mas/episodes${queryStr}`);
+};
+
+export const getNeonatalMasEpisode = (id: number): Promise<{ episode: NeonatalMasRecord; logs: NeonatalMasFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/neonatal-mas/episodes/${id}`);
+
+export const createNeonatalMasEpisode = (payload: any): Promise<{ episode: NeonatalMasRecord; evalResult: any }> =>
+  api('POST', '/api/neonatal-mas/episodes', payload);
+
+export const updateNeonatalMasEpisode = (id: number, payload: any): Promise<{ episode: NeonatalMasRecord }> =>
+  api('PATCH', `/api/neonatal-mas/episodes/${id}`, payload);
+
+export const deleteNeonatalMasEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-mas/episodes/${id}`);
+
+export const addNeonatalMasFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/neonatal-mas/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteNeonatalMasFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-mas/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateNeonatalMas = (payload: any): Promise<{ evalResult: any }> =>
+  api('POST', '/api/neonatal-mas/evaluate', payload);
+
+
+// --- SERIES 28B: Obstetric Uterine Inversion Protocol ---
+export interface ObstetricUterineInversionRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  occurrence_datetime: string;
+  maternal_age: number | null;
+  parity: number;
+  delivery_mode: 'spontaneous_vaginal' | 'operative_vaginal_vacuum' | 'operative_vaginal_forceps' | 'cesarean_section';
+
+  placental_status_at_inversion: 'attached_undelivered' | 'partially_separated' | 'completely_separated';
+  umbilical_cord_traction_applied: number;
+  fundal_pressure_applied: number;
+  inversion_degree: 'first_degree_incomplete_intrauterine' | 'second_degree_complete_through_cervix' | 'third_degree_prolapsed_outside_introitus' | 'fourth_degree_total_inversion_with_vagina';
+
+  neurogenic_shock_present: number;
+  systolic_bp_at_presentation: number;
+  diastolic_bp_at_presentation: number;
+  heart_rate_at_presentation: number;
+  estimated_blood_loss_ml: number;
+
+  reduction_attempted_immediate: number;
+  reduction_technique_primary: 'johnson_manual_maneuver' | 'osullivan_hydrostatic_technique' | 'laparotomy_huntington_procedure' | 'laparotomy_haultain_procedure';
+  uterine_relaxant_administered: number;
+  uterine_relaxant_agent: 'none' | 'terbutaline_sc' | 'nitroglycerin_iv' | 'magnesium_sulfate' | 'general_halogenated_anesthesia';
+  uterotonic_given_before_replacement: number;
+  placenta_removed_before_reinversion: number;
+
+  reinversion_successful: number;
+  time_to_reinversion_minutes: number | null;
+  post_replacement_uterotonics_started: number;
+  bimanual_uterine_compression_maintained: number;
+  blood_products_transfused_units: number;
+
+  status: 'acute_neurogenic_shock_reduction' | 'post_reinversion_bimanual_compression' | 'laparotomy_operative_repair' | 'stabilized_icu_surveillance' | 'resolved_ward_recovery';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+
+  patient_name?: string;
+  consultant_name?: string;
+}
+
+export interface ObstetricUterineInversionFlowsheetRecord {
+  id: number;
+  inversion_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  minutes_from_inversion: number;
+
+  systolic_bp: number;
+  diastolic_bp: number;
+  heart_rate_bpm: number;
+  uterine_tone: 'firm_well_contracted' | 'boggy_hypotonic' | 'relaxing_re_inversion_risk';
+  bimanual_compression_active: number;
+  oxytocin_infusion_running: number;
+  estimated_ongoing_blood_loss_ml: number;
+  urine_output_ml_hr: number | null;
+  notes: string | null;
+  logged_by_id: number;
+  logged_by_name?: string;
+  created_at: string;
+}
+
+export const getObstetricUterineInversionEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: ObstetricUterineInversionRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: ObstetricUterineInversionRecord[] }>('GET', `/api/obstetric-uterine-inversion/episodes${queryStr}`);
+};
+
+export const getObstetricUterineInversionEpisode = (id: number): Promise<{ episode: ObstetricUterineInversionRecord; logs: ObstetricUterineInversionFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/obstetric-uterine-inversion/episodes/${id}`);
+
+export const createObstetricUterineInversionEpisode = (payload: any): Promise<{ episode: ObstetricUterineInversionRecord; evalResult: any }> =>
+  api('POST', '/api/obstetric-uterine-inversion/episodes', payload);
+
+export const updateObstetricUterineInversionEpisode = (id: number, payload: any): Promise<{ episode: ObstetricUterineInversionRecord }> =>
+  api('PATCH', `/api/obstetric-uterine-inversion/episodes/${id}`, payload);
+
+export const deleteObstetricUterineInversionEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-uterine-inversion/episodes/${id}`);
+
+export const addObstetricUterineInversionFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/obstetric-uterine-inversion/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteObstetricUterineInversionFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-uterine-inversion/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateObstetricUterineInversion = (payload: any): Promise<{ evalResult: any }> =>
+  api('POST', '/api/obstetric-uterine-inversion/evaluate', payload);
+
+
+// --- SERIES 28C: Pediatric Acute Appendicitis Protocol ---
+export interface PediatricAppendicitisRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  triage_datetime: string;
+  age_years: number;
+  weight_kg: number;
+  symptom_duration_hours: number;
+
+  cough_percussion_hopping_rlq_pain: number;
+  rlq_tenderness_light_palpation: number;
+  migration_pain_to_rlq: number;
+  fever_gt_38c: number;
+  nausea_or_vomiting: number;
+  anorexia: number;
+  leukocytosis_wbc_gt_10000: number;
+  neutrophilia_anc_gt_7500_or_ge_75pct: number;
+  pas_score_total: number;
+
+  wbc_count_per_microliter: number | null;
+  neutrophil_percent: number | null;
+  crp_mg_l: number | null;
+
+  ultrasound_performed: number;
+  appendix_visualized: number;
+  outer_diameter_mm: number | null;
+  non_compressible: number;
+  hypervascular_ring_of_fire: number;
+  appendicolith_fecalith_present: number;
+  periappendiceal_fluid_or_fat_stranding: number;
+  perforation_or_abscess_suspected: number;
+
+  management_pathway: 'urgent_laparoscopic_appendectomy' | 'open_appendectomy' | 'non_operative_iv_antibiotics' | 'percutaneous_abscess_drainage_interval' | 'discharge_observation';
+  empiric_antibiotic_regimen: 'none' | 'ceftriaxone_plus_metronidazole' | 'piperacillin_tazobactam' | 'ampicillin_gentamicin_metronidazole' | 'ciprofloxacin_plus_metronidazole';
+  surgical_findings: 'uncomplicated_suppurative' | 'gangrenous_intact' | 'perforated_localized_phlegmon' | 'perforated_generalized_peritonitis' | 'normal_appendix' | null;
+
+  status: 'triage_diagnostic_evaluation' | 'operating_room_in_transit' | 'postoperative_recovery' | 'conservative_antibiotics_inpatient' | 'resolved_discharged';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+
+  patient_name?: string;
+  consultant_name?: string;
+}
+
+export interface PediatricAppendicitisFlowsheetRecord {
+  id: number;
+  appendicitis_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_triage: number;
+
+  temperature_celsius: number;
+  heart_rate_bpm: number;
+  respiratory_rate: number;
+  pain_score_flacc_wong_baker: number;
+  abdominal_exam_findings: 'soft_non_tender' | 'focal_rlq_tenderness_improving' | 'rebound_guarding_worsening' | 'diffuse_peritonitis';
+  oral_intake_status: 'npo_strict' | 'clear_liquids_tolerated' | 'age_appropriate_diet';
+  notes: string | null;
+  logged_by_id: number;
+  logged_by_name?: string;
+  created_at: string;
+}
+
+export const getPediatricAppendicitisEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: PediatricAppendicitisRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: PediatricAppendicitisRecord[] }>('GET', `/api/pediatric-appendicitis/episodes${queryStr}`);
+};
+
+export const getPediatricAppendicitisEpisode = (id: number): Promise<{ episode: PediatricAppendicitisRecord; logs: PediatricAppendicitisFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/pediatric-appendicitis/episodes/${id}`);
+
+export const createPediatricAppendicitisEpisode = (payload: any): Promise<{ episode: PediatricAppendicitisRecord; evalResult: any }> =>
+  api('POST', '/api/pediatric-appendicitis/episodes', payload);
+
+export const updatePediatricAppendicitisEpisode = (id: number, payload: any): Promise<{ episode: PediatricAppendicitisRecord }> =>
+  api('PATCH', `/api/pediatric-appendicitis/episodes/${id}`, payload);
+
+export const deletePediatricAppendicitisEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-appendicitis/episodes/${id}`);
+
+export const addPediatricAppendicitisFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/pediatric-appendicitis/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deletePediatricAppendicitisFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-appendicitis/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculatePediatricAppendicitis = (payload: any): Promise<{ evalResult: any }> =>
+  api('POST', '/api/pediatric-appendicitis/evaluate', payload);
+
+
 
 
 

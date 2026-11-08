@@ -155,6 +155,12 @@ import { ObstetricCordProlapsePage } from './pages/ObstetricCordProlapsePage';
 import { ObstetricCordProlapsePrint } from './pages/ObstetricCordProlapsePrint';
 import { PediatricIntussusceptionPage } from './pages/PediatricIntussusceptionPage';
 import { PediatricIntussusceptionPrint } from './pages/PediatricIntussusceptionPrint';
+import { NeonatalMasPage } from './pages/NeonatalMasPage';
+import { NeonatalMasPrint } from './pages/NeonatalMasPrint';
+import { ObstetricUterineInversionPage } from './pages/ObstetricUterineInversionPage';
+import { ObstetricUterineInversionPrint } from './pages/ObstetricUterineInversionPrint';
+import { PediatricAppendicitisPage } from './pages/PediatricAppendicitisPage';
+import { PediatricAppendicitisPrint } from './pages/PediatricAppendicitisPrint';
 import { DeliveryWardPage } from './pages/DeliveryWardPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditPage } from './pages/AuditPage';
@@ -277,6 +283,9 @@ function Shell() {
     ...(can('patient:read_clinical') ? [{ to: '/neonatal-chylothorax', label: 'Neonatal Chylothorax', icon: '🫁', end: false }] : []),
     ...(can('patient:read_clinical') ? [{ to: '/obstetric-cord-prolapse', label: 'Cord Prolapse', icon: '🚨', end: false }] : []),
     ...(can('patient:read_clinical') ? [{ to: '/pediatric-intussusception', label: 'Intussusception', icon: '🌀', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/neonatal-mas', label: 'Neonatal MAS', icon: '💨', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/obstetric-uterine-inversion', label: 'Uterine Inversion', icon: '⚡', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/pediatric-appendicitis', label: 'Pediatric Appendicitis', icon: '🩹', end: false }] : []),
     ...(can('ipd:read_basic') || can('station:read') ? [{ to: '/delivery-ward', label: 'Delivery ward', icon: '👶', end: false }] : []),
     ...(can('billing:read') ? [{ to: '/billing', label: 'Billing', icon: '💳', end: false }] : []),
     ...(can('settings:manage') ? [{ to: '/settings', label: 'Clinic', icon: '🏥', end: false }] : []),
@@ -496,6 +505,15 @@ function Shell() {
           <Route path="/pediatric-intussusception" element={can('patient:read_clinical') ? <PediatricIntussusceptionPage /> : <Navigate to="/" replace />} />
           <Route path="/pediatric-intussusception/:id/print" element={can('patient:read_clinical') ? <PediatricIntussusceptionPrint /> : <Navigate to="/pediatric-intussusception" replace />} />
           <Route path="/patients/:patientId/pediatric-intussusception/:id/print" element={can('patient:read_clinical') ? <PediatricIntussusceptionPrint /> : <Navigate to="/pediatric-intussusception" replace />} />
+          <Route path="/neonatal-mas" element={can('patient:read_clinical') ? <NeonatalMasPage /> : <Navigate to="/" replace />} />
+          <Route path="/neonatal-mas/:id/print" element={can('patient:read_clinical') ? <NeonatalMasPrint /> : <Navigate to="/neonatal-mas" replace />} />
+          <Route path="/patients/:patientId/neonatal-mas/:id/print" element={can('patient:read_clinical') ? <NeonatalMasPrint /> : <Navigate to="/neonatal-mas" replace />} />
+          <Route path="/obstetric-uterine-inversion" element={can('patient:read_clinical') ? <ObstetricUterineInversionPage /> : <Navigate to="/" replace />} />
+          <Route path="/obstetric-uterine-inversion/:id/print" element={can('patient:read_clinical') ? <ObstetricUterineInversionPrint /> : <Navigate to="/obstetric-uterine-inversion" replace />} />
+          <Route path="/patients/:patientId/obstetric-uterine-inversion/:id/print" element={can('patient:read_clinical') ? <ObstetricUterineInversionPrint /> : <Navigate to="/obstetric-uterine-inversion" replace />} />
+          <Route path="/pediatric-appendicitis" element={can('patient:read_clinical') ? <PediatricAppendicitisPage /> : <Navigate to="/" replace />} />
+          <Route path="/pediatric-appendicitis/:id/print" element={can('patient:read_clinical') ? <PediatricAppendicitisPrint /> : <Navigate to="/pediatric-appendicitis" replace />} />
+          <Route path="/patients/:patientId/pediatric-appendicitis/:id/print" element={can('patient:read_clinical') ? <PediatricAppendicitisPrint /> : <Navigate to="/pediatric-appendicitis" replace />} />
           <Route path="/delivery-ward" element={can('ipd:read_basic') || can('station:read') ? <DeliveryWardPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id" element={can('visit:read') ? <VisitPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id/print" element={can('visit:read') ? <PrescriptionPrint /> : <Navigate to="/" replace />} />

@@ -3886,6 +3886,175 @@ async function seed() {
     }
   }
 
+  // --- SERIES 28A: Neonatal Meconium Aspiration Syndrome (MAS) Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_mas_episodes (
+      patient_id, admission_id, episode_code, diagnosis_datetime,
+      gestational_age_weeks, birth_weight_grams, chronological_age_hours, current_weight_kg,
+      amniotic_fluid_meconium_consistency, delivery_room_vigor,
+      endotracheal_suctioning_performed, meconium_cleared_below_cords,
+      apgar_1min, apgar_5min,
+      respiratory_support_mode, fio2_percent, mean_airway_pressure_cmh2o,
+      pao2_mmhg, paco2_mmhg, arterial_ph, oxygenation_index,
+      pre_post_ductal_spo2_diff_percent, echocardiogram_pphn_confirmed, pphn_severity,
+      pulmonary_air_leak_present, air_leak_type,
+      surfactant_administered, surfactant_delivery_method, surfactant_dose_mg_kg,
+      inhaled_nitric_oxide_prescribed, ino_dose_ppm, empiric_antibiotics_active,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'MAS-20261108-101', '2026-11-08T06:30:00',
+      39.5, 3300, 4.0, 3.2,
+      'thick_particulate_pea_soup', 'non_vigorous_depressed',
+      1, 1,
+      4, 7,
+      'high_frequency_oscillatory_ventilation', 75.0, 15.0,
+      52.0, 48.0, 7.28, 21.6,
+      14.0, 1, 'moderate_suprasystemic_shunting',
+      0, 'none',
+      1, 'bolus_endotracheal', 150.0,
+      1, 20.0, 1,
+      'hfov_ino_escalation', ?,
+      'Term neonate born through thick particulate pea-soup meconium with severe depression at birth. Suctioned below vocal cords. Developed acute hypoxemic respiratory failure with OI 21.6 and PPHN (14% pre/post ductal saturation difference, right-to-left ductal shunting on echocardiogram). Commenced on HFOV (MAP 15 cmH2O) and Inhaled Nitric Oxide (iNO 20 ppm) with bovine surfactant bolus (150 mg/kg). Pre-ductal saturation stabilizing to 95%.',
+      ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingMas = db.prepare('SELECT id FROM neonatal_mas_episodes WHERE episode_code = ?').get('MAS-20261108-101') as { id: number } | undefined;
+  if (existingMas) {
+    const masLogs = [
+      { h: 1, rr: 66, hr: 160, pre: 92, post: 78, fio2: 90, map: 16, pao2: 45, paco2: 54, ph: 7.24, oi: 32.0, ino: 20, bp: 42, dr: 0, notes: 'Extreme respiratory failure and critical PPHN prior to HFOV transition. OI 32.0. iNO started at 20 ppm.' },
+      { h: 4, rr: 58, hr: 148, pre: 95, post: 88, fio2: 75, map: 15, pao2: 52, paco2: 48, ph: 7.28, oi: 21.6, ino: 20, bp: 45, dr: 0, notes: 'HFOV stable. Pre/post ductal gradient narrowed from 14% to 7%. Arterial blood gas improving.' },
+      { h: 12, rr: 52, hr: 138, pre: 97, post: 94, fio2: 50, map: 12, pao2: 68, paco2: 42, ph: 7.34, oi: 8.8, ino: 10, bp: 48, dr: 0, notes: 'Significant clinical improvement. OI down to 8.8. Weaning iNO to 10 ppm. No pneumothorax.' },
+    ];
+    for (const ml of masLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_mas_flowsheet_logs (
+          mas_episode_id, patient_id, log_datetime, hours_from_admission,
+          respiratory_rate, heart_rate_bpm, pre_ductal_spo2_percent, post_ductal_spo2_percent,
+          fio2_percent, mean_airway_pressure_cmh2o, pao2_mmhg, paco2_mmhg, arterial_ph,
+          oxygenation_index, ino_dose_ppm, mean_blood_pressure_mmhg, chest_tube_drainage_active,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T06:30:00', ?,
+          ?, ?, ?, ?,
+          ?, ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingMas.id, babyId, ml.h, ml.rr, ml.hr, ml.pre, ml.post, ml.fio2, ml.map, ml.pao2, ml.paco2, ml.ph, ml.oi, ml.ino, ml.bp, ml.dr, ml.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 28B: Obstetric Acute Uterine Inversion Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_uterine_inversion_episodes (
+      patient_id, admission_id, episode_code, occurrence_datetime,
+      maternal_age, parity, delivery_mode,
+      placental_status_at_inversion, umbilical_cord_traction_applied, fundal_pressure_applied,
+      inversion_degree, neurogenic_shock_present,
+      systolic_bp_at_presentation, diastolic_bp_at_presentation, heart_rate_at_presentation,
+      estimated_blood_loss_ml, reduction_attempted_immediate, reduction_technique_primary,
+      uterine_relaxant_administered, uterine_relaxant_agent,
+      uterotonic_given_before_replacement, placenta_removed_before_reinversion,
+      reinversion_successful, time_to_reinversion_minutes,
+      post_replacement_uterotonics_started, bimanual_uterine_compression_maintained,
+      blood_products_transfused_units, status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'INV-20261108-101', '2026-11-08T08:00:00',
+      29, 2, 'spontaneous_vaginal',
+      'attached_undelivered', 1, 0,
+      'third_degree_prolapsed_outside_introitus', 1,
+      74, 42, 58,
+      550.0, 1, 'johnson_manual_maneuver',
+      1, 'terbutaline_sc',
+      0, 0,
+      1, 12,
+      1, 1,
+      2, 'post_reinversion_bimanual_compression', ?,
+      'Acute 3rd degree uterine inversion following delivery of placenta with attached morbidly adherent component. Severe neurogenic shock triggered by peritoneal traction: BP 74/42 with vagal bradycardia 58 bpm. Uterotonics withheld; Subcutaneous Terbutaline 0.25 mg administered for cervical ring relaxation. Immediate Johnson manual maneuver performed with palm guiding inverted fundus towards umbilicus. Successful reinversion achieved at 12 minutes. Placenta removed manually following reinversion. High-dose IV Oxytocin (40 IU) and internal bimanual compression maintained. 2 units packed RBCs transfused. Patient stabilized.',
+      ?, ?
+    )
+  `).run(sunitaId, docId, now, now);
+
+  const existingInversion = db.prepare('SELECT id FROM obstetric_uterine_inversion_episodes WHERE episode_code = ?').get('INV-20261108-101') as { id: number } | undefined;
+  if (existingInversion) {
+    const invLogs = [
+      { min: 5, sbp: 74, dbp: 42, hr: 58, tone: 'relaxing_re_inversion_risk' as const, bim: 1, oxy: 0, loss: 100, uo: 15, notes: 'Profound hypotension and vagal shock. Terbutaline administered. Johnson maneuver underway.' },
+      { min: 15, sbp: 92, dbp: 56, hr: 78, tone: 'boggy_hypotonic' as const, bim: 1, oxy: 1, loss: 50, uo: 30, notes: 'Reinversion complete. High-dose Oxytocin running. Internal bimanual compression active.' },
+      { min: 45, sbp: 110, dbp: 68, hr: 82, tone: 'firm_well_contracted' as const, bim: 1, oxy: 1, loss: 20, uo: 50, notes: 'Myometrial tone firm and contracted. Bleeding controlled. Transfusion completed.' },
+    ];
+    for (const il of invLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_uterine_inversion_flowsheet_logs (
+          inversion_episode_id, patient_id, log_datetime, minutes_from_inversion,
+          systolic_bp, diastolic_bp, heart_rate_bpm, uterine_tone,
+          bimanual_compression_active, oxytocin_infusion_running,
+          estimated_ongoing_blood_loss_ml, urine_output_ml_hr,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T08:00:00', ?,
+          ?, ?, ?, ?,
+          ?, ?,
+          ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingInversion.id, sunitaId, il.min, il.sbp, il.dbp, il.hr, il.tone, il.bim, il.oxy, il.loss, il.uo, il.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 28C: Pediatric Acute Appendicitis & Samuel PAS Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_appendicitis_episodes (
+      patient_id, admission_id, episode_code, triage_datetime,
+      age_years, weight_kg, symptom_duration_hours,
+      cough_percussion_hopping_rlq_pain, rlq_tenderness_light_palpation,
+      migration_pain_to_rlq, fever_gt_38c, nausea_or_vomiting, anorexia,
+      leukocytosis_wbc_gt_10000, neutrophilia_anc_gt_7500_or_ge_75pct, pas_score_total,
+      wbc_count_per_microliter, neutrophil_percent, crp_mg_l,
+      ultrasound_performed, appendix_visualized, outer_diameter_mm,
+      non_compressible, hypervascular_ring_of_fire, appendicolith_fecalith_present,
+      periappendiceal_fluid_or_fat_stranding, perforation_or_abscess_suspected,
+      management_pathway, empiric_antibiotic_regimen, surgical_findings,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'APP-20261108-101', '2026-11-08T09:30:00',
+      8.0, 26.5, 18.0,
+      1, 1, 1, 1, 1, 1, 1, 1, 10,
+      14200, 82.0, 38.0,
+      1, 1, 7.8,
+      1, 1, 0,
+      1, 0,
+      'urgent_laparoscopic_appendectomy', 'ceftriaxone_plus_metronidazole', 'uncomplicated_suppurative',
+      'postoperative_recovery', ?,
+      '8-year-old child presenting with classic migratory right lower quadrant abdominal pain, anorexia, vomiting, fever 38.4°C, and marked hopping/percussion tenderness. Samuel Pediatric Appendicitis Score 10/10 (> 90% predicted probability). Point-of-care graded-compression ultrasound demonstrated 7.8 mm non-compressible appendix with hypervascular wall hyperemia and periappendiceal fat stranding. Emergent laparoscopic appendectomy performed: suppurative non-perforated appendicitis successfully resected without complications.',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingAppy = db.prepare('SELECT id FROM pediatric_appendicitis_episodes WHERE episode_code = ?').get('APP-20261108-101') as { id: number } | undefined;
+  if (existingAppy) {
+    const appyLogs = [
+      { h: 2, temp: 38.4, hr: 118, rr: 24, pain: 7, exam: 'rebound_guarding_worsening' as const, oral: 'npo_strict' as const, notes: 'Pre-operative holding area. RLQ tenderness acute. IV Plasmalyte and analgesia running.' },
+      { h: 6, temp: 37.6, hr: 98, rr: 20, pain: 4, exam: 'focal_rlq_tenderness_improving' as const, oral: 'npo_strict' as const, notes: 'Post-laparoscopic appendectomy in surgical recovery. Incisions clean. Pain well controlled.' },
+      { h: 14, temp: 37.0, hr: 88, rr: 18, pain: 1, exam: 'soft_non_tender' as const, oral: 'clear_liquids_tolerated' as const, notes: 'Afebrile, walking in room. Clear oral fluids tolerated without emesis. Abdomen soft.' },
+    ];
+    for (const al of appyLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_appendicitis_flowsheet_logs (
+          appendicitis_episode_id, patient_id, log_datetime, hours_from_triage,
+          temperature_celsius, heart_rate_bpm, respiratory_rate,
+          pain_score_flacc_wong_baker, abdominal_exam_findings, oral_intake_status,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T09:30:00', ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingAppy.id, aaravId, al.h, al.temp, al.hr, al.rr, al.pain, al.exam, al.oral, al.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },
