@@ -11660,6 +11660,297 @@ export const addPediatricOsteomyelitisFlowsheet = (episodeId: number, payload: a
 export const evaluatePediatricOsteomyelitisApi = (payload: any): Promise<{ evaluation: any }> =>
   api('POST', '/api/pediatric-osteomyelitis/evaluate', payload);
 
+// ==========================================
+// SERIES 36A: Neonatal Intestinal Atresia (Duodenal & Jejunoileal)
+// ==========================================
+export interface NeonatalIntestinalAtresiaRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  age_hours: number;
+  weight_kg: number;
+  atresia_level:
+    | 'duodenal_atresia_complete'
+    | 'duodenal_web_stenosis'
+    | 'jejunoileal_atresia_type_1_membrane'
+    | 'jejunoileal_atresia_type_2_cord'
+    | 'jejunoileal_atresia_type_3a_gap'
+    | 'jejunoileal_atresia_type_3b_apple_peel'
+    | 'jejunoileal_atresia_type_4_multiple';
+  polyhydramnios_antenatal: number;
+  bilious_emesis_present: number;
+  abdominal_distension_pattern:
+    | 'scaphoid_epigastric_fullness_only'
+    | 'generalized_distension_visible_loops'
+    | 'soft_non_distended';
+  radiographic_gas_pattern:
+    | 'double_bubble_sign_gasless_distal'
+    | 'triple_bubble_sign'
+    | 'multiple_dilated_loops_air_fluid_levels'
+    | 'microcolon_on_contrast_enema';
+  down_syndrome_features_present: number;
+  karyotype_trisomy_21_confirmed: number;
+  echocardiogram_cardiac_defect: number;
+  replogle_decompression_active: number;
+  surgical_procedure_planned:
+    | 'duodenoduodenostomy_diamond_anastomosis'
+    | 'duodenojejunostomy'
+    | 'primary_end_to_oblique_anastomosis'
+    | 'tapering_enteroplasty_anastomosis'
+    | 'temporary_enterostomy_stoma';
+  transanastomotic_tube_placed: number;
+  tpn_central_line_in_situ: number;
+  status:
+    | 'preop_nasogastric_decompression'
+    | 'contrast_imaging_enema_workup'
+    | 'in_operating_room_reconstruction'
+    | 'postop_transanastomotic_tube_tpn'
+    | 'resolved_full_enteral_nutrition';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  consultant_name?: string;
+}
+
+export interface NeonatalIntestinalAtresiaFlowsheetRecord {
+  id: number;
+  atresia_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_admission: number;
+  nasogastric_output_ml: number;
+  nasogastric_aspirate_character: 'clear_gastric' | 'bilious_dark_green' | 'feculent_stasis';
+  abdominal_girth_cm: number;
+  enteral_feed_rate_ml_hr: number;
+  stool_passage_observed: number;
+  stool_character: 'none' | 'pale_mucus_plug' | 'transitional_meconium' | 'normal_yellow_breastmilk_stool';
+  heart_rate: number;
+  respiratory_rate: number;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getNeonatalIntestinalAtresiaEpisodes = (params?: { patientId?: number }): Promise<{ episodes: NeonatalIntestinalAtresiaRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/neonatal-intestinal-atresia/episodes${query}`);
+};
+
+export const getNeonatalIntestinalAtresiaEpisode = (id: number): Promise<{ episode: NeonatalIntestinalAtresiaRecord; evaluation: any; flowsheetLogs: NeonatalIntestinalAtresiaFlowsheetRecord[] }> =>
+  api('GET', `/api/neonatal-intestinal-atresia/episodes/${id}`);
+
+export const createNeonatalIntestinalAtresiaEpisode = (payload: any): Promise<{ episode: NeonatalIntestinalAtresiaRecord }> =>
+  api('POST', '/api/neonatal-intestinal-atresia/episodes', payload);
+
+export const updateNeonatalIntestinalAtresiaEpisode = (id: number, payload: any): Promise<{ episode: NeonatalIntestinalAtresiaRecord }> =>
+  api('PUT', `/api/neonatal-intestinal-atresia/episodes/${id}`, payload);
+
+export const addNeonatalIntestinalAtresiaFlowsheet = (episodeId: number, payload: any): Promise<{ log: NeonatalIntestinalAtresiaFlowsheetRecord }> =>
+  api('POST', `/api/neonatal-intestinal-atresia/episodes/${episodeId}/flowsheet`, payload);
+
+export const evaluateNeonatalIntestinalAtresiaApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/neonatal-intestinal-atresia/evaluate', payload);
+
+export const patchNeonatalIntestinalAtresiaStatus = (id: number, status: string): Promise<{ ok: boolean }> =>
+  api('PATCH', `/api/neonatal-intestinal-atresia/episodes/${id}/status`, { status });
+
+export const deleteNeonatalIntestinalAtresiaFlowsheet = (episodeId: number, flowsheetId: number): Promise<{ ok: boolean }> =>
+  api('DELETE', `/api/neonatal-intestinal-atresia/flowsheet/${flowsheetId}`);
+
+export const deleteNeonatalIntestinalAtresiaEpisode = (id: number): Promise<{ ok: boolean }> =>
+  api('DELETE', `/api/neonatal-intestinal-atresia/episodes/${id}`);
+
+// ==========================================
+// SERIES 36B: Obstetric HELLP Syndrome & Mississippi Triple-Class Protocol
+// ==========================================
+export interface ObstetricHellpRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  gestational_age_weeks: number;
+  platelet_count_per_ul: number;
+  ast_u_l: number;
+  alt_u_l: number;
+  ldh_u_l: number;
+  total_bilirubin_mg_dl: number;
+  schistocytes_present: number;
+  systolic_bp: number;
+  diastolic_bp: number;
+  epigastric_ruq_pain: number;
+  hepatic_subcapsular_hematoma_suspected: number;
+  hepatic_imaging_performed:
+    | 'none'
+    | 'ultrasound_capsule_intact'
+    | 'subcapsular_hematoma_contained'
+    | 'hepatic_rupture_hemoperitoneum';
+  dexamethasone_pulse_initiated: number;
+  magnesium_sulfate_seizure_prophylaxis: number;
+  platelet_transfusion_administered: number;
+  delivery_timing_plan:
+    | 'immediate_crash_delivery_under_2h'
+    | 'planned_stabilization_and_delivery'
+    | 'steroid_window_24_to_48h_if_stable';
+  status:
+    | 'acute_stabilization_icu_triage'
+    | 'dexamethasone_antihypertensive_active'
+    | 'in_operating_room_crash_delivery'
+    | 'postpartum_icu_platelet_nadir_surveillance'
+    | 'resolved_platelet_recovery_discharge';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  consultant_name?: string;
+}
+
+export interface ObstetricHellpFlowsheetRecord {
+  id: number;
+  hellp_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_admission: number;
+  platelet_count_per_ul: number;
+  ast_u_l: number;
+  ldh_u_l: number;
+  systolic_bp: number;
+  diastolic_bp: number;
+  urine_output_ml_hr: number;
+  deep_tendon_reflexes: 'absent_hyporeflexia' | 'normal_2_plus' | 'hyperreflexic_clonus';
+  epigastric_pain_score: number;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getObstetricHellpEpisodes = (params?: { patientId?: number }): Promise<{ episodes: ObstetricHellpRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/obstetric-hellp/episodes${query}`);
+};
+
+export const getObstetricHellpEpisode = (id: number): Promise<{ episode: ObstetricHellpRecord; evaluation: any; flowsheetLogs: ObstetricHellpFlowsheetRecord[] }> =>
+  api('GET', `/api/obstetric-hellp/episodes/${id}`);
+
+export const createObstetricHellpEpisode = (payload: any): Promise<{ episode: ObstetricHellpRecord }> =>
+  api('POST', '/api/obstetric-hellp/episodes', payload);
+
+export const updateObstetricHellpEpisode = (id: number, payload: any): Promise<{ episode: ObstetricHellpRecord }> =>
+  api('PUT', `/api/obstetric-hellp/episodes/${id}`, payload);
+
+export const addObstetricHellpFlowsheet = (episodeId: number, payload: any): Promise<{ log: ObstetricHellpFlowsheetRecord }> =>
+  api('POST', `/api/obstetric-hellp/episodes/${episodeId}/flowsheet`, payload);
+
+export const evaluateObstetricHellpApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/obstetric-hellp/evaluate', payload);
+
+export const patchObstetricHellpStatus = (id: number, status: string): Promise<{ ok: boolean }> =>
+  api('PATCH', `/api/obstetric-hellp/episodes/${id}/status`, { status });
+
+export const deleteObstetricHellpFlowsheet = (episodeId: number, flowsheetId: number): Promise<{ ok: boolean }> =>
+  api('DELETE', `/api/obstetric-hellp/flowsheet/${flowsheetId}`);
+
+export const deleteObstetricHellpEpisode = (id: number): Promise<{ ok: boolean }> =>
+  api('DELETE', `/api/obstetric-hellp/episodes/${id}`);
+
+// ==========================================
+// SERIES 36C: Pediatric Slipped Capital Femoral Epiphysis (SCFE) & Loder Instability
+// ==========================================
+export interface PediatricScfeRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  age_years: number;
+  weight_kg: number;
+  bmi_percentile: number;
+  affected_hip: 'right' | 'left' | 'bilateral';
+  loder_stability: 'stable_able_to_ambulate' | 'unstable_cannot_bear_weight';
+  symptom_duration_days: number;
+  southwick_slip_angle_degrees: number;
+  klein_line_trethowan_abnormal: number;
+  referred_knee_thigh_pain: number;
+  endocrine_disorder_suspected: number;
+  strict_non_weight_bearing_enforced: number;
+  surgical_procedure_performed:
+    | 'none_preoperative_traction'
+    | 'in_situ_single_cannulated_screw'
+    | 'two_screw_fixation'
+    | 'open_modified_dunn_procedure'
+    | 'contralateral_prophylactic_pinning_only';
+  contralateral_hip_prophylactic_pinning: number;
+  status:
+    | 'strict_bedrest_non_weight_bearing'
+    | 'urgent_preop_radiographic_workup'
+    | 'in_operating_room_percutaneous_pinning'
+    | 'postop_crutch_training_healing'
+    | 'resolved_growth_plate_fusion';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  consultant_name?: string;
+}
+
+export interface PediatricScfeFlowsheetRecord {
+  id: number;
+  scfe_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  day_from_presentation: number;
+  pain_score_vas: number;
+  non_weight_bearing_compliance: 'strict_wheelchair_bedrest' | 'partial_crutches' | 'full_weight_bearing';
+  hip_internal_rotation_degrees: number;
+  wound_dressing_clean: number;
+  distal_neurovascular_status: 'intact_pulses_sensation_normal' | 'paresthesias_delayed_cap_refill';
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getPediatricScfeEpisodes = (params?: { patientId?: number }): Promise<{ episodes: PediatricScfeRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/pediatric-scfe/episodes${query}`);
+};
+
+export const getPediatricScfeEpisode = (id: number): Promise<{ episode: PediatricScfeRecord; evaluation: any; flowsheetLogs: PediatricScfeFlowsheetRecord[] }> =>
+  api('GET', `/api/pediatric-scfe/episodes/${id}`);
+
+export const createPediatricScfeEpisode = (payload: any): Promise<{ episode: PediatricScfeRecord }> =>
+  api('POST', '/api/pediatric-scfe/episodes', payload);
+
+export const updatePediatricScfeEpisode = (id: number, payload: any): Promise<{ episode: PediatricScfeRecord }> =>
+  api('PUT', `/api/pediatric-scfe/episodes/${id}`, payload);
+
+export const addPediatricScfeFlowsheet = (episodeId: number, payload: any): Promise<{ log: PediatricScfeFlowsheetRecord }> =>
+  api('POST', `/api/pediatric-scfe/episodes/${episodeId}/flowsheet`, payload);
+
+export const evaluatePediatricScfeApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/pediatric-scfe/evaluate', payload);
+
+export const patchPediatricScfeStatus = (id: number, status: string): Promise<{ ok: boolean }> =>
+  api('PATCH', `/api/pediatric-scfe/episodes/${id}/status`, { status });
+
+export const deletePediatricScfeFlowsheet = (episodeId: number, flowsheetId: number): Promise<{ ok: boolean }> =>
+  api('DELETE', `/api/pediatric-scfe/flowsheet/${flowsheetId}`);
+
+export const deletePediatricScfeEpisode = (id: number): Promise<{ ok: boolean }> =>
+  api('DELETE', `/api/pediatric-scfe/episodes/${id}`);
+
+
 
 
 

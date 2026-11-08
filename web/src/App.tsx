@@ -203,6 +203,12 @@ import { ObstetricSptPage } from './pages/ObstetricSptPage';
 import { ObstetricSptPrint } from './pages/ObstetricSptPrint';
 import { PediatricOsteomyelitisPage } from './pages/PediatricOsteomyelitisPage';
 import { PediatricOsteomyelitisPrint } from './pages/PediatricOsteomyelitisPrint';
+import { NeonatalIntestinalAtresiaPage } from './pages/NeonatalIntestinalAtresiaPage';
+import { NeonatalIntestinalAtresiaPrint } from './pages/NeonatalIntestinalAtresiaPrint';
+import { ObstetricHellpPage } from './pages/ObstetricHellpPage';
+import { ObstetricHellpPrint } from './pages/ObstetricHellpPrint';
+import { PediatricScfePage } from './pages/PediatricScfePage';
+import { PediatricScfePrint } from './pages/PediatricScfePrint';
 import { DeliveryWardPage } from './pages/DeliveryWardPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditPage } from './pages/AuditPage';
@@ -349,6 +355,9 @@ function Shell() {
     ...(can('patient:read_clinical') ? [{ to: '/neonatal-abdominal-defects', label: 'Wall Defects & Silo', icon: '👶', end: false }] : []),
     ...(can('patient:read_clinical') ? [{ to: '/obstetric-spt', label: 'Obstetric SPT', icon: '🩸', end: false }] : []),
     ...(can('patient:read_clinical') ? [{ to: '/pediatric-osteomyelitis', label: 'Acute Osteomyelitis', icon: '🦴', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/neonatal-intestinal-atresia', label: 'Intestinal Atresia', icon: '👶', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/obstetric-hellp', label: 'Obstetric HELLP', icon: '🩸', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/pediatric-scfe', label: 'Pediatric SCFE', icon: '🦴', end: false }] : []),
     ...(can('ipd:read_basic') || can('station:read') ? [{ to: '/delivery-ward', label: 'Delivery ward', icon: '👶', end: false }] : []),
     ...(can('billing:read') ? [{ to: '/billing', label: 'Billing', icon: '💳', end: false }] : []),
     ...(can('settings:manage') ? [{ to: '/settings', label: 'Clinic', icon: '🏥', end: false }] : []),
@@ -640,6 +649,15 @@ function Shell() {
           <Route path="/pediatric-osteomyelitis" element={can('patient:read_clinical') ? <PediatricOsteomyelitisPage /> : <Navigate to="/" replace />} />
           <Route path="/pediatric-osteomyelitis/:id/print" element={can('patient:read_clinical') ? <PediatricOsteomyelitisPrint /> : <Navigate to="/pediatric-osteomyelitis" replace />} />
           <Route path="/patients/:patientId/pediatric-osteomyelitis/:episodeId/print" element={can('patient:read_clinical') ? <PediatricOsteomyelitisPrint /> : <Navigate to="/pediatric-osteomyelitis" replace />} />
+          <Route path="/neonatal-intestinal-atresia" element={can('patient:read_clinical') ? <NeonatalIntestinalAtresiaPage /> : <Navigate to="/" replace />} />
+          <Route path="/neonatal-intestinal-atresia/:id/print" element={can('patient:read_clinical') ? <NeonatalIntestinalAtresiaPrint /> : <Navigate to="/neonatal-intestinal-atresia" replace />} />
+          <Route path="/patients/:patientId/neonatal-intestinal-atresia/:episodeId/print" element={can('patient:read_clinical') ? <NeonatalIntestinalAtresiaPrint /> : <Navigate to="/neonatal-intestinal-atresia" replace />} />
+          <Route path="/obstetric-hellp" element={can('patient:read_clinical') ? <ObstetricHellpPage /> : <Navigate to="/" replace />} />
+          <Route path="/obstetric-hellp/:id/print" element={can('patient:read_clinical') ? <ObstetricHellpPrint /> : <Navigate to="/obstetric-hellp" replace />} />
+          <Route path="/patients/:patientId/obstetric-hellp/:episodeId/print" element={can('patient:read_clinical') ? <ObstetricHellpPrint /> : <Navigate to="/obstetric-hellp" replace />} />
+          <Route path="/pediatric-scfe" element={can('patient:read_clinical') ? <PediatricScfePage /> : <Navigate to="/" replace />} />
+          <Route path="/pediatric-scfe/:id/print" element={can('patient:read_clinical') ? <PediatricScfePrint /> : <Navigate to="/pediatric-scfe" replace />} />
+          <Route path="/patients/:patientId/pediatric-scfe/:episodeId/print" element={can('patient:read_clinical') ? <PediatricScfePrint /> : <Navigate to="/pediatric-scfe" replace />} />
           <Route path="/delivery-ward" element={can('ipd:read_basic') || can('station:read') ? <DeliveryWardPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id" element={can('visit:read') ? <VisitPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id/print" element={can('visit:read') ? <PrescriptionPrint /> : <Navigate to="/" replace />} />

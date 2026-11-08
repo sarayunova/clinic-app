@@ -5133,6 +5133,144 @@ async function seed() {
     }
   }
 
+  // --- SERIES 36A: Neonatal Intestinal Atresia (Duodenal & Jejunoileal) Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_intestinal_atresia_episodes (
+      patient_id, admission_id, episode_code, onset_datetime, age_hours, weight_kg,
+      atresia_level, polyhydramnios_antenatal, bilious_emesis_present,
+      abdominal_distension_pattern, radiographic_gas_pattern,
+      down_syndrome_features_present, karyotype_trisomy_21_confirmed, echocardiogram_cardiac_defect,
+      replogle_decompression_active, surgical_procedure_planned, transanastomotic_tube_placed,
+      tpn_central_line_in_situ, status, consultant_id, clinical_notes,
+      created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'ATRESIA-20261108-101', '2026-11-08T02:00:00', 14, 2.85,
+      'duodenal_atresia_complete', 1, 1,
+      'scaphoid_epigastric_fullness_only', 'double_bubble_sign_gasless_distal',
+      1, 1, 1,
+      1, 'duodenoduodenostomy_diamond_anastomosis', 1,
+      1, 'in_operating_room_reconstruction', ?,
+      'Newborn with antenatal polyhydramnios and immediate post-delivery bilious vomiting. Abdominal plain film confirms classical double-bubble sign with gasless distal abdomen. Karyotype confirms Trisomy 21 (Down syndrome); echocardiogram shows small ostium primum ASD and perimembranous VSD. Undergoing Kimura diamond-shaped duodenoduodenostomy with transanastomotic tube (TAT) placement without dividing pancreatic parenchyma.',
+      ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingAtresia = db.prepare('SELECT id FROM neonatal_intestinal_atresia_episodes WHERE episode_code = ?').get('ATRESIA-20261108-101') as any;
+  if (existingAtresia) {
+    const atresiaLogs = [
+      { hr: 4, ng: 18.0, char: 'bilious_dark_green', girth: 28.0, feed: 0.0, stool: 0, sChar: 'none', hr_bpm: 144, rr: 44, notes: 'Replogle sump 10 Fr active on low continuous suction (-20 mmHg). Dark green bilious drainage.' },
+      { hr: 8, ng: 14.5, char: 'bilious_dark_green', girth: 28.5, feed: 0.0, stool: 0, sChar: 'none', hr_bpm: 138, rr: 42, notes: 'Pre-op stabilization on TPN + lipid infusion via PICC line. Gastric decompression decompression maintained.' },
+      { hr: 24, ng: 6.0, char: 'clear_gastric', girth: 27.0, feed: 1.0, stool: 1, sChar: 'transitional_meconium', hr_bpm: 132, rr: 38, notes: 'Post-Kimura duodenoduodenostomy Day 1. Diamond anastomosis widely patent. Minimal clear gastric return. Transanastomotic tube (TAT) trickle feeds initiated at 1 mL/hr express breast milk.' },
+    ];
+    for (const al of atresiaLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_intestinal_atresia_flowsheet_logs (
+          atresia_episode_id, patient_id, log_datetime, hours_from_admission,
+          nasogastric_output_ml, nasogastric_aspirate_character, abdominal_girth_cm,
+          enteral_feed_rate_ml_hr, stool_passage_observed, stool_character,
+          heart_rate, respiratory_rate, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T06:00:00', ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?, ?
+        )
+      `).run(existingAtresia.id, babyId, al.hr, al.ng, al.char, al.girth, al.feed, al.stool, al.sChar, al.hr_bpm, al.rr, al.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 36B: Obstetric HELLP Syndrome & Mississippi Triple-Class Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_hellp_episodes (
+      patient_id, admission_id, episode_code, onset_datetime, gestational_age_weeks,
+      platelet_count_per_ul, ast_u_l, alt_u_l, ldh_u_l, total_bilirubin_mg_dl,
+      schistocytes_present, systolic_bp, diastolic_bp, epigastric_ruq_pain,
+      hepatic_subcapsular_hematoma_suspected, hepatic_imaging_performed,
+      dexamethasone_pulse_initiated, magnesium_sulfate_seizure_prophylaxis,
+      platelet_transfusion_administered, delivery_timing_plan,
+      status, consultant_id, clinical_notes,
+      created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'HELLP-20261108-101', '2026-11-08T04:30:00', 33.2,
+      42000, 168.0, 142.0, 890.0, 2.1,
+      1, 168, 110, 1,
+      0, 'ultrasound_capsule_intact',
+      1, 1,
+      1, 'planned_stabilization_and_delivery',
+      'dexamethasone_antihypertensive_active', ?,
+      'G2P1 at 33+2 weeks with severe preeclampsia presenting with right upper quadrant pain, headache, and visual scotomata. Laboratory profile diagnostic of Mississippi Class 1 / Tennessee Complete HELLP Syndrome (Platelets 42k, AST 168, LDH 890, Bilirubin 2.1 mg/dL, schistocytes on peripheral blood smear). Liver ultrasound confirms intact capsule without contained hematoma. High-dose Dexamethasone pulse protocol initiated (10 mg IV q12h) along with IV Magnesium sulfate Zuspan seizure prophylaxis and IV Nicardipine BP titration. Single-donor apheresis platelet transfusion administered for planned delivery.',
+      ?, ?
+    )
+  `).run(sunitaId, docId, now, now);
+
+  const existingHellp = db.prepare('SELECT id FROM obstetric_hellp_episodes WHERE episode_code = ?').get('HELLP-20261108-101') as any;
+  if (existingHellp) {
+    const hellpLogs = [
+      { hrs: 0, plt: 42000, ast: 168, ldh: 890, sys: 168, dia: 110, uo: 28.0, dtr: 'hyperreflexic_clonus', pain: 7, notes: 'Admission to Obstetric ICU. Zuspan MgSO4 4g IV bolus completed. Dexamethasone 10mg IV dose #1 given.' },
+      { hrs: 6, plt: 56000, ast: 140, ldh: 790, sys: 146, dia: 92, uo: 42.0, dtr: 'normal_2_plus', pain: 4, notes: 'Post-apheresis platelet unit. Patellar reflexes 2+ normal. Urine output stabilized. RUQ tenderness significantly improved.' },
+      { hrs: 12, plt: 74000, ast: 112, ldh: 670, sys: 138, dia: 88, uo: 48.0, dtr: 'normal_2_plus', pain: 2, notes: '12 hours post admission: Platelets trending upwards (56k -> 74k). Nicardipine infusion titrated down. Patient hemodynamically optimized.' },
+    ];
+    for (const hl of hellpLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_hellp_flowsheet_logs (
+          hellp_episode_id, patient_id, log_datetime, hours_from_admission,
+          platelet_count_per_ul, ast_u_l, ldh_u_l, systolic_bp, diastolic_bp,
+          urine_output_ml_hr, deep_tendon_reflexes, epigastric_pain_score, notes,
+          logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T07:00:00', ?,
+          ?, ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?
+        )
+      `).run(existingHellp.id, sunitaId, hl.hrs, hl.plt, hl.ast, hl.ldh, hl.sys, hl.dia, hl.uo, hl.dtr, hl.pain, hl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 36C: Pediatric Slipped Capital Femoral Epiphysis (SCFE) & Loder Instability ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_scfe_episodes (
+      patient_id, admission_id, episode_code, onset_datetime, age_years, weight_kg,
+      bmi_percentile, affected_hip, loder_stability, symptom_duration_days,
+      southwick_slip_angle_degrees, klein_line_trethowan_abnormal, referred_knee_thigh_pain,
+      endocrine_disorder_suspected, strict_non_weight_bearing_enforced,
+      surgical_procedure_performed, contralateral_hip_prophylactic_pinning,
+      status, consultant_id, clinical_notes,
+      created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'SCFE-20261108-101', '2026-11-06T14:00:00', 13.0, 68.0,
+      97.0, 'left', 'unstable_cannot_bear_weight', 4,
+      42.0, 1, 1,
+      0, 1,
+      'in_situ_single_cannulated_screw', 0,
+      'in_operating_room_percutaneous_pinning', ?,
+      '13-year-old male with acute-on-chronic left hip and referred medial distal thigh/knee pain following a minor misstep. Inability to ambulate or bear weight even with crutches (Loder Unstable SCFE, 40-50% AVN risk). Pelvic AP and frog-leg lateral radiographs demonstrate Trethowan sign positive (Klein line does not intersect epiphysis) and Southwick slip angle of 42 degrees (moderate slip). Strict emergency non-weight bearing enforced with zero forceful manipulative reduction to protect retinacular lateral epiphyseal arterial vessels. Underwent emergency percutaneous in-situ single central 7.3 mm cannulated screw fixation.',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingScfe = db.prepare('SELECT id FROM pediatric_scfe_episodes WHERE episode_code = ?').get('SCFE-20261108-101') as any;
+  if (existingScfe) {
+    const scfeLogs = [
+      { d: 1, pain: 7, nwb: 'strict_wheelchair_bedrest', ir: 0.0, wound: 1, nv: 'intact_pulses_sensation_normal', notes: 'Immediate post-op Day 1. In-situ single screw confirmed center-center on AP & lateral fluoroscopy. 5 threads across physis. Strict wheelchair bedrest.' },
+      { d: 2, pain: 4, nwb: 'strict_wheelchair_bedrest', ir: 5.0, wound: 1, nv: 'intact_pulses_sensation_normal', notes: 'Day 2: Pain well managed on oral NSAIDs. Puncture wound dressing clean and dry. Distal DP/PT pulses 2+ intact. Physical therapy instruction on sliding transfers.' },
+      { d: 14, pain: 1, nwb: 'partial_crutches', ir: 10.0, wound: 1, nv: 'intact_pulses_sensation_normal', notes: 'Two-week clinic review: Puncture incision healed without complication. Protected toe-touch crutch ambulation initiated. Contralateral asymptomatic right hip under radiographic surveillance.' },
+    ];
+    for (const sl of scfeLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_scfe_flowsheet_logs (
+          scfe_episode_id, patient_id, log_datetime, day_from_presentation,
+          pain_score_vas, non_weight_bearing_compliance, hip_internal_rotation_degrees,
+          wound_dressing_clean, distal_neurovascular_status, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T08:00:00', ?,
+          ?, ?, ?,
+          ?, ?, ?, ?, ?
+        )
+      `).run(existingScfe.id, aaravId, sl.d, sl.pain, sl.nwb, sl.ir, sl.wound, sl.nv, sl.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

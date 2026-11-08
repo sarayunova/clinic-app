@@ -686,6 +686,31 @@ export const ACTION_LABELS: Record<string, string> = {
   'pediatric_osteomyelitis.flowsheet_delete': 'Deleted pediatric osteomyelitis flowsheet log',
   'pediatric_osteomyelitis.print': 'Printed pediatric acute hematogenous osteomyelitis clinical dossier',
 
+  // SERIES 36: Neonatal Intestinal Atresia, Obstetric HELLP Syndrome, Pediatric SCFE
+  'neonatal_intestinal_atresia.create': 'Initiated neonatal duodenal / jejunoileal intestinal atresia protocol',
+  'neonatal_intestinal_atresia.update': 'Updated neonatal intestinal atresia episode & operative plan',
+  'neonatal_intestinal_atresia.status_update': 'Updated neonatal intestinal atresia episode status or feed progress',
+  'neonatal_intestinal_atresia.delete': 'Deleted neonatal intestinal atresia episode record',
+  'neonatal_intestinal_atresia.flowsheet_add': 'Logged neonatal atresia NG aspirate, enteral feeds & transit checkpoint',
+  'neonatal_intestinal_atresia.flowsheet_delete': 'Deleted neonatal intestinal atresia flowsheet log',
+  'neonatal_intestinal_atresia.print': 'Printed neonatal intestinal atresia & duodenoduodenostomy clinical dossier',
+
+  'obstetric_hellp.create': 'Initiated obstetric HELLP syndrome & Mississippi triple-class protocol',
+  'obstetric_hellp.update': 'Updated obstetric HELLP episode & delivery timing plan',
+  'obstetric_hellp.status_update': 'Updated obstetric HELLP episode status or crash delivery triage',
+  'obstetric_hellp.delete': 'Deleted obstetric HELLP episode record',
+  'obstetric_hellp.flowsheet_add': 'Logged obstetric HELLP platelet nadir, liver enzymes & reflex checkpoint',
+  'obstetric_hellp.flowsheet_delete': 'Deleted obstetric HELLP flowsheet log',
+  'obstetric_hellp.print': 'Printed obstetric HELLP syndrome & Mississippi staging clinical dossier',
+
+  'pediatric_scfe.create': 'Initiated pediatric slipped capital femoral epiphysis (SCFE) & Loder protocol',
+  'pediatric_scfe.update': 'Updated pediatric SCFE episode & in-situ pinning plan',
+  'pediatric_scfe.status_update': 'Updated pediatric SCFE episode status or non-weight bearing progression',
+  'pediatric_scfe.delete': 'Deleted pediatric SCFE episode record',
+  'pediatric_scfe.flowsheet_add': 'Logged pediatric SCFE pain, internal rotation & non-weight bearing checkpoint',
+  'pediatric_scfe.flowsheet_delete': 'Deleted pediatric SCFE flowsheet log',
+  'pediatric_scfe.print': 'Printed pediatric SCFE & in-situ cannulated screw fixation clinical dossier',
+
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };
