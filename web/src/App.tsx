@@ -243,6 +243,7 @@ import { PrescriptionTemplatesPage } from './pages/PrescriptionTemplatesPage';
 import { CollectionReportPage } from './pages/CollectionReport';
 import { TvQueuePage } from './pages/TvQueuePage';
 import { ScreenLock } from './components/ScreenLock';
+import { ProtocolsHubPage, CLINICAL_PROTOCOLS } from './pages/ProtocolsHubPage';
 
 export function App() {
   const location = useLocation();
@@ -291,125 +292,142 @@ function Shell() {
   const { logout, can, locked, lock } = useAuth();
   const nav = useNavigate();
   const here = useLocation().pathname;
+  const [protocolsOpen, setProtocolsOpen] = useState(false);
+  const [openCategory, setOpenCategory] = useState<'obstetric' | 'neonatal' | 'pediatric' | 'specialty' | null>(null);
+
   // Nurses start their shift on the nurse station board. Only on arrival (login or opening the app at the home page);
   // the "Today" link still works afterwards.
   useEffect(() => {
     if (me.role === 'nurse' && here === '/') nav('/station', { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const links = [
+const primaryLinks = [
     { to: '/', label: 'Today', icon: '📅', end: true },
-    ...(can('station:read') ? [{ to: '/station', label: 'Nurse station', icon: '🩺', end: false }] : []),
     { to: '/patients', label: 'Patients', icon: '👥', end: false },
+    ...(can('station:read') ? [{ to: '/station', label: 'Nurse station', icon: '🩺', end: false }] : []),
     { to: '/wards', label: 'Wards', icon: '🛏️', end: false },
-    ...(can('patient:read_clinical') ? [{ to: '/ward-board', label: 'Ward Board', icon: '📊', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/teleconsultations', label: 'Teleconsult', icon: '📹', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/ot-schedule', label: 'OT Schedule', icon: '🔪', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/blood-bank', label: 'Blood Bank', icon: '🩸', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-renal', label: 'Renal & PD', icon: '💧', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/ams', label: 'AMS & Antibiogram', icon: '🧫', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-hdu', label: 'Obstetric HDU', icon: '🤰', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pals-emergency', label: 'PALS Emergency', icon: '🚨', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/nicu-tpn', label: 'NICU TPN', icon: '🧪', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/maternal-comorbidities', label: 'Maternal Comorbidities', icon: '🤰', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-allergy', label: 'Asthma & Allergy', icon: '🫁', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-hie', label: 'Neonatal HIE', icon: '🧊', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/maternal-sepsis', label: 'Maternal Sepsis', icon: '🚨', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-dka', label: 'Pediatric DKA', icon: '🍼', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-rds', label: 'Neonatal RDS', icon: '🫁', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/maternal-vte', label: 'Maternal VTE', icon: '🩸', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-seizures', label: 'Status Epilepticus', icon: '⚡', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-sepsis', label: 'Neonatal Sepsis', icon: '👶', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-hypertension', label: 'Obstetric HTN', icon: '⚡', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-septic-shock', label: 'Septic Shock', icon: '🧸', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-hypoglycemia', label: 'Neonatal Hypoglycemia', icon: '🍼', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-pph', label: 'Obstetric PPH', icon: '🩸', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-pards', label: 'Pediatric ARDS', icon: '🫁', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-bind-aabr', label: 'Neonatal BIND', icon: '👂', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-icp', label: 'Obstetric ICP', icon: '🧪', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-status-epilepticus', label: 'Pediatric Status Resus', icon: '⚡', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-nec', label: 'Neonatal NEC', icon: '🫄', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-pas', label: 'Obstetric PAS', icon: '🩸', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-tbi', label: 'Pediatric TBI', icon: '🧠', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-pphn', label: 'Neonatal PPHN', icon: '🫁', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-afe', label: 'Obstetric AFE', icon: '🩸', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-asthma', label: 'Pediatric Asthma', icon: '🫁', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-bpd', label: 'Neonatal BPD', icon: '🫁', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-aflp', label: 'Obstetric AFLP', icon: '🩺', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-polytrauma', label: 'Pediatric Trauma', icon: '🚨', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-hspda', label: 'Neonatal hsPDA', icon: '🫀', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-dka', label: 'Obstetric DKA', icon: '🩺', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-anaphylaxis', label: 'Pediatric Anaphylaxis', icon: '🚨', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-ivh', label: 'Neonatal IVH', icon: '🧠', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-pprom', label: 'Obstetric PPROM', icon: '🩺', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-svt', label: 'Pediatric SVT', icon: '⚡', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-hypocalcemia', label: 'Neonatal Hypocalcemia', icon: '🧪', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-postterm', label: 'Obstetric Post-Term', icon: '🩺', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-croup', label: 'Pediatric Croup', icon: '🌬️', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-polycythemia', label: 'Neonatal Polycythemia', icon: '🩸', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-shoulder-dystocia', label: 'Shoulder Dystocia', icon: '🚨', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-foreign-body', label: 'Pediatric Choking FBAO', icon: '🥜', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-hypomagnesemia', label: 'Neonatal Hypomagnesemia', icon: '⚡', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-ppcm', label: 'Obstetric PPCM', icon: '🫀', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-septic-arthritis', label: 'Septic Arthritis Kocher', icon: '🦴', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-chylothorax', label: 'Neonatal Chylothorax', icon: '🫁', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-cord-prolapse', label: 'Cord Prolapse', icon: '🚨', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-intussusception', label: 'Intussusception', icon: '🌀', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-mas', label: 'Neonatal MAS', icon: '💨', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-uterine-inversion', label: 'Uterine Inversion', icon: '⚡', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-appendicitis', label: 'Pediatric Appendicitis', icon: '🩹', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-ttn', label: 'Neonatal TTN', icon: '🫁', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-pdph', label: 'Obstetric PDPH', icon: '💉', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-meningitis', label: 'Pediatric Meningitis', icon: '🧠', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-aop', label: 'Neonatal AOP', icon: '🫁', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-retained-placenta', label: 'Retained Placenta', icon: '🩸', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-pyloric-stenosis', label: 'Pyloric Stenosis', icon: '🍼', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-sgh', label: 'Neonatal SGH', icon: '🩸', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-tolac', label: 'Obstetric TOLAC', icon: '🤰', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-kawasaki', label: 'Pediatric Kawasaki', icon: '❤️', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-volvulus', label: 'Neonatal Volvulus', icon: '🌀', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-ecv', label: 'Obstetric ECV', icon: '🔄', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-dka-ce', label: 'Pediatric DKA CE', icon: '🧠', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-meconium-ileus', label: 'Meconium Ileus & CF', icon: '🍼', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-placental-abruption', label: 'Placental Abruption', icon: '🩸', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-hus', label: 'Pediatric HUS', icon: '🔬', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-ea-tef', label: 'Neonatal EA/TEF', icon: '🫁', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-vasa-previa', label: 'Vasa Previa', icon: '🩸', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-empyema', label: 'Pediatric Empyema', icon: '🫁', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-abdominal-defects', label: 'Wall Defects & Silo', icon: '👶', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-spt', label: 'Obstetric SPT', icon: '🩸', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-osteomyelitis', label: 'Acute Osteomyelitis', icon: '🦴', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-intestinal-atresia', label: 'Intestinal Atresia', icon: '👶', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-hellp', label: 'Obstetric HELLP', icon: '🩸', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-scfe', label: 'Pediatric SCFE', icon: '🦴', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-cdh', label: 'Neonatal CDH', icon: '🫁', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-hyperemesis', label: 'Hyperemesis Gravidarum', icon: '🤰', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-acute-scrotum', label: 'Acute Scrotum', icon: '🩻', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-sip', label: 'Neonatal SIP', icon: '🍼', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-pmcd', label: 'Obstetric PMCD', icon: '⚡', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-gbs', label: 'Pediatric GBS', icon: '🧠', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/pediatric-toxicology', label: 'Pediatric Toxicology', icon: '🧪', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/obstetric-massive-pe', label: 'Massive PE & RV', icon: '🫀', end: false }] : []),
-    ...(can('patient:read_clinical') ? [{ to: '/neonatal-hyperammonemia', label: 'Neonatal IEM Ammonia', icon: '🧬', end: false }] : []),
     ...(can('ipd:read_basic') || can('station:read') ? [{ to: '/delivery-ward', label: 'Delivery ward', icon: '👶', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/ward-board', label: 'Ward Board', icon: '📊', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/ot-schedule', label: 'OT Schedule', icon: '🔪', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/teleconsultations', label: 'Teleconsult', icon: '📹', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/blood-bank', label: 'Blood Bank', icon: '🩸', end: false }] : []),
     ...(can('billing:read') ? [{ to: '/billing', label: 'Billing', icon: '💳', end: false }] : []),
+  ];
+
+  const adminLinks = [
     ...(can('settings:manage') ? [{ to: '/settings', label: 'Clinic', icon: '🏥', end: false }] : []),
     ...(can('user:manage') ? [{ to: '/users', label: 'Staff', icon: '🔑', end: false }] : []),
     ...(can('audit:read') ? [{ to: '/audit', label: 'Audit', icon: '🔍', end: false }] : []),
     { to: '/account', label: 'Account', icon: '⚙️', end: false },
   ];
+
   return (
     <>
     <ScreenLock />
     <div className="shell" inert={locked} aria-hidden={locked}>
       <nav className="nav" aria-label="Main">
         <div className="brand">Clinic</div>
-        {links.map((l) => (
-          <NavLink key={l.to} to={l.to} end={l.end} className={({ isActive }) => (isActive ? 'active' : '')}>
-            <span aria-hidden="true">{l.icon}</span>
-            <span>{l.label}</span>
-          </NavLink>
-        ))}
+        <div className="nav-scroll">
+          <div className="nav-section-title">Care & Wards</div>
+          {primaryLinks.map((l) => (
+            <NavLink key={l.to} to={l.to} end={l.end} className={({ isActive }) => (isActive ? 'active' : '')}>
+              <span aria-hidden="true">{l.icon}</span>
+              <span>{l.label}</span>
+            </NavLink>
+          ))}
+
+          {can('patient:read_clinical') && (
+            <>
+              <div className="nav-section-title">Clinical Protocols</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', paddingRight: '0.25rem' }}>
+                <NavLink
+                  to="/protocols"
+                  style={{ flex: 1 }}
+                  className={({ isActive }) => (isActive ? 'active' : '')}
+                >
+                  <span aria-hidden="true">🚨</span>
+                  <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Protocols Hub</span>
+                  <span
+                    style={{
+                      fontSize: '0.65rem',
+                      padding: '0.1rem 0.4rem',
+                      borderRadius: '10px',
+                      background: 'rgba(239, 68, 68, 0.18)',
+                      color: '#b91c1c',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {CLINICAL_PROTOCOLS.length}
+                  </span>
+                </NavLink>
+                <button
+                  type="button"
+                  className="desktop-only-nav"
+                  onClick={() => setProtocolsOpen(!protocolsOpen)}
+                  title={protocolsOpen ? 'Collapse protocol list' : 'Expand protocol categories in sidebar'}
+                  style={{
+                    background: 'none',
+                    border: '1px solid var(--border)',
+                    cursor: 'pointer',
+                    padding: '0.35rem 0.45rem',
+                    fontSize: '0.75rem',
+                    color: 'var(--text-muted, #666)',
+                    borderRadius: '4px',
+                    lineHeight: 1,
+                  }}
+                >
+                  {protocolsOpen ? '▲' : '▼'}
+                </button>
+              </div>
+
+              {protocolsOpen && (
+                <div className="nav-protocol-accordion desktop-only-nav">
+                  {(['obstetric', 'neonatal', 'pediatric', 'specialty'] as const).map((cat) => {
+                    const isOpen = openCategory === cat;
+                    const catLabels = {
+                      obstetric: '🤰 Obstetric & High-Risk',
+                      neonatal: '👶 Neonatal & NICU',
+                      pediatric: '🧸 Pediatric & PICU',
+                      specialty: '🧪 Specialty Care',
+                    };
+                    const catItems = CLINICAL_PROTOCOLS.filter((p) => p.category === cat);
+                    return (
+                      <div key={cat} style={{ marginBottom: '0.2rem' }}>
+                        <button
+                          type="button"
+                          className="nav-protocol-category-btn"
+                          onClick={() => setOpenCategory(isOpen ? null : cat)}
+                        >
+                          <span>{catLabels[cat]}</span>
+                          <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>({catItems.length}) {isOpen ? '▾' : '▸'}</span>
+                        </button>
+                        {isOpen && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem', paddingLeft: '0.25rem' }}>
+                            {catItems.map((p) => (
+                              <NavLink key={p.id} to={p.to} className={({ isActive }) => `nav-sublink ${isActive ? 'active' : ''}`}>
+                                <span>{p.icon}</span>
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</span>
+                              </NavLink>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+
+          <div className="nav-section-title">Management</div>
+          {adminLinks.map((l) => (
+            <NavLink key={l.to} to={l.to} end={l.end} className={({ isActive }) => (isActive ? 'active' : '')}>
+              <span aria-hidden="true">{l.icon}</span>
+              <span>{l.label}</span>
+            </NavLink>
+          ))}
+        </div>
+
         <div className="nav-user">
           <div>{me.fullName}</div>
           <div className="muted small">{me.role}</div>
@@ -424,6 +442,7 @@ function Shell() {
       <main className="main">
         {can('backup:manage') && <SystemWarning />}
         <Routes>
+          <Route path="/protocols" element={can('patient:read_clinical') ? <ProtocolsHubPage /> : <Navigate to="/" replace />} />
           <Route path="/" element={<Dashboard />} />
           <Route path="/patients" element={<PatientsPage />} />
           <Route path="/immunization-recall" element={can('patient:read_clinical') ? <ImmunizationRecallPage /> : <Navigate to="/patients" replace />} />
