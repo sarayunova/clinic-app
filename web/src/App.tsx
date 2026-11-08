@@ -131,6 +131,12 @@ import { ObstetricPpromPage } from './pages/ObstetricPpromPage';
 import { ObstetricPpromPrint } from './pages/ObstetricPpromPrint';
 import { PediatricSvtPage } from './pages/PediatricSvtPage';
 import { PediatricSvtPrint } from './pages/PediatricSvtPrint';
+import { NeonatalHypocalcemiaPage } from './pages/NeonatalHypocalcemiaPage';
+import { NeonatalHypocalcemiaPrint } from './pages/NeonatalHypocalcemiaPrint';
+import { ObstetricPosttermPage } from './pages/ObstetricPosttermPage';
+import { ObstetricPosttermPrint } from './pages/ObstetricPosttermPrint';
+import { PediatricCroupPage } from './pages/PediatricCroupPage';
+import { PediatricCroupPrint } from './pages/PediatricCroupPrint';
 import { DeliveryWardPage } from './pages/DeliveryWardPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditPage } from './pages/AuditPage';
@@ -241,6 +247,9 @@ function Shell() {
     ...(can('patient:read_clinical') ? [{ to: '/neonatal-ivh', label: 'Neonatal IVH', icon: '🧠', end: false }] : []),
     ...(can('patient:read_clinical') ? [{ to: '/obstetric-pprom', label: 'Obstetric PPROM', icon: '🩺', end: false }] : []),
     ...(can('patient:read_clinical') ? [{ to: '/pediatric-svt', label: 'Pediatric SVT', icon: '⚡', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/neonatal-hypocalcemia', label: 'Neonatal Hypocalcemia', icon: '🧪', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/obstetric-postterm', label: 'Obstetric Post-Term', icon: '🩺', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/pediatric-croup', label: 'Pediatric Croup', icon: '🌬️', end: false }] : []),
     ...(can('ipd:read_basic') || can('station:read') ? [{ to: '/delivery-ward', label: 'Delivery ward', icon: '👶', end: false }] : []),
     ...(can('billing:read') ? [{ to: '/billing', label: 'Billing', icon: '💳', end: false }] : []),
     ...(can('settings:manage') ? [{ to: '/settings', label: 'Clinic', icon: '🏥', end: false }] : []),
@@ -424,6 +433,15 @@ function Shell() {
           <Route path="/pediatric-svt" element={can('patient:read_clinical') ? <PediatricSvtPage /> : <Navigate to="/" replace />} />
           <Route path="/pediatric-svt/:id/print" element={can('patient:read_clinical') ? <PediatricSvtPrint /> : <Navigate to="/pediatric-svt" replace />} />
           <Route path="/patients/:patientId/pediatric-svt/:id/print" element={can('patient:read_clinical') ? <PediatricSvtPrint /> : <Navigate to="/pediatric-svt" replace />} />
+          <Route path="/neonatal-hypocalcemia" element={can('patient:read_clinical') ? <NeonatalHypocalcemiaPage /> : <Navigate to="/" replace />} />
+          <Route path="/neonatal-hypocalcemia/:id/print" element={can('patient:read_clinical') ? <NeonatalHypocalcemiaPrint /> : <Navigate to="/neonatal-hypocalcemia" replace />} />
+          <Route path="/patients/:patientId/neonatal-hypocalcemia/:id/print" element={can('patient:read_clinical') ? <NeonatalHypocalcemiaPrint /> : <Navigate to="/neonatal-hypocalcemia" replace />} />
+          <Route path="/obstetric-postterm" element={can('patient:read_clinical') ? <ObstetricPosttermPage /> : <Navigate to="/" replace />} />
+          <Route path="/obstetric-postterm/:id/print" element={can('patient:read_clinical') ? <ObstetricPosttermPrint /> : <Navigate to="/obstetric-postterm" replace />} />
+          <Route path="/patients/:patientId/obstetric-postterm/:id/print" element={can('patient:read_clinical') ? <ObstetricPosttermPrint /> : <Navigate to="/obstetric-postterm" replace />} />
+          <Route path="/pediatric-croup" element={can('patient:read_clinical') ? <PediatricCroupPage /> : <Navigate to="/" replace />} />
+          <Route path="/pediatric-croup/:id/print" element={can('patient:read_clinical') ? <PediatricCroupPrint /> : <Navigate to="/pediatric-croup" replace />} />
+          <Route path="/patients/:patientId/pediatric-croup/:id/print" element={can('patient:read_clinical') ? <PediatricCroupPrint /> : <Navigate to="/pediatric-croup" replace />} />
           <Route path="/delivery-ward" element={can('ipd:read_basic') || can('station:read') ? <DeliveryWardPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id" element={can('visit:read') ? <VisitPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id/print" element={can('visit:read') ? <PrescriptionPrint /> : <Navigate to="/" replace />} />

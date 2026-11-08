@@ -413,6 +413,31 @@ export const ACTION_LABELS: Record<string, string> = {
   'pediatric_svt.flowsheet_delete': 'Deleted pediatric SVT flowsheet log',
   'pediatric_svt.print': 'Printed pediatric SVT PALS emergency resuscitation & cardioversion dossier',
 
+  // SERIES 24: Neonatal Hypocalcemia, Obstetric Post-Term Bishop, Pediatric Croup Westley
+  'neonatal_hypocalcemia.episode_create': 'Initiated neonatal hypocalcemia & electrolyte emergency evaluation',
+  'neonatal_hypocalcemia.episode_update': 'Updated neonatal hypocalcemia episode or maintenance therapy',
+  'neonatal_hypocalcemia.episode_delete': 'Deleted neonatal hypocalcemia episode record',
+  'neonatal_hypocalcemia.flowsheet_create': 'Logged neonatal ionized calcium, infusion rate & ECG checkpoint',
+  'neonatal_hypocalcemia.flowsheet_log': 'Logged neonatal ionized calcium, infusion rate & ECG checkpoint',
+  'neonatal_hypocalcemia.flowsheet_delete': 'Deleted neonatal hypocalcemia flowsheet log',
+  'neonatal_hypocalcemia.print': 'Printed neonatal hypocalcemia & electrolyte emergency dossier',
+
+  'obstetric_postterm.episode_create': 'Initiated post-term pregnancy & Bishop cervical ripening evaluation',
+  'obstetric_postterm.episode_update': 'Updated post-term pregnancy episode or ripening decision',
+  'obstetric_postterm.episode_delete': 'Deleted post-term pregnancy episode record',
+  'obstetric_postterm.flowsheet_create': 'Logged post-term Bishop score, contractions & FHR checkpoint',
+  'obstetric_postterm.flowsheet_log': 'Logged post-term Bishop score, contractions & FHR checkpoint',
+  'obstetric_postterm.flowsheet_delete': 'Deleted post-term cervical ripening flowsheet log',
+  'obstetric_postterm.print': 'Printed post-term pregnancy & Bishop ripening clinical dossier',
+
+  'pediatric_croup.episode_create': 'Initiated pediatric croup Westley scoring & airway obstruction evaluation',
+  'pediatric_croup.episode_update': 'Updated pediatric croup episode, dexamethasone or nebulization status',
+  'pediatric_croup.episode_delete': 'Deleted pediatric croup episode record',
+  'pediatric_croup.flowsheet_create': 'Logged pediatric croup Westley score & airway response checkpoint',
+  'pediatric_croup.flowsheet_log': 'Logged pediatric croup Westley score & airway response checkpoint',
+  'pediatric_croup.flowsheet_delete': 'Deleted pediatric croup flowsheet log',
+  'pediatric_croup.print': 'Printed pediatric croup Westley scoring & emergency airway dossier',
+
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

@@ -3302,6 +3302,150 @@ async function seed() {
     }
   }
 
+  // --- SERIES 24A: Neonatal Hypocalcemia, Hypomagnesemia & Electrolyte Emergencies ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_hypocalcemia_episodes (
+      patient_id, admission_id, episode_code, diagnosis_datetime,
+      gestational_age_weeks, birth_weight_grams, chronological_age_hours, onset_timing,
+      etiology_category, ionized_calcium_mmol_l, total_calcium_mg_dl, serum_magnesium_mg_dl,
+      symptoms_present, symptom_details, ecg_qtc_seconds, ecg_prolonged_qtc,
+      emergency_bolus_indicated, calcium_gluconate_10pct_bolus_ml, calcium_gluconate_maintenance_mg_kg_day,
+      concurrent_hypomagnesemia, magnesium_sulfate_50pct_dose_ml,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'HYPOCAL-20261108-101', '2026-11-08T06:00:00',
+      33, 1850, 30, 'early_onset_le_72h',
+      'prematurity_respiratory_distress', 0.82, 6.3, 1.3,
+      1, 'hypocalcemic_seizures', 0.49, 1,
+      1, 3.6, 400.0,
+      1, 0.36,
+      'maintenance_infusion_weaning', ?,
+      'Preterm neonate developed focal clonic seizures and jitteriness at 30h of life. Lab revealed ionized Ca 0.82 mmol/L and concurrent Mg 1.3 mg/dL. 10% Calcium Gluconate bolus (3.6 mL in D5W) given with continuous ECG bradycardia monitoring, followed by 50% MgSO4 (0.36 mL IM). Maintenance calcium infusion ongoing at 7.2 mL/day.',
+      ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingHypocal = db.prepare('SELECT id FROM neonatal_hypocalcemia_episodes WHERE episode_code = ?').get('HYPOCAL-20261108-101') as { id: number } | undefined;
+  if (existingHypocal) {
+    const hypocalLogs = [
+      { h: 0.5, hr: 144, ica: 0.95, tca: 6.9, mg: 1.5, rate: 0.3, iv: 'patent_no_extravasation' as const, neuro: 'mild_tremor_on_handling' as const, ecg: 'normal_sinus_rhythm' as const, notes: 'Infusion completed over 25 min with no bradycardia. Seizures ceased.' },
+      { h: 4.0, hr: 138, ica: 1.12, tca: 7.8, mg: 1.8, rate: 0.3, iv: 'patent_no_extravasation' as const, neuro: 'normal_tone_calm' as const, ecg: 'normal_sinus_rhythm' as const, notes: 'Ionized calcium normalized to 1.12 mmol/L. Calm tone, feeding well via NG tube.' },
+    ];
+    for (const hl of hypocalLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_hypocalcemia_flowsheet_logs (
+          hypocalcemia_episode_id, patient_id, log_datetime, hours_from_initiation,
+          heart_rate_bpm, ionized_calcium_mmol_l, total_calcium_mg_dl, serum_magnesium_mg_dl,
+          calcium_infusion_rate_ml_hr, iv_site_condition, clinical_neuromuscular_state,
+          ecg_rhythm_strip, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T06:30:00', ?,
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingHypocal.id, babyId, hl.h, hl.hr, hl.ica, hl.tca, hl.mg, hl.rate, hl.iv, hl.neuro, hl.ecg, hl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 24B: Obstetric Post-Term Pregnancy, Oligohydramnios & Bishop Cervical Ripening ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_postterm_episodes (
+      patient_id, admission_id, episode_code, assessment_datetime,
+      gestational_age_weeks, postterm_classification, dating_method,
+      amniotic_fluid_index_cm, single_deepest_pocket_cm, oligohydramnios_present,
+      estimated_fetal_weight_grams, fetal_growth_percentile, non_stress_test_result, biophysical_profile_score,
+      cervical_dilation_cm, cervical_effacement_pct, fetal_station,
+      cervical_consistency, cervical_position, bishop_score_total, cervix_favorable,
+      prior_cesarean_section, recommended_ripening_method, status, consultant_id,
+      clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'POSTTERM-20261108-101', '2026-11-08T08:00:00',
+      41.4, 'late_term_41_0_to_41_6', 'first_trimester_ultrasound_crl',
+      4.6, 1.8, 1,
+      3600, 60, 'reactive', 8,
+      1.0, 30, -2,
+      'firm', 'posterior', 2, 0,
+      1, 'mechanical_foley_balloon', 'inpatient_cervical_ripening', ?,
+      'Gravida 2 Para 1 at 41w 4d with previous lower segment Cesarean delivery. Ultrasound confirms oligohydramnios (AFI 4.6 cm, SDP 1.8 cm). Cervix unfavorable (Bishop 2/13). Due to prior uterine scar, all prostaglandins are strictly contraindicated. 16 Fr Foley catheter with 40 mL saline placed through internal os for mechanical cervical ripening under continuous CTG.',
+      ?, ?
+    )
+  `).run(anitaId, docId, now, now);
+
+  const existingPostterm = db.prepare('SELECT id FROM obstetric_postterm_episodes WHERE episode_code = ?').get('POSTTERM-20261108-101') as { id: number } | undefined;
+  if (existingPostterm) {
+    const posttermLogs = [
+      { h: 3.0, b: 4, dil: 2.0, eff: 50, ctx: 1, fhr: 140, cat: 'category_1_normal' as const, tachy: 0, act: 'continue_monitoring' as const, notes: 'Foley traction maintained. FHR reactive, no decelerations.' },
+      { h: 8.0, b: 8, dil: 4.0, eff: 75, ctx: 3, fhr: 144, cat: 'category_1_normal' as const, tachy: 0, act: 'balloon_expelled_ready_amniotomy' as const, notes: 'Foley catheter balloon spontaneously expelled. Cervix ripe at 4 cm, 75% effaced, station -1. Transferred to labor room for amniotomy.' },
+    ];
+    for (const pl of posttermLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_postterm_flowsheet_logs (
+          postterm_episode_id, patient_id, log_datetime, hours_from_ripening_start,
+          bishop_score_current, dilation_cm, effacement_pct,
+          contractions_per_10min, fetal_heart_rate_bpm, fhr_category,
+          tachysystole_present, action_taken, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T11:00:00', ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?, ?
+        )
+      `).run(existingPostterm.id, anitaId, pl.h, pl.b, pl.dil, pl.eff, pl.ctx, pl.fhr, pl.cat, pl.tachy, pl.act, pl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 24C: Pediatric Croup (Laryngotracheobronchitis) & Westley Scoring ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_croup_episodes (
+      patient_id, admission_id, episode_code, triage_datetime,
+      age_months, weight_kg,
+      inspiratory_stridor_score, retractions_score, air_entry_score, cyanosis_score, consciousness_score,
+      westley_croup_score_total, croup_severity_tier,
+      heart_rate_bpm, respiratory_rate, spo2_percent,
+      barking_cough_present, hoarseness_present,
+      dexamethasone_dose_mg, dexamethasone_route, dexamethasone_administered,
+      nebulized_epinephrine_indicated, epinephrine_nebulization_dose_ml, epinephrine_nebulization_administered,
+      rebound_observation_hours_required, status, consultant_id,
+      clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'CROUP-20261108-101', '2026-11-08T07:30:00',
+      20, 12.0,
+      2, 2, 1, 0, 0,
+      5, 'moderate_croup_score_3_to_5',
+      145, 44, 95.0,
+      1, 1,
+      7.2, 'oral', 1,
+      1, 5.0, 1,
+      4, 'post_nebulization_observation', ?,
+      'Toddler presented at 07:30 with classic barking seal-like cough, hoarseness, and resting inspiratory stridor with moderate subcostal retractions (Westley score 5/17, moderate croup). Single oral dose of Dexamethasone 7.2 mg (0.6 mg/kg) administered. Nebulized with 5.0 mL L-Epinephrine 1:1000 in 3 mL NS with blow-by oxygen. 4-hour post-nebulization observation initiated.',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingCroup = db.prepare('SELECT id FROM pediatric_croup_episodes WHERE episode_code = ?').get('CROUP-20261108-101') as { id: number } | undefined;
+  if (existingCroup) {
+    const croupLogs = [
+      { min: 30, score: 2, hr: 130, rr: 32, spo2: 98.0, stridor: 0, retr: 'mild_subcostal' as const, intv: 'nebulized_epinephrine_1' as const, notes: 'Rapid response to nebulized epinephrine. Stridor resolved at rest, only audible during active crying. Respiratory rate down from 44 to 32.' },
+      { min: 120, score: 1, hr: 118, rr: 26, spo2: 99.0, stridor: 0, retr: 'none' as const, intv: 'none_observation' as const, notes: 'Two hours post-nebulization. No stridor rebound. Alert, drinking oral fluids comfortably with mother.' },
+    ];
+    for (const cl of croupLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_croup_flowsheet_logs (
+          croup_episode_id, patient_id, log_datetime, minutes_from_triage,
+          westley_score_current, heart_rate_bpm, respiratory_rate, spo2_percent,
+          stridor_at_rest, chest_retractions_severity, intervention_given,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T08:00:00', ?,
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingCroup.id, aaravId, cl.min, cl.score, cl.hr, cl.rr, cl.spo2, cl.stridor, cl.retr, cl.intv, cl.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

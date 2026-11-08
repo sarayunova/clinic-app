@@ -8487,6 +8487,272 @@ export const deletePediatricSvtFlowsheet = (episodeId: number, logId: number): P
 export const calculatePediatricSvt = (payload: any): Promise<{ evalResult: any }> =>
   api('POST', '/api/pediatric-svt/evaluate', payload);
 
+// ==========================================
+// SERIES 24: Neonatal Hypocalcemia, Obstetric Post-Term Bishop, Pediatric Croup Westley
+// ==========================================
+
+export interface NeonatalHypocalcemiaRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  patient_number?: string | null;
+  date_of_birth?: string | null;
+  admission_id?: number | null;
+  episode_code: string;
+  diagnosis_datetime: string;
+  gestational_age_weeks: number;
+  birth_weight_grams: number;
+  chronological_age_hours: number;
+  onset_timing: 'early_onset_le_72h' | 'late_onset_gt_72h';
+  etiology_category: 'prematurity_respiratory_distress' | 'infant_of_diabetic_mother_idm' | 'birth_asphyxia_hie' | 'maternal_hyperparathyroidism' | 'hypoparathyroidism_digeorge' | 'high_phosphate_formula' | 'hypomagnesemia_induced' | 'idiopathic_other';
+  ionized_calcium_mmol_l: number;
+  total_calcium_mg_dl: number;
+  serum_magnesium_mg_dl: number;
+  serum_phosphorus_mg_dl?: number | null;
+  serum_albumin_g_dl?: number | null;
+  alkaline_phosphatase_u_l?: number | null;
+  symptoms_present: number;
+  symptom_details: 'asymptomatic' | 'jitteriness_hyperreflexia' | 'tetany_carpopedal_spasm' | 'hypocalcemic_seizures' | 'apnea_cyanosis' | 'lethargy_poor_feeding';
+  ecg_qtc_seconds?: number | null;
+  ecg_prolonged_qtc: number;
+  emergency_bolus_indicated: number;
+  calcium_gluconate_10pct_bolus_ml: number;
+  calcium_gluconate_maintenance_mg_kg_day: number;
+  concurrent_hypomagnesemia: number;
+  magnesium_sulfate_50pct_dose_ml?: number | null;
+  status: 'acute_iv_correction' | 'maintenance_infusion_weaning' | 'transitioned_to_oral_supplements' | 'eucalcemic_resolved';
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NeonatalHypocalcemiaFlowsheetRecord {
+  id: number;
+  hypocalcemia_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_initiation: number;
+  heart_rate_bpm: number;
+  ionized_calcium_mmol_l: number;
+  total_calcium_mg_dl?: number | null;
+  serum_magnesium_mg_dl?: number | null;
+  calcium_infusion_rate_ml_hr: number;
+  iv_site_condition: 'patent_no_extravasation' | 'mild_erythema_monitored' | 'extravasation_infusion_stopped';
+  clinical_neuromuscular_state: 'normal_tone_calm' | 'mild_tremor_on_handling' | 'marked_jitteriness' | 'active_seizure';
+  ecg_rhythm_strip: 'normal_sinus_rhythm' | 'sinus_bradycardia' | 'qtc_prolongation_improving' | 'arrhythmia_noted';
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getNeonatalHypocalcemiaEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: NeonatalHypocalcemiaRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: NeonatalHypocalcemiaRecord[] }>('GET', `/api/neonatal-hypocalcemia/episodes${queryStr}`);
+};
+
+export const getNeonatalHypocalcemiaEpisode = (id: number): Promise<{ episode: NeonatalHypocalcemiaRecord; logs: NeonatalHypocalcemiaFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/neonatal-hypocalcemia/episodes/${id}`);
+
+export const createNeonatalHypocalcemiaEpisode = (payload: any): Promise<{ episode: NeonatalHypocalcemiaRecord; evalResult: any }> =>
+  api('POST', '/api/neonatal-hypocalcemia/episodes', payload);
+
+export const updateNeonatalHypocalcemiaEpisode = (id: number, payload: any): Promise<{ episode: NeonatalHypocalcemiaRecord }> =>
+  api('PATCH', `/api/neonatal-hypocalcemia/episodes/${id}`, payload);
+
+export const deleteNeonatalHypocalcemiaEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-hypocalcemia/episodes/${id}`);
+
+export const addNeonatalHypocalcemiaFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/neonatal-hypocalcemia/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteNeonatalHypocalcemiaFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-hypocalcemia/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateNeonatalHypocalcemia = (payload: any): Promise<{ evalResult: any }> =>
+  api('POST', '/api/neonatal-hypocalcemia/evaluate', payload);
+
+// ---------- Obstetric Post-Term & Bishop Ripening ----------
+
+export interface ObstetricPosttermRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  patient_number?: string | null;
+  date_of_birth?: string | null;
+  admission_id?: number | null;
+  episode_code: string;
+  assessment_datetime: string;
+  gestational_age_weeks: number;
+  postterm_classification: 'late_term_41_0_to_41_6' | 'post_term_ge_42_0';
+  dating_method: 'first_trimester_ultrasound_crl' | 'early_second_trimester_bpd_fl' | 'reliable_lmp_concordant' | 'uncertain_dating';
+  amniotic_fluid_index_cm: number;
+  single_deepest_pocket_cm: number;
+  oligohydramnios_present: number;
+  estimated_fetal_weight_grams?: number | null;
+  fetal_growth_percentile?: number | null;
+  non_stress_test_result: 'reactive' | 'non_reactive';
+  biophysical_profile_score?: number | null;
+  cervical_dilation_cm: number;
+  cervical_effacement_pct: number;
+  fetal_station: number;
+  cervical_consistency: 'firm' | 'medium' | 'soft';
+  cervical_position: 'posterior' | 'midposition' | 'anterior';
+  bishop_score_total: number;
+  cervix_favorable: number;
+  prior_cesarean_section: number;
+  recommended_ripening_method: 'mechanical_foley_balloon' | 'dinoprostone_pge2_insert' | 'misoprostol_pge1_oral_vaginal' | 'oxytocin_direct_infusion' | 'cesarean_delivery_indicated';
+  status: 'outpatient_surveillance' | 'inpatient_cervical_ripening' | 'oxytocin_labor_induction' | 'cesarean_delivery' | 'postpartum_completed';
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ObstetricPosttermFlowsheetRecord {
+  id: number;
+  postterm_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_ripening_start: number;
+  bishop_score_current: number;
+  dilation_cm: number;
+  effacement_pct: number;
+  contractions_per_10min: number;
+  fetal_heart_rate_bpm: number;
+  fhr_category: 'category_1_normal' | 'category_2_indeterminate' | 'category_3_abnormal';
+  tachysystole_present: number;
+  action_taken: 'continue_monitoring' | 'oxytocin_initiated' | 'insert_removed_spontaneous_labor' | 'insert_removed_tachysystole_terbutaline' | 'balloon_expelled_ready_amniotomy' | 'emergency_cesarean_transfer';
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getObstetricPosttermEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: ObstetricPosttermRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: ObstetricPosttermRecord[] }>('GET', `/api/obstetric-postterm/episodes${queryStr}`);
+};
+
+export const getObstetricPosttermEpisode = (id: number): Promise<{ episode: ObstetricPosttermRecord; logs: ObstetricPosttermFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/obstetric-postterm/episodes/${id}`);
+
+export const createObstetricPosttermEpisode = (payload: any): Promise<{ episode: ObstetricPosttermRecord; evalResult: any }> =>
+  api('POST', '/api/obstetric-postterm/episodes', payload);
+
+export const updateObstetricPosttermEpisode = (id: number, payload: any): Promise<{ episode: ObstetricPosttermRecord }> =>
+  api('PATCH', `/api/obstetric-postterm/episodes/${id}`, payload);
+
+export const deleteObstetricPosttermEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-postterm/episodes/${id}`);
+
+export const addObstetricPosttermFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/obstetric-postterm/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteObstetricPosttermFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-postterm/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateObstetricPostterm = (payload: any): Promise<{ evalResult: any }> =>
+  api('POST', '/api/obstetric-postterm/evaluate', payload);
+
+// ---------- Pediatric Croup & Westley Airway Obstruction ----------
+
+export interface PediatricCroupRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  patient_number?: string | null;
+  date_of_birth?: string | null;
+  admission_id?: number | null;
+  episode_code: string;
+  triage_datetime: string;
+  age_months: number;
+  weight_kg: number;
+  inspiratory_stridor_score: 0 | 1 | 2;
+  retractions_score: 0 | 1 | 2 | 3;
+  air_entry_score: 0 | 1 | 2;
+  cyanosis_score: 0 | 4 | 5;
+  consciousness_score: 0 | 5;
+  westley_croup_score_total: number;
+  croup_severity_tier: 'mild_croup_score_le_2' | 'moderate_croup_score_3_to_5' | 'severe_croup_score_6_to_11' | 'impending_respiratory_failure_ge_12';
+  heart_rate_bpm: number;
+  respiratory_rate: number;
+  spo2_percent: number;
+  barking_cough_present: number;
+  hoarseness_present: number;
+  dexamethasone_dose_mg: number;
+  dexamethasone_route: 'oral' | 'im' | 'iv';
+  dexamethasone_administered: number;
+  nebulized_epinephrine_indicated: number;
+  epinephrine_nebulization_dose_ml?: number | null;
+  epinephrine_nebulization_administered: number;
+  rebound_observation_hours_required: number;
+  status: 'acute_triage_resuscitation' | 'post_nebulization_observation' | 'picu_admission_escalation' | 'discharged_home_stable';
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PediatricCroupFlowsheetRecord {
+  id: number;
+  croup_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  minutes_from_triage: number;
+  westley_score_current: number;
+  heart_rate_bpm: number;
+  respiratory_rate: number;
+  spo2_percent: number;
+  stridor_at_rest: number;
+  chest_retractions_severity: 'none' | 'mild_subcostal' | 'moderate_intercostal' | 'severe_sternal_indrawing';
+  intervention_given: 'none_observation' | 'dexamethasone_oral' | 'dexamethasone_im_iv' | 'nebulized_epinephrine_1' | 'nebulized_epinephrine_repeat' | 'heliox_or_intubation_prep';
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getPediatricCroupEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: PediatricCroupRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: PediatricCroupRecord[] }>('GET', `/api/pediatric-croup/episodes${queryStr}`);
+};
+
+export const getPediatricCroupEpisode = (id: number): Promise<{ episode: PediatricCroupRecord; logs: PediatricCroupFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/pediatric-croup/episodes/${id}`);
+
+export const createPediatricCroupEpisode = (payload: any): Promise<{ episode: PediatricCroupRecord; evalResult: any }> =>
+  api('POST', '/api/pediatric-croup/episodes', payload);
+
+export const updatePediatricCroupEpisode = (id: number, payload: any): Promise<{ episode: PediatricCroupRecord }> =>
+  api('PATCH', `/api/pediatric-croup/episodes/${id}`, payload);
+
+export const deletePediatricCroupEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-croup/episodes/${id}`);
+
+export const addPediatricCroupFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/pediatric-croup/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deletePediatricCroupFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-croup/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculatePediatricCroup = (payload: any): Promise<{ evalResult: any }> =>
+  api('POST', '/api/pediatric-croup/evaluate', payload);
+
+
 
 
 
