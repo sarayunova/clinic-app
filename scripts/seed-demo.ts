@@ -3153,6 +3153,155 @@ async function seed() {
     }
   }
 
+  // --- SERIES 23A: Neonatal Intraventricular Hemorrhage (IVH) & Levene PHH Surveillance ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_ivh_episodes (
+      patient_id, admission_id, episode_code, scan_datetime,
+      gestational_age_weeks, birth_weight_grams, chronological_age_days, current_pma_weeks,
+      cranial_ultrasound_indication, papile_grade, hemorrhage_laterality, parenchymal_infarction_location,
+      ventricular_index_left_mm, ventricular_index_right_mm, anterior_horn_width_left_mm, anterior_horn_width_right_mm,
+      thalamo_occipital_distance_mm, resistive_index_aca,
+      head_circumference_cm, head_circumference_growth_cm_week,
+      levene_97th_percentile_mm, levene_action_line_threshold_mm, phh_intervention_threshold_crossed,
+      intervention_status, lumbar_puncture_performed, csf_protein_g_l, csf_rbc_count,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'IVH-20261108-101', '2026-11-08T08:00:00',
+      27.0, 920.0, 14, 29.0,
+      'Routine day 14 screening ultrasound in extremely low birth weight premature infant',
+      'grade_3_intraventricular_dilatation', 'bilateral', NULL,
+      16.5, 16.8, 7.2, 7.0,
+      28.5, 0.86,
+      26.4, 2.1,
+      12.2, 16.2, 1,
+      'ventricular_access_device_reservoir', 1, 2.6, 12000,
+      'phh_active_decompression', ?,
+      'Davies action line crossed (+4.6 mm above 97th centile). ELVIS trial criteria met. Subcutaneous Rickham reservoir placed for serial CSF taps.',
+      ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingIvh = db.prepare('SELECT id FROM neonatal_ivh_episodes WHERE episode_code = ?').get('IVH-20261108-101') as { id: number } | undefined;
+  if (existingIvh) {
+    const ivhLogs = [
+      { d: 1.0, vi: 15.2, ahw: 6.2, hc: 26.5, font: 'full' as const, split: 1, apneas: 2, csf: 12.0, ri: 0.78, notes: 'Reservoir aspirated 12 mL clear xanthochromic CSF under strict aseptic precautions.' },
+      { d: 3.0, vi: 14.5, ahw: 5.6, hc: 26.6, font: 'normal_soft' as const, split: 0, apneas: 0, csf: 11.5, ri: 0.72, notes: 'Fontanelle soft, apneas ceased. Ventricular decompression sustained.' },
+    ];
+    for (const il of ivhLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_ivh_flowsheet_logs (
+          ivh_episode_id, patient_id, log_datetime, days_from_baseline,
+          ventricular_index_mm, anterior_horn_width_mm, head_circumference_cm,
+          fontanelle_tension, split_cranial_sutures, apneic_episodes_24h,
+          csf_volume_tapped_ml, resistive_index_aca, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T09:30:00', ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?, ?
+        )
+      `).run(existingIvh.id, babyId, il.d, il.vi, il.ahw, il.hc, il.font, il.split, il.apneas, il.csf, il.ri, il.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 23B: Obstetric Preterm Premature Rupture of Membranes (PPROM) & Triple I ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_pprom_episodes (
+      patient_id, admission_id, episode_code, rupture_datetime, presentation_datetime,
+      gestation_weeks, rupture_confirmation_method, amniotic_fluid_index_cm, single_deepest_pocket_cm,
+      latency_antibiotics_initiated, latency_antibiotic_regimen, antenatal_corticosteroid_status,
+      mgso4_neuroprotection_active, gbs_screening_status,
+      maternal_temperature_celsius, maternal_heart_rate_bpm, fetal_heart_rate_bpm,
+      uterine_tenderness, foul_cervical_discharge, maternal_wbc_per_ul,
+      triple_i_category, delivery_timing_plan, status, consultant_id,
+      clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'PPROM-20261108-101', '2026-11-08T04:30:00', '2026-11-08T06:00:00',
+      29.3, 'pooling_ferning_nitrazine', 3.8, 1.6,
+      1, 'ampicillin_erythromycin_standard', 'course_initiated',
+      0, 'unknown',
+      36.8, 78, 138,
+      0, 0, 9600,
+      'no_infection_uncomplicated', 'expectant_management_to_34w', 'inpatient_latency_surveillance', ?,
+      'Sterile speculum confirmed pooling and ferning. AFI 3.8 cm (oligohydramnios). 7-day latency antibiotics and Betamethasone dose 1 initiated.',
+      ?, ?
+    )
+  `).run(sunitaId, docId, now, now);
+
+  const existingPprom = db.prepare('SELECT id FROM obstetric_pprom_episodes WHERE episode_code = ?').get('PPROM-20261108-101') as { id: number } | undefined;
+  if (existingPprom) {
+    const ppromLogs = [
+      { h: 6.0, temp: 36.9, hr: 80, sbp: 116, dbp: 72, fhr: 140, ctx: 0, fluid: 'clear' as const, wbc: 9800, ctg: 'category_1_normal' as const, notes: 'Afebrile, maternal vital signs stable. Continuous fetal heart monitoring shows baseline 140 bpm, moderate variability.' },
+      { h: 12.0, temp: 37.0, hr: 82, sbp: 120, dbp: 74, fhr: 142, ctx: 0, fluid: 'clear' as const, wbc: 10100, ctg: 'category_1_normal' as const, notes: 'No uterine tenderness or contractions. Betamethasone 12 mg IM dose 1 completed.' },
+    ];
+    for (const ppl of ppromLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_pprom_flowsheet_logs (
+          pprom_episode_id, patient_id, log_datetime, hours_from_admission,
+          maternal_temp_c, maternal_hr_bpm, maternal_bp_sbp, maternal_bp_dbp,
+          fetal_hr_bpm, uterine_contractions_per_10min, amniotic_fluid_character,
+          maternal_wbc, ctg_category, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T12:00:00', ?,
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?, ?
+        )
+      `).run(existingPprom.id, sunitaId, ppl.h, ppl.temp, ppl.hr, ppl.sbp, ppl.dbp, ppl.fhr, ppl.ctx, ppl.fluid, ppl.wbc, ppl.ctg, ppl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 23C: Pediatric Supraventricular Tachycardia (SVT) & PALS Emergency Resuscitation ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_svt_episodes (
+      patient_id, admission_id, episode_code, onset_datetime,
+      age_months, weight_kg, heart_rate_bpm, qrs_duration_ms,
+      qrs_morphology, rhythm_regularity, p_waves_identifiable, svt_confirmed,
+      hemodynamic_stability, signs_of_shock,
+      vagal_maneuver_attempted, vagal_maneuver_successful,
+      adenosine_first_dose_mg, adenosine_first_dose_given, adenosine_first_dose_successful,
+      adenosine_second_dose_mg, adenosine_second_dose_given, adenosine_second_dose_successful,
+      synchronized_cardioversion_joules, synchronized_cardioversion_delivered, cardioversion_successful,
+      maintenance_antiarrhythmic, status, consultant_id,
+      clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'SVT-20261108-101', '2026-11-08T09:00:00',
+      8, 8.5, 245, 68,
+      'narrow_complex_le_0_09s', 'regular', 0, 1,
+      'stable_compensated', 'none',
+      'ice_bag_to_face_infant', 0,
+      0.85, 1, 1,
+      1.70, 0, 0,
+      9.0, 0, 0,
+      'oral_propranolol', 'converted_sinus_surveillance', ?,
+      'Infant presented with irritability and poor feeding. ECG revealed narrow complex SVT at 245 bpm without visible P waves. Vagal ice slurry attempted without conversion. Adenosine 0.85 mg rapid IV push restored sinus rhythm at 125 bpm.',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingSvt = db.prepare('SELECT id FROM pediatric_svt_episodes WHERE episode_code = ?').get('SVT-20261108-101') as { id: number } | undefined;
+  if (existingSvt) {
+    const svtLogs = [
+      { min: 5, hr: 245, rhythm: 'svt_active' as const, sbp: 82, dbp: 48, crt: 2.5, mental: 'irritable' as const, spo2: 97, intv: 'ice_bag_to_face' as const, notes: 'Ice bag to face applied for 15 seconds. Transient deceleration to 200 bpm then immediately returned to 245 bpm.' },
+      { min: 12, hr: 125, rhythm: 'sinus_rhythm_restored' as const, sbp: 90, dbp: 54, crt: 1.5, mental: 'alert_normal' as const, spo2: 100, intv: 'adenosine_dose_1' as const, notes: 'Adenosine 0.85 mg rapid push via left antecubital IV with 10 mL saline flush. Brief 1.5s pause then normal sinus rhythm restored.' },
+    ];
+    for (const sl of svtLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_svt_flowsheet_logs (
+          svt_episode_id, patient_id, log_datetime, minutes_from_triage,
+          heart_rate_bpm, rhythm_state, sbp_mmhg, dbp_mmhg,
+          capillary_refill_seconds, mental_status, spo2_percent,
+          intervention_administered, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T09:15:00', ?,
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingSvt.id, aaravId, sl.min, sl.hr, sl.rhythm, sl.sbp, sl.dbp, sl.crt, sl.mental, sl.spo2, sl.intv, sl.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

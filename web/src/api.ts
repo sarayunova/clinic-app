@@ -8213,6 +8213,281 @@ export const deletePediatricAnaphylaxisFlowsheet = (episodeId: number, logId: nu
 export const calculatePediatricAnaphylaxis = (payload: any): Promise<{ evalResult: any }> =>
   api('POST', '/api/pediatric-anaphylaxis/evaluate', payload);
 
+// ==========================================
+// SERIES 23A: Neonatal IVH & Levene PHH
+// ==========================================
+
+export interface NeonatalIvhRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  patient_number?: string | null;
+  date_of_birth?: string | null;
+  admission_id?: number | null;
+  episode_code: string;
+  scan_datetime: string;
+  gestational_age_weeks: number;
+  birth_weight_grams: number;
+  chronological_age_days: number;
+  current_pma_weeks: number;
+  cranial_ultrasound_indication: string;
+  papile_grade: 'grade_1_subependymal' | 'grade_2_intraventricular_normal_size' | 'grade_3_intraventricular_dilatation' | 'grade_4_periventricular_infarction';
+  hemorrhage_laterality: 'unilateral_left' | 'unilateral_right' | 'bilateral';
+  parenchymal_infarction_location?: string | null;
+  ventricular_index_left_mm: number;
+  ventricular_index_right_mm: number;
+  anterior_horn_width_left_mm: number;
+  anterior_horn_width_right_mm: number;
+  thalamo_occipital_distance_mm: number;
+  resistive_index_aca?: number | null;
+  head_circumference_cm: number;
+  head_circumference_growth_cm_week: number;
+  levene_97th_percentile_mm: number;
+  levene_action_line_threshold_mm: number;
+  phh_intervention_threshold_crossed: number;
+  intervention_status: 'conservative_surveillance' | 'serial_lumbar_punctures' | 'ventricular_access_device_reservoir' | 'subgaleal_shunt' | 'permanent_vp_shunt';
+  lumbar_puncture_performed: number;
+  csf_protein_g_l?: number | null;
+  csf_rbc_count?: number | null;
+  status: 'ultrasound_surveillance_active' | 'phh_active_decompression' | 'post_surgical_shunt_monitoring' | 'stable_arrested_hydrocephalus' | 'resolved_quiescent';
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NeonatalIvhFlowsheetRecord {
+  id: number;
+  ivh_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  days_from_baseline: number;
+  ventricular_index_mm: number;
+  anterior_horn_width_mm: number;
+  head_circumference_cm: number;
+  fontanelle_tension: 'normal_soft' | 'full' | 'bulging_tense';
+  split_cranial_sutures: number;
+  apneic_episodes_24h: number;
+  csf_volume_tapped_ml: number;
+  resistive_index_aca?: number | null;
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getNeonatalIvhEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: NeonatalIvhRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: NeonatalIvhRecord[] }>('GET', `/api/neonatal-ivh/episodes${queryStr}`);
+};
+
+export const getNeonatalIvhEpisode = (id: number): Promise<{ episode: NeonatalIvhRecord; logs: NeonatalIvhFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/neonatal-ivh/episodes/${id}`);
+
+export const createNeonatalIvhEpisode = (payload: any): Promise<{ episode: NeonatalIvhRecord; evalResult: any }> =>
+  api('POST', '/api/neonatal-ivh/episodes', payload);
+
+export const updateNeonatalIvhEpisode = (id: number, payload: any): Promise<{ episode: NeonatalIvhRecord }> =>
+  api('PATCH', `/api/neonatal-ivh/episodes/${id}`, payload);
+
+export const deleteNeonatalIvhEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-ivh/episodes/${id}`);
+
+export const addNeonatalIvhFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/neonatal-ivh/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteNeonatalIvhFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-ivh/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateNeonatalIvh = (payload: any): Promise<{ evalResult: any }> =>
+  api('POST', '/api/neonatal-ivh/evaluate', payload);
+
+// ==========================================
+// SERIES 23B: Obstetric PPROM & Triple I
+// ==========================================
+
+export interface ObstetricPpromRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  patient_number?: string | null;
+  date_of_birth?: string | null;
+  admission_id?: number | null;
+  episode_code: string;
+  rupture_datetime: string;
+  presentation_datetime: string;
+  gestation_weeks: number;
+  rupture_confirmation_method: 'pooling_ferning_nitrazine' | 'biochemical_amnisure_actim_prom' | 'direct_visualization' | 'ultrasound_oligohydramnios';
+  amniotic_fluid_index_cm?: number | null;
+  single_deepest_pocket_cm?: number | null;
+  latency_antibiotics_initiated: number;
+  latency_antibiotic_regimen: 'ampicillin_erythromycin_standard' | 'ampicillin_azithromycin_alternative' | 'penicillin_allergic_cefazolin_erythro' | 'vancomycin_gentamicin_severe_allergy' | 'none_not_indicated';
+  antenatal_corticosteroid_status: 'not_indicated_ge_34w' | 'course_initiated' | 'course_completed' | 'rescue_course_given';
+  mgso4_neuroprotection_active: number;
+  gbs_screening_status: 'positive' | 'negative' | 'unknown';
+  maternal_temperature_celsius: number;
+  maternal_heart_rate_bpm: number;
+  fetal_heart_rate_bpm: number;
+  uterine_tenderness: number;
+  foul_cervical_discharge: number;
+  maternal_wbc_per_ul?: number | null;
+  triple_i_category: 'no_infection_uncomplicated' | 'isolated_maternal_fever' | 'suspected_triple_i' | 'confirmed_triple_i';
+  delivery_timing_plan: 'expectant_management_to_34w' | 'previable_expectant_or_termination' | 'immediate_delivery_triple_i' | 'immediate_delivery_ge_34w' | 'immediate_delivery_non_reassuring_fhr';
+  status: 'inpatient_latency_surveillance' | 'active_triple_i_sepsis_resuscitation' | 'labor_induction_delivery' | 'postpartum_resolved';
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ObstetricPpromFlowsheetRecord {
+  id: number;
+  pprom_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_admission: number;
+  maternal_temp_c: number;
+  maternal_hr_bpm: number;
+  maternal_bp_sbp: number;
+  maternal_bp_dbp: number;
+  fetal_hr_bpm: number;
+  uterine_contractions_per_10min: number;
+  amniotic_fluid_character: 'clear' | 'blood_tinged' | 'purulent_malodorous';
+  maternal_wbc?: number | null;
+  ctg_category: 'category_1_normal' | 'category_2_indeterminate' | 'category_3_abnormal';
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getObstetricPpromEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: ObstetricPpromRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: ObstetricPpromRecord[] }>('GET', `/api/obstetric-pprom/episodes${queryStr}`);
+};
+
+export const getObstetricPpromEpisode = (id: number): Promise<{ episode: ObstetricPpromRecord; logs: ObstetricPpromFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/obstetric-pprom/episodes/${id}`);
+
+export const createObstetricPpromEpisode = (payload: any): Promise<{ episode: ObstetricPpromRecord; evalResult: any }> =>
+  api('POST', '/api/obstetric-pprom/episodes', payload);
+
+export const updateObstetricPpromEpisode = (id: number, payload: any): Promise<{ episode: ObstetricPpromRecord }> =>
+  api('PATCH', `/api/obstetric-pprom/episodes/${id}`, payload);
+
+export const deleteObstetricPpromEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-pprom/episodes/${id}`);
+
+export const addObstetricPpromFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/obstetric-pprom/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteObstetricPpromFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-pprom/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateObstetricPprom = (payload: any): Promise<{ evalResult: any }> =>
+  api('POST', '/api/obstetric-pprom/evaluate', payload);
+
+// ==========================================
+// SERIES 23C: Pediatric SVT & PALS
+// ==========================================
+
+export interface PediatricSvtRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  patient_number?: string | null;
+  date_of_birth?: string | null;
+  admission_id?: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  age_months: number;
+  weight_kg: number;
+  heart_rate_bpm: number;
+  qrs_duration_ms: number;
+  qrs_morphology: 'narrow_complex_le_0_09s' | 'wide_complex_aberrancy_gt_0_09s';
+  rhythm_regularity: 'regular' | 'irregular';
+  p_waves_identifiable: number;
+  svt_confirmed: number;
+  hemodynamic_stability: 'stable_compensated' | 'unstable_decompensated_shock';
+  signs_of_shock: 'poor_perfusion_cap_refill_gt_3s' | 'hypotension' | 'lethargy_altered_mental_status' | 'pulmonary_congestion' | 'none';
+  vagal_maneuver_attempted: 'ice_bag_to_face_infant' | 'modified_valsalva_child' | 'none_unstable';
+  vagal_maneuver_successful: number;
+  adenosine_first_dose_mg: number;
+  adenosine_first_dose_given: number;
+  adenosine_first_dose_successful: number;
+  adenosine_second_dose_mg: number;
+  adenosine_second_dose_given: number;
+  adenosine_second_dose_successful: number;
+  synchronized_cardioversion_joules?: number | null;
+  synchronized_cardioversion_delivered: number;
+  cardioversion_successful: number;
+  maintenance_antiarrhythmic: 'none' | 'amiodarone_infusion' | 'procainamide_infusion' | 'esmolol_infusion' | 'oral_propranolol';
+  status: 'acute_svt_resuscitation' | 'converted_sinus_surveillance' | 'refractory_picu_transfer' | 'discharged_maintenance_therapy';
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PediatricSvtFlowsheetRecord {
+  id: number;
+  svt_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  minutes_from_triage: number;
+  heart_rate_bpm: number;
+  rhythm_state: 'svt_active' | 'sinus_rhythm_restored' | 'sinus_bradycardia' | 'junctional_or_other';
+  sbp_mmhg: number;
+  dbp_mmhg?: number | null;
+  capillary_refill_seconds: number;
+  mental_status: 'alert_normal' | 'irritable' | 'lethargic' | 'unresponsive';
+  spo2_percent: number;
+  intervention_administered: 'none' | 'ice_bag_to_face' | 'valsalva' | 'adenosine_dose_1' | 'adenosine_dose_2' | 'synchronized_cardioversion' | 'antiarrhythmic_infusion';
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getPediatricSvtEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: PediatricSvtRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: PediatricSvtRecord[] }>('GET', `/api/pediatric-svt/episodes${queryStr}`);
+};
+
+export const getPediatricSvtEpisode = (id: number): Promise<{ episode: PediatricSvtRecord; logs: PediatricSvtFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/pediatric-svt/episodes/${id}`);
+
+export const createPediatricSvtEpisode = (payload: any): Promise<{ episode: PediatricSvtRecord; evalResult: any }> =>
+  api('POST', '/api/pediatric-svt/episodes', payload);
+
+export const updatePediatricSvtEpisode = (id: number, payload: any): Promise<{ episode: PediatricSvtRecord }> =>
+  api('PATCH', `/api/pediatric-svt/episodes/${id}`, payload);
+
+export const deletePediatricSvtEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-svt/episodes/${id}`);
+
+export const addPediatricSvtFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/pediatric-svt/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deletePediatricSvtFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-svt/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculatePediatricSvt = (payload: any): Promise<{ evalResult: any }> =>
+  api('POST', '/api/pediatric-svt/evaluate', payload);
+
+
 
 
 

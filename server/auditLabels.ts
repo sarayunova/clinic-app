@@ -388,6 +388,31 @@ export const ACTION_LABELS: Record<string, string> = {
   'pediatric_anaphylaxis.flowsheet_delete': 'Deleted pediatric anaphylaxis flowsheet log',
   'pediatric_anaphylaxis.print': 'Printed pediatric anaphylaxis WAO resuscitation & biphasic surveillance dossier',
 
+  // SERIES 23: Neonatal IVH & Levene PHH, Obstetric PPROM & Triple I, Pediatric SVT & PALS
+  'neonatal_ivh.episode_create': 'Initiated neonatal IVH Papile staging & Levene ventricular index surveillance',
+  'neonatal_ivh.episode_update': 'Updated neonatal IVH episode, intervention status or clinical notes',
+  'neonatal_ivh.episode_delete': 'Deleted neonatal IVH episode record',
+  'neonatal_ivh.flowsheet_create': 'Logged neonatal ventricular index, anterior horn width & CSF tap checkpoint',
+  'neonatal_ivh.flowsheet_log': 'Logged neonatal ventricular index, anterior horn width & CSF tap checkpoint',
+  'neonatal_ivh.flowsheet_delete': 'Deleted neonatal IVH flowsheet log',
+  'neonatal_ivh.print': 'Printed neonatal IVH Papile & Levene post-hemorrhagic hydrocephalus dossier',
+
+  'obstetric_pprom.episode_create': 'Initiated obstetric PPROM latency surveillance & Triple I evaluation',
+  'obstetric_pprom.episode_update': 'Updated obstetric PPROM episode, latency antibiotics or delivery plan',
+  'obstetric_pprom.episode_delete': 'Deleted obstetric PPROM episode record',
+  'obstetric_pprom.flowsheet_create': 'Logged obstetric PPROM maternal vitals, fetal heart rate & amniotic fluid checkpoint',
+  'obstetric_pprom.flowsheet_log': 'Logged obstetric PPROM maternal vitals, fetal heart rate & amniotic fluid checkpoint',
+  'obstetric_pprom.flowsheet_delete': 'Deleted obstetric PPROM flowsheet log',
+  'obstetric_pprom.print': 'Printed obstetric PPROM latency & Triple I chorioamnionitis clinical dossier',
+
+  'pediatric_svt.episode_create': 'Initiated pediatric SVT acute resuscitation & PALS dysrhythmia evaluation',
+  'pediatric_svt.episode_update': 'Updated pediatric SVT episode, converted rhythm or antiarrhythmic status',
+  'pediatric_svt.episode_delete': 'Deleted pediatric SVT episode record',
+  'pediatric_svt.flowsheet_create': 'Logged pediatric SVT heart rate, rhythm conversion & adenosine checkpoint',
+  'pediatric_svt.flowsheet_log': 'Logged pediatric SVT heart rate, rhythm conversion & adenosine checkpoint',
+  'pediatric_svt.flowsheet_delete': 'Deleted pediatric SVT flowsheet log',
+  'pediatric_svt.print': 'Printed pediatric SVT PALS emergency resuscitation & cardioversion dossier',
+
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };
