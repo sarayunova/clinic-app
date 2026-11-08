@@ -74,6 +74,7 @@ export interface Appointment {
   patientNumber: string;
   patientName: string;
   patientPhone: string | null;
+  aadhaarLastFour?: string | null;
   allergyStatus: 'unknown' | 'none' | 'known';
   allergyDetails: string | null;
   /** Present only for roles allowed to read consultations. */
@@ -104,6 +105,7 @@ export interface PatientSummary {
   patientNumber: string;
   fullName: string;
   phone: string | null;
+  aadhaarLastFour?: string | null;
   ageYears: number | null;
   ageIsEstimated: boolean;
   allergyStatus: 'unknown' | 'none' | 'known';
@@ -128,6 +130,7 @@ export type Patient = Record<string, unknown> & {
   patientNumber: string;
   fullName: string;
   version: number;
+  aadhaarLastFour?: string | null;
   allergyStatus: 'unknown' | 'none' | 'known';
   allergyDetails: string | null;
   ageYears: number | null;

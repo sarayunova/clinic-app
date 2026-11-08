@@ -21,6 +21,12 @@ const phone = z
   .refine((s) => s === null || /^[0-9+()\-\s]{6,20}$/.test(s), 'Enter a valid phone number')
   .nullable();
 const count = z.number().int().min(0).max(30).nullable();
+const aadhaarLastFour = z
+  .string()
+  .trim()
+  .transform((s) => (s === '' ? null : s))
+  .refine((s) => s === null || /^\d{4}$/.test(s), 'Enter exactly the last 4 digits of Aadhaar (e.g. 5432)')
+  .nullable();
 
 const FIELDS = {
   // demographics
@@ -28,6 +34,7 @@ const FIELDS = {
   dateOfBirth: date.nullable(),
   estimatedAgeYears: z.number().int().min(0).max(130).nullable(),
   phone,
+  aadhaarLastFour,
   address: text(500),
   emergencyContactName: text(120),
   emergencyContactPhone: phone,
@@ -57,6 +64,7 @@ const GROUP: Record<FieldKey, Permission> = {
   dateOfBirth: 'patient:write_demographics',
   estimatedAgeYears: 'patient:write_demographics',
   phone: 'patient:write_demographics',
+  aadhaarLastFour: 'patient:write_demographics',
   address: 'patient:write_demographics',
   emergencyContactName: 'patient:write_demographics',
   emergencyContactPhone: 'patient:write_demographics',
@@ -78,13 +86,13 @@ const GROUP: Record<FieldKey, Permission> = {
 };
 
 const BASIC_KEYS = new Set([
-  'id', 'patientNumber', 'fullName', 'dateOfBirth', 'estimatedAgeYears', 'phone', 'address',
+  'id', 'patientNumber', 'fullName', 'dateOfBirth', 'estimatedAgeYears', 'phone', 'aadhaarLastFour', 'address',
   'emergencyContactName', 'emergencyContactPhone', 'allergyStatus', 'allergyDetails',
   'version', 'createdAt', 'updatedAt', 'ageYears', 'ageIsEstimated',
 ]);
 
 const DEFAULTS: Record<FieldKey, unknown> = {
-  fullName: '', dateOfBirth: null, estimatedAgeYears: null, phone: null, address: null,
+  fullName: '', dateOfBirth: null, estimatedAgeYears: null, phone: null, aadhaarLastFour: null, address: null,
   emergencyContactName: null, emergencyContactPhone: null, allergyStatus: 'unknown', allergyDetails: null,
   medicalHistory: null, surgicalHistory: null, familyHistory: null, menstrualHistory: null,
   lastMenstrualPeriod: null, menopauseStatus: 'unknown', obstetricHistory: null, gravida: null, para: null,
@@ -95,7 +103,7 @@ const DEFAULTS: Record<FieldKey, unknown> = {
 const base = z.object(FIELDS).partial();
 const createSchema = base.extend({ fullName: FIELDS.fullName }).strict();
 const patchSchema = base.extend({ version: z.number().int().min(1) }).strict();
-const dupSchema = z.object({ fullName: z.string().max(120).optional(), dateOfBirth: date.nullable().optional(), phone: phone.optional(), excludeId: z.number().int().optional() }).strict();
+const dupSchema = z.object({ fullName: z.string().max(120).optional(), dateOfBirth: date.nullable().optional(), phone: phone.optional(), aadhaarLastFour: aadhaarLastFour.optional(), excludeId: z.number().int().optional() }).strict();
 const searchSchema = z
   .object({
     q: z.string().trim().max(100).optional(),
@@ -191,15 +199,16 @@ export function registerPatientRoutes(app: FastifyInstance, { db, cfg }: Ctx): v
     return Object.fromEntries(Object.entries(out).filter(([k]) => BASIC_KEYS.has(k)));
   }
 
-  function findDuplicates(c: { fullName?: string | null; dateOfBirth?: string | null; phone?: string | null }, excludeId?: number) {
+  function findDuplicates(c: { fullName?: string | null; dateOfBirth?: string | null; phone?: string | null; aadhaarLastFour?: string | null }, excludeId?: number) {
     const clauses: string[] = [];
     const args: (string | number)[] = [];
     if (c.phone) { clauses.push('phone = ?'); args.push(c.phone); }
+    if (c.aadhaarLastFour) { clauses.push('aadhaar_last_four = ?'); args.push(c.aadhaarLastFour); }
     if (c.fullName && c.dateOfBirth) { clauses.push('(full_name = ? COLLATE NOCASE AND date_of_birth = ?)'); args.push(c.fullName.trim(), c.dateOfBirth); }
     if (!clauses.length) return [];
     return db
       .prepare(
-        `SELECT id, patient_number AS patientNumber, full_name AS fullName, phone, date_of_birth AS dateOfBirth
+        `SELECT id, patient_number AS patientNumber, full_name AS fullName, phone, aadhaar_last_four AS aadhaarLastFour, date_of_birth AS dateOfBirth
            FROM patients WHERE (${clauses.join(' OR ')}) ${excludeId ? 'AND id <> ?' : ''} ORDER BY id LIMIT 10`,
       )
       .all(...args, ...(excludeId ? [excludeId] : []));
@@ -235,6 +244,14 @@ export function registerPatientRoutes(app: FastifyInstance, { db, cfg }: Ctx): v
         "p.address LIKE ? ESCAPE '\\'",
       ];
       const textArgs: (string | number)[] = [like, `${escapeLike(queryStr)}%`, like, like];
+
+      if (digits.length === 4) {
+        textClauses.push('p.aadhaar_last_four = ?');
+        textArgs.push(digits);
+      } else if (digits.length >= 2 && digits.length < 4) {
+        textClauses.push("p.aadhaar_last_four LIKE ? ESCAPE '\\\'");
+        textArgs.push(`${escapeLike(digits)}%`);
+      }
 
       if (digits.length >= 3) {
         textClauses.push(`${phoneExpr} LIKE ? ESCAPE '\\'`);
@@ -317,7 +334,7 @@ export function registerPatientRoutes(app: FastifyInstance, { db, cfg }: Ctx): v
 
     const rows = db
       .prepare(
-        `SELECT p.id, p.patient_number, p.full_name, p.date_of_birth, p.estimated_age_years, p.phone,
+        `SELECT p.id, p.patient_number, p.full_name, p.date_of_birth, p.estimated_age_years, p.phone, p.aadhaar_last_four,
                 p.emergency_contact_name, p.emergency_contact_phone, p.address,
                 p.allergy_status, p.last_menstrual_period, p.gravida, p.para, p.abortions, p.living,
                 p.obstetric_history, p.surgical_history,
@@ -356,6 +373,7 @@ export function registerPatientRoutes(app: FastifyInstance, { db, cfg }: Ctx): v
         date_of_birth: string | null;
         estimated_age_years: number | null;
         phone: string | null;
+        aadhaar_last_four: string | null;
         emergency_contact_name: string | null;
         emergency_contact_phone: string | null;
         address: string | null;
@@ -416,6 +434,7 @@ export function registerPatientRoutes(app: FastifyInstance, { db, cfg }: Ctx): v
         fullName: r.full_name,
         dateOfBirth: r.date_of_birth,
         phone: r.phone,
+        aadhaarLastFour: r.aadhaar_last_four,
         emergencyContactName: r.emergency_contact_name,
         emergencyContactPhone: r.emergency_contact_phone,
         address: r.address,
@@ -465,7 +484,7 @@ export function registerPatientRoutes(app: FastifyInstance, { db, cfg }: Ctx): v
       audit(db, { actorId: user.id, action: 'patient.create', entity: 'patient', entityId: id, detail: { patientNumber } });
       return db.prepare('SELECT * FROM patients WHERE id = ?').get(id)!;
     });
-    const possibleDuplicates = findDuplicates(rec as { fullName: string; dateOfBirth: string | null; phone: string | null }, (row as { id: number }).id);
+    const possibleDuplicates = findDuplicates(rec as { fullName: string; dateOfBirth: string | null; phone: string | null; aadhaarLastFour?: string | null }, (row as { id: number }).id);
     return reply.status(201).send({ patient: present(row, user.role), possibleDuplicates });
   });
 

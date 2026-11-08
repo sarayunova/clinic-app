@@ -161,6 +161,7 @@ const SECTIONS: Section[] = [
     readPerm: 'patient:read_basic',
     fields: [
       { key: 'fullName', label: 'Full name', kind: 'text', wide: true },
+      { key: 'aadhaarLastFour', label: 'Aadhaar (last 4 digits)', kind: 'text', hint: 'e.g. 5432 (essential for fast search & UID lookup)' },
       { key: 'dateOfBirth', label: 'Date of birth', kind: 'date' },
       { key: 'estimatedAgeYears', label: 'Estimated age (years)', kind: 'int', hint: 'Use only if date of birth is unknown' },
       { key: 'phone', label: 'Phone', kind: 'tel' },
@@ -415,7 +416,7 @@ export function PatientPage() {
           <div>
             <h1>{patient!.fullName}</h1>
             <div className="muted">
-              {patient!.patientNumber} · {formatAge(patient!.ageYears, patient!.ageIsEstimated)}
+              {patient!.patientNumber} · {formatAge(patient!.ageYears, patient!.ageIsEstimated)}{patient!.aadhaarLastFour ? ' · 🆔 Aadhaar: •••• •••• ' + patient!.aadhaarLastFour : ''}
               {typeof patient!.phone === 'string' && patient!.phone ? (
                 <>
                   {' · '}

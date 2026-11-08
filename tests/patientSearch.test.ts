@@ -200,4 +200,50 @@ describe('Advanced Patient Search & Filter API', () => {
     expect(asDesk.status).toBe(200);
     expect(asDesk.body[0].highRiskFlags).toBeUndefined();
   });
+  it('searches and validates Aadhaar last 4 digits', async () => {
+    // 1. Validation test: Aadhaar last 4 must be exactly 4 digits
+    const invalidRes1 = await call('POST', '/api/patients', desk, {
+      fullName: 'Test Patient 1',
+      aadhaarLastFour: '123', // only 3 digits
+    });
+    expect(invalidRes1.status).toBe(400);
+
+    const invalidRes2 = await call('POST', '/api/patients', desk, {
+      fullName: 'Test Patient 2',
+      aadhaarLastFour: '12345', // 5 digits
+    });
+    expect(invalidRes2.status).toBe(400);
+
+    const invalidRes3 = await call('POST', '/api/patients', desk, {
+      fullName: 'Test Patient 3',
+      aadhaarLastFour: '12ab', // alphanumeric
+    });
+    expect(invalidRes3.status).toBe(400);
+
+    // 2. Successful creation with valid 4-digit Aadhaar
+    const created = await call('POST', '/api/patients', desk, {
+      fullName: 'Meenakshi Sundaram',
+      phone: '9840112233',
+      aadhaarLastFour: '6543',
+    });
+    expect(created.status).toBe(201);
+    expect(created.body.patient.aadhaarLastFour).toBe('6543');
+
+    // 3. Search by Aadhaar last 4
+    const searchRes = await call('GET', '/api/patients?q=6543', desk);
+    expect(searchRes.status).toBe(200);
+    expect(searchRes.body.length).toBe(1);
+    expect(searchRes.body[0].fullName).toBe('Meenakshi Sundaram');
+    expect(searchRes.body[0].aadhaarLastFour).toBe('6543');
+
+    // 4. Duplicate check identifies identical Aadhaar last 4 and phone
+    const dupCheck = await call('POST', '/api/patients/check-duplicates', desk, {
+      fullName: 'Meenakshi S',
+      phone: '9840112233',
+      aadhaarLastFour: '6543',
+    });
+    expect(dupCheck.status).toBe(200);
+    expect(dupCheck.body.possibleDuplicates.length).toBeGreaterThan(0);
+    expect(dupCheck.body.possibleDuplicates[0].fullName).toBe('Meenakshi Sundaram');
+  });
 });

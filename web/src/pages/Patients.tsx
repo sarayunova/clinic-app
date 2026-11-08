@@ -76,7 +76,7 @@ export function PatientsPage() {
         <div>
           <h1 style={{ margin: 0 }}>Patient Directory</h1>
           <div className="muted small">
-            Search by name, patient ID, phone substring, partner/spouse name, or locality
+            Search by name, patient ID, Aadhaar (last 4), phone digits, partner/spouse name, or locality
           </div>
         </div>
         <div className="row" style={{ gap: '0.5rem' }}>
@@ -98,7 +98,7 @@ export function PatientsPage() {
             type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Type patient name, phone, partner name (e.g. Ramesh) or locality..."
+            placeholder="Search by name, phone, Aadhaar last 4 (e.g. 5432), partner name or locality..."
             aria-label="Search patients"
             autoFocus
             style={{ fontSize: '1rem', padding: '0.6rem 0.8rem' }}
@@ -225,7 +225,7 @@ export function PatientsPage() {
       {category === 'all' && !tag && q.trim().length < 2 ? (
         <div className="card" style={{ textAlign: 'center', padding: '2rem 1rem' }}>
           <p className="muted" style={{ margin: '0 0 0.8rem 0' }}>
-            Type at least 2 characters to search by patient name, patient ID, phone digits, spouse/partner name, or select a cohort filter above.
+            Type at least 2 characters to search by patient name, patient ID, Aadhaar last 4, phone digits, spouse/partner name, or select a cohort filter above.
           </p>
           <div className="row wrap" style={{ justifyContent: 'center', gap: '0.5rem' }}>
             <button type="button" className="btn small" onClick={() => setCategory('antenatal')}>
@@ -279,6 +279,20 @@ export function PatientsPage() {
                       · {p.detailedAge ?? formatAge(p.ageYears, p.ageIsEstimated)}
                     </span>
                     {p.phone && <span className="small">· 📞 {p.phone}</span>}
+                    {p.aadhaarLastFour && (
+                      <span
+                        className="small"
+                        style={{
+                          background: 'var(--primary-light, #e0f2fe)',
+                          color: 'var(--primary-dark, #0369a1)',
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        🆔 Aadhaar: •••• {p.aadhaarLastFour}
+                      </span>
+                    )}
                   </div>
 
                   {/* Partner / Locality Info */}

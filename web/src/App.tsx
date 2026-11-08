@@ -326,7 +326,15 @@ const primaryLinks = [
     <ScreenLock />
     <div className="shell" inert={locked} aria-hidden={locked}>
       <nav className="nav" aria-label="Main">
-        <div className="brand">Clinic</div>
+        <div className="brand">
+          <div className="brand-badge">
+            <span className="brand-icon">🏥</span>
+            <div className="brand-text">
+              <span className="brand-title">LiVi Clinic</span>
+              <span className="brand-subtitle">EHR & Maternity</span>
+            </div>
+          </div>
+        </div>
         <div className="nav-scroll">
           <div className="nav-section-title">Care & Wards</div>
           {primaryLinks.map((l) => (
@@ -429,14 +437,21 @@ const primaryLinks = [
         </div>
 
         <div className="nav-user">
-          <div>{me.fullName}</div>
-          <div className="muted small">{me.role}</div>
-          <button className="btn small" onClick={() => void lock('manual')}>
-            Lock screen
-          </button>
-          <button className="btn small" onClick={() => void logout()}>
-            Log out
-          </button>
+          <div className="nav-user-info">
+            <div className="nav-user-avatar">{me.fullName.charAt(0).toUpperCase()}</div>
+            <div className="nav-user-meta">
+              <div className="nav-user-name">{me.fullName}</div>
+              <div className="nav-user-role">{me.role}</div>
+            </div>
+          </div>
+          <div className="row wrap" style={{ gap: '0.4rem', marginTop: '0.2rem' }}>
+            <button className="btn small" style={{ flex: 1 }} onClick={() => void lock('manual')} title="Lock screen">
+              🔒 Lock
+            </button>
+            <button className="btn small" style={{ flex: 1 }} onClick={() => void logout()} title="Sign out">
+              Log out
+            </button>
+          </div>
         </div>
       </nav>
       <main className="main">
