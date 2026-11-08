@@ -570,6 +570,28 @@ export const ACTION_LABELS: Record<string, string> = {
   'pediatric_pyloric_stenosis.flowsheet_delete': 'Deleted pediatric pyloric stenosis flowsheet log',
   'pediatric_pyloric_stenosis.print': 'Printed pediatric pyloric stenosis IHPS & Ramstedt pyloromyotomy clinical dossier',
 
+  // SERIES 31: Neonatal SGH, Obstetric TOLAC Uterine Rupture, Pediatric Kawasaki Disease
+  'neonatal_sgh.create': 'Initiated neonatal subgaleal hemorrhage (SGH) evaluation & MTP calculation',
+  'neonatal_sgh.status_update': 'Updated neonatal SGH episode status, transfusion or coagulopathy management',
+  'neonatal_sgh.delete': 'Deleted neonatal SGH episode record',
+  'neonatal_sgh.flowsheet_add': 'Logged neonatal SGH head circumference, shock index & blood product checkpoint',
+  'neonatal_sgh.flowsheet_delete': 'Deleted neonatal SGH flowsheet log',
+  'neonatal_sgh.print': 'Printed neonatal subgaleal hemorrhage & emergent MTP resuscitation clinical dossier',
+
+  'obstetric_tolac.create': 'Initiated obstetric TOLAC evaluation & impending uterine rupture protocol',
+  'obstetric_tolac.status_update': 'Updated obstetric TOLAC episode, labor progress or crash cesarean status',
+  'obstetric_tolac.delete': 'Deleted obstetric TOLAC episode record',
+  'obstetric_tolac.flowsheet_add': 'Logged obstetric TOLAC uterine tone, FHR deceleration & scar tenderness checkpoint',
+  'obstetric_tolac.flowsheet_delete': 'Deleted obstetric TOLAC flowsheet log',
+  'obstetric_tolac.print': 'Printed obstetric TOLAC & uterine rupture surveillance clinical dossier',
+
+  'pediatric_kawasaki.create': 'Initiated pediatric Kawasaki disease evaluation & Kobayashi risk score calculation',
+  'pediatric_kawasaki.status_update': 'Updated pediatric Kawasaki episode, IVIG resistance or aspirin therapy status',
+  'pediatric_kawasaki.delete': 'Deleted pediatric Kawasaki episode record',
+  'pediatric_kawasaki.flowsheet_add': 'Logged pediatric Kawasaki coronary Z-score, fever curve & IVIG infusion checkpoint',
+  'pediatric_kawasaki.flowsheet_delete': 'Deleted pediatric Kawasaki flowsheet log',
+  'pediatric_kawasaki.print': 'Printed pediatric Kawasaki disease & coronary aneurysm prevention clinical dossier',
+
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

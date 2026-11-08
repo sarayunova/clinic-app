@@ -4388,6 +4388,178 @@ async function seed() {
     }
   }
 
+  // --- SERIES 31A: Neonatal Subgaleal Hemorrhage (SGH) & Emergent MTP Resuscitation ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_sgh_episodes (
+      patient_id, admission_id, episode_code, birth_datetime, diagnosis_datetime,
+      delivery_mode, vacuum_cup_popoffs, birth_weight_kg,
+      initial_head_circumference_cm, current_head_circumference_cm,
+      hc_increase_cm, estimated_occult_blood_loss_ml, circulating_volume_loss_pct,
+      swelling_crosses_sutures, swelling_fluctuant_pitting,
+      periorbital_ecchymosis, ear_displacement, pallor_severe,
+      shock_state, heart_rate_bpm, blood_pressure_sys, blood_pressure_dia,
+      shock_index, capillary_refill_seconds,
+      hematocrit_initial_pct, hematocrit_lowest_pct,
+      platelet_count, fibrinogen_mg_dl,
+      mtp_activated, prbc_volume_transfused_ml, ffp_volume_transfused_ml, cryoprecipitate_volume_ml,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'SGH-20261108-101', '2026-11-08T02:30:00', '2026-11-08T06:00:00',
+      'vacuum_assisted', 2, 3.4,
+      34.0, 35.5,
+      1.5, 57.0, 21.0,
+      1, 1,
+      1, 1, 1,
+      'uncompensated_hypotensive_shock', 178, 50, 28,
+      3.56, 4.0,
+      48.0, 28.0,
+      75000, 95.0,
+      1, 68.0, 51.0, 34.0,
+      'mtp_massive_transfusion', ?, 'Vacuum birth trauma with fluctuant subgaleal swelling crossing sagittal & coronal sutures. MTP Pack 1 active.', ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingSgh = db.prepare('SELECT id FROM neonatal_sgh_episodes WHERE episode_code = ?').get('SGH-20261108-101') as any;
+  if (existingSgh) {
+    const sghLogs = [
+      { h: 3.5, hc: 35.0, sbp: 52, dbp: 28, hr: 175, idx: 3.37, cr: 4.0, hct: 32, trans: 'PRBC 35 mL bolus via UVC', notes: 'Severe pallor, fluctuant fluid wave crossing sagittal suture.' },
+      { h: 5.0, hc: 35.5, sbp: 48, dbp: 26, hr: 180, idx: 3.75, cr: 4.5, hct: 28, trans: 'PRBC 33 mL + FFP 51 mL + Cryo 34 mL', notes: 'Fibrinogen 95 mg/dL. Consumptive coagulopathy managed with cryoprecipitate.' },
+      { h: 8.0, hc: 35.5, sbp: 64, dbp: 38, hr: 148, idx: 2.31, cr: 2.5, hct: 38, trans: 'MTP infusion completed', notes: 'Perfusion restored, warm extremities, HC stabilized over last 3 hours.' },
+    ];
+    for (const sl of sghLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_sgh_flowsheet_logs (
+          sgh_episode_id, patient_id, log_datetime,
+          hours_from_birth, head_circumference_cm,
+          blood_pressure_sys, blood_pressure_dia,
+          heart_rate, shock_index, capillary_refill_seconds,
+          hematocrit_pct, blood_products_transfused,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T06:00:00',
+          ?, ?,
+          ?, ?,
+          ?, ?, ?,
+          ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingSgh.id, babyId, sl.h, sl.hc, sl.sbp, sl.dbp, sl.hr, sl.idx, sl.cr, sl.hct, sl.trans, sl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 31B: Obstetric TOLAC & Impending Uterine Rupture Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_tolac_episodes (
+      patient_id, admission_id, episode_code, assessment_datetime,
+      gestational_age_weeks, maternal_age, maternal_bmi,
+      prior_cesarean_count, prior_uterine_incision_type, prior_vaginal_delivery,
+      indication_for_prior_cesarean, interdelivery_interval_months,
+      bishop_score, grobman_vbac_success_pct, contraindications_present,
+      efm_abnormality, iupc_loss_of_uterine_tone, acute_scar_tenderness,
+      vaginal_bleeding_fresh, cessation_of_contractions, presenting_part_retraction,
+      rupture_risk_tier, status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'TOLAC-20261108-101', '2026-11-08T06:30:00',
+      39.3, 30, 25.8,
+      1, 'low_transverse', 'prior_vbac',
+      'Breech presentation in prior pregnancy', 26,
+      7, 83.0, 0,
+      'normal_category_1', 0, 0,
+      0, 0, 0,
+      'standard_tolac_candidate', 'active_labor_efm_monitoring', ?,
+      'Grobman score 83%. Continuous EFM and IUPC tone monitoring in progress.', ?, ?
+    )
+  `).run(meeraId, docId, now, now);
+
+  const existingTolac = db.prepare('SELECT id FROM obstetric_tolac_episodes WHERE episode_code = ?').get('TOLAC-20261108-101') as any;
+  if (existingTolac) {
+    const tolacLogs = [
+      { h: 2.0, dil: 4.5, fhr: 140, cat: 'category_1_normal', contr: 3, tone: 12, scar: 0, intv: 'IV access secured, type & screen crossmatched', notes: 'Patient tolerating active labor well with epidural.' },
+      { h: 4.5, dil: 6.5, fhr: 136, cat: 'category_1_normal', contr: 4, tone: 14, scar: 0, intv: 'Left lateral position, continuous EFM', notes: 'Cervical dilation progressing smoothly, fetal heart reactive.' },
+      { h: 7.0, dil: 9.0, fhr: 132, cat: 'category_1_normal', contr: 5, tone: 15, scar: 0, intv: 'Delivery trolley prepared, pediatrician on standby', notes: 'Transition phase. No scar tenderness. Presenting part deeply engaged.' },
+    ];
+    for (const tl of tolacLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_tolac_flowsheet_logs (
+          tolac_episode_id, patient_id, log_datetime,
+          hours_in_active_labor, cervical_dilation_cm,
+          fetal_heart_rate_baseline, efm_category,
+          contractions_per_10min, resting_uterine_tone_mmhg,
+          lower_segment_scar_pain, intervention_applied,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T08:00:00',
+          ?, ?,
+          ?, ?,
+          ?, ?,
+          ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingTolac.id, meeraId, tl.h, tl.dil, tl.fhr, tl.cat, tl.contr, tl.tone, tl.scar, tl.intv, tl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 31C: Pediatric Kawasaki Disease (KD) & Coronary Aneurysm Prevention Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_kawasaki_episodes (
+      patient_id, admission_id, episode_code, presentation_datetime,
+      age_months, weight_kg, fever_duration_days,
+      conjunctivitis_bilateral_bulbar, oral_mucosal_changes,
+      polymorphous_exanthem_rash, peripheral_extremity_changes,
+      cervical_lymphadenopathy_ge_1_5cm, bcg_scar_erythema, perineal_erythema_desquamation,
+      principal_criteria_count, diagnosis_classification,
+      crp_mg_l, esr_mm_hr, serum_albumin_g_dl, serum_sodium_meq_l,
+      platelet_count, wbc_count, alt_u_l, neutrophil_pct,
+      sterile_pyuria_present, kobayashi_score, ivig_resistance_risk,
+      ivig_administered, ivig_dose_g_kg, aspirin_dose_mg_kg_day,
+      echo_performed, lad_z_score, rca_z_score,
+      coronary_aneurysm_classification, status,
+      consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'KAW-20261108-101', '2026-11-08T05:00:00',
+      18, 11.5, 6,
+      1, 1,
+      1, 1, 0,
+      1, 1,
+      4, 'classic_complete_kd',
+      85.0, 68.0, 2.9, 131.0,
+      280000, 16800, 115.0, 83.0,
+      1, 7, 'high_risk',
+      1, 2.0, 40.0,
+      1, 2.8, 2.2,
+      'small_aneurysm_z_2_5_to_5', 'ivig_infusion_in_progress',
+      ?, 'Classic complete KD with BCG scar erythema, Kobayashi score 7 (High Risk). IVIG 23g infusing.', ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingKaw = db.prepare('SELECT id FROM pediatric_kawasaki_episodes WHERE episode_code = ?').get('KAW-20261108-101') as any;
+  if (existingKaw) {
+    const kawLogs = [
+      { h: 2.0, temp: 39.1, hr: 135, sbp: 94, dbp: 56, ivig: 1, asp: 115, rash: 'Trunk polymorphous rash, strawberry tongue', edem: 'Indurated palmar erythema', notes: 'Premedicated with paracetamol. IVIG started at 0.5 mL/kg/h.' },
+      { h: 6.0, temp: 38.3, hr: 122, sbp: 96, dbp: 60, ivig: 1, asp: 115, rash: 'Erythema lessening, conjunctival injection present', edem: 'Hand edema stable', notes: 'IVIG titrated to 2.0 mL/kg/h without adverse effect.' },
+      { h: 12.0, temp: 37.2, hr: 108, sbp: 98, dbp: 62, ivig: 0, asp: 115, rash: 'Rash markedly faded, lips moistening', edem: 'Edema subsiding', notes: 'IVIG 23g completed. Infant afebrile for 4 hours. Continuing high-dose aspirin.' },
+    ];
+    for (const kl of kawLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_kawasaki_flowsheet_logs (
+          kawasaki_episode_id, patient_id, log_datetime,
+          hours_from_admission, temperature_celsius,
+          heart_rate, blood_pressure_sys, blood_pressure_dia,
+          ivig_infusion_running, aspirin_dose_given_mg,
+          rash_appearance, extremity_edema,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T07:00:00',
+          ?, ?,
+          ?, ?, ?,
+          ?, ?,
+          ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingKaw.id, aaravId, kl.h, kl.temp, kl.hr, kl.sbp, kl.dbp, kl.ivig, kl.asp, kl.rash, kl.edem, kl.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

@@ -173,6 +173,12 @@ import { ObstetricRetainedPlacentaPage } from './pages/ObstetricRetainedPlacenta
 import { ObstetricRetainedPlacentaPrint } from './pages/ObstetricRetainedPlacentaPrint';
 import { PediatricPyloricStenosisPage } from './pages/PediatricPyloricStenosisPage';
 import { PediatricPyloricStenosisPrint } from './pages/PediatricPyloricStenosisPrint';
+import { NeonatalSghPage } from './pages/NeonatalSghPage';
+import { NeonatalSghPrint } from './pages/NeonatalSghPrint';
+import { ObstetricTolacPage } from './pages/ObstetricTolacPage';
+import { ObstetricTolacPrint } from './pages/ObstetricTolacPrint';
+import { PediatricKawasakiPage } from './pages/PediatricKawasakiPage';
+import { PediatricKawasakiPrint } from './pages/PediatricKawasakiPrint';
 import { DeliveryWardPage } from './pages/DeliveryWardPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditPage } from './pages/AuditPage';
@@ -304,6 +310,9 @@ function Shell() {
     ...(can('patient:read_clinical') ? [{ to: '/neonatal-aop', label: 'Neonatal AOP', icon: '🫁', end: false }] : []),
     ...(can('patient:read_clinical') ? [{ to: '/obstetric-retained-placenta', label: 'Retained Placenta', icon: '🩸', end: false }] : []),
     ...(can('patient:read_clinical') ? [{ to: '/pediatric-pyloric-stenosis', label: 'Pyloric Stenosis', icon: '🍼', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/neonatal-sgh', label: 'Neonatal SGH', icon: '🩸', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/obstetric-tolac', label: 'Obstetric TOLAC', icon: '🤰', end: false }] : []),
+    ...(can('patient:read_clinical') ? [{ to: '/pediatric-kawasaki', label: 'Pediatric Kawasaki', icon: '❤️', end: false }] : []),
     ...(can('ipd:read_basic') || can('station:read') ? [{ to: '/delivery-ward', label: 'Delivery ward', icon: '👶', end: false }] : []),
     ...(can('billing:read') ? [{ to: '/billing', label: 'Billing', icon: '💳', end: false }] : []),
     ...(can('settings:manage') ? [{ to: '/settings', label: 'Clinic', icon: '🏥', end: false }] : []),
@@ -550,6 +559,15 @@ function Shell() {
           <Route path="/pediatric-pyloric-stenosis" element={can('patient:read_clinical') ? <PediatricPyloricStenosisPage /> : <Navigate to="/" replace />} />
           <Route path="/pediatric-pyloric-stenosis/:id/print" element={can('patient:read_clinical') ? <PediatricPyloricStenosisPrint /> : <Navigate to="/pediatric-pyloric-stenosis" replace />} />
           <Route path="/patients/:patientId/pediatric-pyloric-stenosis/:episodeId/print" element={can('patient:read_clinical') ? <PediatricPyloricStenosisPrint /> : <Navigate to="/pediatric-pyloric-stenosis" replace />} />
+          <Route path="/neonatal-sgh" element={can('patient:read_clinical') ? <NeonatalSghPage /> : <Navigate to="/" replace />} />
+          <Route path="/neonatal-sgh/:id/print" element={can('patient:read_clinical') ? <NeonatalSghPrint /> : <Navigate to="/neonatal-sgh" replace />} />
+          <Route path="/patients/:patientId/neonatal-sgh/:episodeId/print" element={can('patient:read_clinical') ? <NeonatalSghPrint /> : <Navigate to="/neonatal-sgh" replace />} />
+          <Route path="/obstetric-tolac" element={can('patient:read_clinical') ? <ObstetricTolacPage /> : <Navigate to="/" replace />} />
+          <Route path="/obstetric-tolac/:id/print" element={can('patient:read_clinical') ? <ObstetricTolacPrint /> : <Navigate to="/obstetric-tolac" replace />} />
+          <Route path="/patients/:patientId/obstetric-tolac/:episodeId/print" element={can('patient:read_clinical') ? <ObstetricTolacPrint /> : <Navigate to="/obstetric-tolac" replace />} />
+          <Route path="/pediatric-kawasaki" element={can('patient:read_clinical') ? <PediatricKawasakiPage /> : <Navigate to="/" replace />} />
+          <Route path="/pediatric-kawasaki/:id/print" element={can('patient:read_clinical') ? <PediatricKawasakiPrint /> : <Navigate to="/pediatric-kawasaki" replace />} />
+          <Route path="/patients/:patientId/pediatric-kawasaki/:episodeId/print" element={can('patient:read_clinical') ? <PediatricKawasakiPrint /> : <Navigate to="/pediatric-kawasaki" replace />} />
           <Route path="/delivery-ward" element={can('ipd:read_basic') || can('station:read') ? <DeliveryWardPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id" element={can('visit:read') ? <VisitPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id/print" element={can('visit:read') ? <PrescriptionPrint /> : <Navigate to="/" replace />} />

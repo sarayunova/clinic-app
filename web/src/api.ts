@@ -10352,6 +10352,267 @@ export const deletePediatricPyloricStenosisFlowsheet = (episodeId: number, logId
 export const evaluatePediatricPyloricStenosisApi = (payload: any): Promise<{ evaluation: any }> =>
   api('POST', '/api/pediatric-pyloric-stenosis/evaluate', payload);
 
+// ==========================================
+// SERIES 31A: NEONATAL SUBGALEAL HEMORRHAGE (SGH)
+// ==========================================
+export interface NeonatalSghRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  birth_datetime: string;
+  diagnosis_datetime: string;
+  delivery_mode: 'vacuum_assisted' | 'forceps_assisted' | 'vacuum_failed_cesarean' | 'normal_vaginal' | 'emergency_cesarean_unassisted';
+  vacuum_cup_popoffs: number;
+  birth_weight_kg: number;
+  initial_head_circumference_cm: number;
+  current_head_circumference_cm: number;
+  hc_increase_cm: number;
+  estimated_occult_blood_loss_ml: number;
+  circulating_volume_loss_pct: number;
+  swelling_crosses_sutures: number;
+  swelling_fluctuant_pitting: number;
+  periorbital_ecchymosis: number;
+  ear_displacement: number;
+  pallor_severe: number;
+  shock_state: 'compensated_tachycardia' | 'uncompensated_hypotensive_shock' | 'life_threatening_circulatory_collapse';
+  heart_rate_bpm: number;
+  blood_pressure_sys: number | null;
+  blood_pressure_dia: number | null;
+  shock_index: number | null;
+  capillary_refill_seconds: number | null;
+  hematocrit_initial_pct: number | null;
+  hematocrit_lowest_pct: number | null;
+  platelet_count: number | null;
+  fibrinogen_mg_dl: number | null;
+  mtp_activated: number;
+  prbc_volume_transfused_ml: number;
+  ffp_volume_transfused_ml: number;
+  cryoprecipitate_volume_ml: number;
+  status: 'active_resuscitation' | 'mtp_massive_transfusion' | 'stabilized_monitoring' | 'resolved_discharged';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  consultant_name?: string;
+}
+
+export interface NeonatalSghFlowsheetRecord {
+  id: number;
+  sgh_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_birth: number;
+  head_circumference_cm: number;
+  blood_pressure_sys: number | null;
+  blood_pressure_dia: number | null;
+  heart_rate: number;
+  shock_index: number | null;
+  capillary_refill_seconds: number | null;
+  hematocrit_pct: number | null;
+  blood_products_transfused: string | null;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getNeonatalSghEpisodes = (params?: { patientId?: number }): Promise<{ episodes: NeonatalSghRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/neonatal-sgh/episodes${query}`);
+};
+
+export const getNeonatalSghEpisode = (id: number): Promise<{ episode: NeonatalSghRecord; evaluation: any; flowsheet: NeonatalSghFlowsheetRecord[] }> =>
+  api('GET', `/api/neonatal-sgh/episodes/${id}`);
+
+export const createNeonatalSghEpisode = (payload: any): Promise<{ episodeId: number; episodeCode: string; evaluation: any; success: boolean }> =>
+  api('POST', '/api/neonatal-sgh/episodes', payload);
+
+export const updateNeonatalSghStatus = (id: number, payload: any): Promise<{ success: boolean }> =>
+  api('PATCH', `/api/neonatal-sgh/episodes/${id}/status`, payload);
+
+export const addNeonatalSghFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number; success: boolean }> =>
+  api('POST', `/api/neonatal-sgh/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteNeonatalSghFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-sgh/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const evaluateNeonatalSghApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/neonatal-sgh/evaluate', payload);
+
+// ==========================================
+// SERIES 31B: OBSTETRIC TOLAC & IMPENDING UTERINE RUPTURE
+// ==========================================
+export interface ObstetricTolacRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  assessment_datetime: string;
+  gestational_age_weeks: number;
+  maternal_age: number;
+  maternal_bmi: number;
+  prior_cesarean_count: number;
+  prior_uterine_incision_type: 'low_transverse' | 'unknown_low_transverse_presumed' | 'classical_vertical' | 'inverted_t_or_j' | 'prior_transmural_myomectomy';
+  prior_vaginal_delivery: 'prior_vbac' | 'prior_vaginal_before_cesarean' | 'no_prior_vaginal_delivery';
+  indication_for_prior_cesarean: string;
+  interdelivery_interval_months: number;
+  bishop_score: number;
+  grobman_vbac_success_pct: number;
+  contraindications_present: number;
+  efm_abnormality: 'normal_category_1' | 'indeterminate_category_2' | 'variable_decelerations_recurrent' | 'prolonged_deceleration' | 'persistent_bradycardia_lt_90';
+  iupc_loss_of_uterine_tone: number;
+  acute_scar_tenderness: number;
+  vaginal_bleeding_fresh: number;
+  cessation_of_contractions: number;
+  presenting_part_retraction: number;
+  rupture_risk_tier: 'standard_tolac_candidate' | 'elevated_rupture_risk' | 'impending_or_active_uterine_rupture';
+  status: 'eligible_tolac_counseled' | 'active_labor_efm_monitoring' | 'impending_rupture_detected' | 'crash_cesarean_transfer' | 'successful_vbac' | 'elective_repeat_cesarean';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  consultant_name?: string;
+}
+
+export interface ObstetricTolacFlowsheetRecord {
+  id: number;
+  tolac_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_in_active_labor: number;
+  cervical_dilation_cm: number;
+  fetal_heart_rate_baseline: number;
+  efm_category: 'category_1_normal' | 'category_2_indeterminate' | 'category_3_abnormal';
+  contractions_per_10min: number;
+  resting_uterine_tone_mmhg: number | null;
+  lower_segment_scar_pain: number;
+  intervention_applied: string | null;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getObstetricTolacEpisodes = (params?: { patientId?: number }): Promise<{ episodes: ObstetricTolacRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/obstetric-tolac/episodes${query}`);
+};
+
+export const getObstetricTolacEpisode = (id: number): Promise<{ episode: ObstetricTolacRecord; evaluation: any; flowsheet: ObstetricTolacFlowsheetRecord[] }> =>
+  api('GET', `/api/obstetric-tolac/episodes/${id}`);
+
+export const createObstetricTolacEpisode = (payload: any): Promise<{ episodeId: number; episodeCode: string; evaluation: any; success: boolean }> =>
+  api('POST', '/api/obstetric-tolac/episodes', payload);
+
+export const updateObstetricTolacStatus = (id: number, payload: any): Promise<{ success: boolean }> =>
+  api('PATCH', `/api/obstetric-tolac/episodes/${id}/status`, payload);
+
+export const addObstetricTolacFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number; success: boolean }> =>
+  api('POST', `/api/obstetric-tolac/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteObstetricTolacFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-tolac/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const evaluateObstetricTolacApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/obstetric-tolac/evaluate', payload);
+
+// ==========================================
+// SERIES 31C: PEDIATRIC KAWASAKI DISEASE (KD)
+// ==========================================
+export interface PediatricKawasakiRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  presentation_datetime: string;
+  age_months: number;
+  weight_kg: number;
+  fever_duration_days: number;
+  conjunctivitis_bilateral_bulbar: number;
+  oral_mucosal_changes: number;
+  polymorphous_exanthem_rash: number;
+  peripheral_extremity_changes: number;
+  cervical_lymphadenopathy_ge_1_5cm: number;
+  bcg_scar_erythema: number;
+  perineal_erythema_desquamation: number;
+  principal_criteria_count: number;
+  diagnosis_classification: 'classic_complete_kd' | 'incomplete_atypical_kd' | 'suspected_kd_evaluating';
+  crp_mg_l: number;
+  esr_mm_hr: number;
+  serum_albumin_g_dl: number | null;
+  serum_sodium_meq_l: number | null;
+  platelet_count: number | null;
+  wbc_count: number | null;
+  alt_u_l: number | null;
+  neutrophil_pct: number | null;
+  sterile_pyuria_present: number;
+  kobayashi_score: number;
+  ivig_resistance_risk: 'low_risk' | 'high_risk';
+  ivig_administered: number;
+  ivig_dose_g_kg: number;
+  aspirin_dose_mg_kg_day: number;
+  echo_performed: number;
+  lad_z_score: number | null;
+  rca_z_score: number | null;
+  coronary_aneurysm_classification: 'normal_z_lt_2' | 'dilation_z_2_to_2_5' | 'small_aneurysm_z_2_5_to_5' | 'medium_aneurysm_z_5_to_10' | 'giant_aneurysm_ge_10_or_ge_8mm';
+  status: 'active_diagnostic_workup' | 'ivig_infusion_in_progress' | 'afebrile_post_ivig_monitoring' | 'ivig_resistant_retreatment' | 'resolved_discharged';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  consultant_name?: string;
+}
+
+export interface PediatricKawasakiFlowsheetRecord {
+  id: number;
+  kawasaki_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_admission: number;
+  temperature_celsius: number;
+  heart_rate: number;
+  blood_pressure_sys: number | null;
+  blood_pressure_dia: number | null;
+  ivig_infusion_running: number;
+  aspirin_dose_given_mg: number | null;
+  rash_appearance: string | null;
+  extremity_edema: string | null;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getPediatricKawasakiEpisodes = (params?: { patientId?: number }): Promise<{ episodes: PediatricKawasakiRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/pediatric-kawasaki/episodes${query}`);
+};
+
+export const getPediatricKawasakiEpisode = (id: number): Promise<{ episode: PediatricKawasakiRecord; evaluation: any; flowsheet: PediatricKawasakiFlowsheetRecord[] }> =>
+  api('GET', `/api/pediatric-kawasaki/episodes/${id}`);
+
+export const createPediatricKawasakiEpisode = (payload: any): Promise<{ episodeId: number; episodeCode: string; evaluation: any; success: boolean }> =>
+  api('POST', '/api/pediatric-kawasaki/episodes', payload);
+
+export const updatePediatricKawasakiStatus = (id: number, payload: any): Promise<{ success: boolean }> =>
+  api('PATCH', `/api/pediatric-kawasaki/episodes/${id}/status`, payload);
+
+export const addPediatricKawasakiFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number; success: boolean }> =>
+  api('POST', `/api/pediatric-kawasaki/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deletePediatricKawasakiFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-kawasaki/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const evaluatePediatricKawasakiApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/pediatric-kawasaki/evaluate', payload);
+
 
 
 
