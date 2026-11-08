@@ -5271,6 +5271,150 @@ async function seed() {
     }
   }
 
+  // --- SERIES 37A: Neonatal Congenital Diaphragmatic Hernia (CDH) & Gentle Ventilation Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_cdh_episodes (
+      patient_id, admission_id, episode_code, onset_datetime, age_hours, weight_kg,
+      defect_side, liver_herniation_up, observed_expected_lhr_percent,
+      bag_mask_avoided_in_delivery_room, replogle_sump_decompression_active,
+      preductal_spo2_percent, postductal_spo2_percent,
+      peak_inspiratory_pressure_cmh2o, peep_cmh2o, paco2_mmhg,
+      inhaled_nitric_oxide_active, sildenafil_infusion_active,
+      surgical_repair_status, status, consultant_id, clinical_notes,
+      created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'CDH-20261108-101', '2026-11-08T01:15:00', 6, 2.95,
+      'left_bochdalek', 1, 22.5,
+      1, 1,
+      94, 81,
+      23, 4.5, 58,
+      1, 1,
+      'preop_physiological_stabilization', 'preop_gentle_ventilation', ?,
+      'Neonate delivered at 38+2 weeks with known antenatal left Bochdalek congenital diaphragmatic hernia and intrathoracic liver herniation (liver-up, o/e LHR 22.5% severe hypoplasia). Immediate delivery room endotracheal intubation achieved without bag-valve-mask ventilation. Replogle 10 Fr sump tube placed on continuous low suction (-20 mmHg). High pre/post ductal SpO2 gradient (94% vs 81%, 13% delta) consistent with suprasystemic PPHN right-to-left ductal shunting. Initiated gentle lung-protective ventilation (PIP 23, PEEP 4.5, permissive hypercapnia PaCO2 58 mmHg) with inhaled Nitric Oxide 20 ppm and IV Sildenafil infusion to achieve physiological stabilization prior to delayed prosthetic patch repair.',
+      ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingCdh = db.prepare('SELECT id FROM neonatal_cdh_episodes WHERE episode_code = ?').get('CDH-20261108-101') as any;
+  if (existingCdh) {
+    const cdhLogs = [
+      { hr: 1, t: '2026-11-08T02:00:00', pip: 24, peep: 4.5, fio2: 60, pre: 91, post: 76, ph: 7.24, paco2: 64, lac: 3.2, map: 40, ino: 20, notes: 'Delivery room to NICU transfer. Bag-mask strictly avoided. Replogle 10 Fr on continuous suction. iNO 20 ppm started.' },
+      { hr: 4, t: '2026-11-08T05:00:00', pip: 23, peep: 4.5, fio2: 50, pre: 94, post: 81, ph: 7.30, paco2: 58, lac: 2.1, map: 44, ino: 20, notes: 'Permissive hypercapnia maintained. Sildenafil infusion titrated to 0.2 mcg/kg/min. Right-to-left ductal shunt decreasing.' },
+      { hr: 8, t: '2026-11-08T09:00:00', pip: 22, peep: 4.0, fio2: 40, pre: 96, post: 88, ph: 7.35, paco2: 52, lac: 1.5, map: 46, ino: 15, notes: 'Postductal SpO2 stabilized >= 85%, PIP < 25, gradient < 10%. Patient approaching physiological readiness criteria for delayed repair.' },
+    ];
+    for (const cl of cdhLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_cdh_flowsheet_logs (
+          cdh_episode_id, patient_id, log_datetime, hours_from_admission,
+          pip_cmh2o, peep_cmh2o, fio2_percent, preductal_spo2, postductal_spo2,
+          arterial_ph, paco2_mmhg, lactate_mmol_l, mean_arterial_pressure_mmhg,
+          ino_ppm, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, ?, ?,
+          ?, ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingCdh.id, babyId, cl.t, cl.hr, cl.pip, cl.peep, cl.fio2, cl.pre, cl.post, cl.ph, cl.paco2, cl.lac, cl.map, cl.ino, cl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 37B: Obstetric Hyperemesis Gravidarum (HG) & PUQE-24 Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_hyperemesis_episodes (
+      patient_id, admission_id, episode_code, onset_datetime, gestational_age_weeks,
+      puqe_nausea_hours, puqe_vomiting_episodes, puqe_retching_episodes,
+      weight_loss_percent, ketonuria_level,
+      serum_potassium_mmol_l, serum_sodium_mmol_l, serum_chloride_mmol_l, bicarbonate_mmol_l,
+      parenteral_thiamine_given_before_dextrose, wernicke_triad_symptoms_present,
+      current_antiemetic_tier, thromboprophylaxis_lmwh_prescribed,
+      status, consultant_id, clinical_notes,
+      created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'HG-20261108-101', '2026-11-07T10:00:00', 9.4,
+      5, 5, 4,
+      7.8, 'three_plus',
+      3.0, 131.0, 89.0, 32.5,
+      1, 0,
+      'tier_3_ondansetron_5ht3_antagonist', 1,
+      'inpatient_iv_hydration_thiamine', ?,
+      'Primigravida at 9+4 weeks admitted with intractable vomiting (>7 times/24h), severe nausea (>6h), and inability to retain fluids. PUQE-24 score 14/15 (Severe Hyperemesis Gravidarum). Significant catabolic starvation with 7.8% pre-pregnancy weight loss and 3+ ketonuria. Serum biochemistry shows classical hypokalemic hypochloremic metabolic alkalosis (K+ 3.0, Na+ 131, Cl- 89, HCO3- 32.5). Parenteral Thiamine 100 mg IV administered prior to starting IV hydration to strictly prevent Wernicke encephalopathy. Tier 3 Ondansetron IV and Enoxaparin LMWH thromboprophylaxis initiated.',
+      ?, ?
+    )
+  `).run(sunitaId, docId, now, now);
+
+  const existingHg = db.prepare('SELECT id FROM obstetric_hyperemesis_episodes WHERE episode_code = ?').get('HG-20261108-101') as any;
+  if (existingHg) {
+    const hgLogs = [
+      { d: 1, t: '2026-11-07T12:00:00', puqe: 14, vom: 8, keto: 'three_plus', iv: 2500, oral: 150, k: 3.0, thia: 1, notes: 'Day 1 Admission: Thiamine 100 mg IV piggyback completed before IV 0.9% normal saline with 40 mEq KCl. Ondansetron 4mg IV Q8H.' },
+      { d: 2, t: '2026-11-08T08:00:00', puqe: 9, vom: 3, keto: 'two_plus', iv: 2000, oral: 450, k: 3.6, thia: 1, notes: 'Day 2: Thiamine 100 mg IV daily dose #2 given. K+ corrected to 3.6 mmol/L. Tolerating sips of electrolyte fluid and ginger biscuit.' },
+      { d: 3, t: '2026-11-08T16:00:00', puqe: 6, vom: 1, keto: 'trace', iv: 1000, oral: 1100, k: 4.1, thia: 1, notes: 'Day 3: PUQE score down to 6 (mild category). Ketonuria cleared to trace. Oral hydration target met. Stepping down to oral Doxylamine-Pyridoxine.' },
+    ];
+    for (const hl of hgLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_hyperemesis_flowsheet_logs (
+          hyperemesis_episode_id, patient_id, log_datetime, day_of_treatment,
+          puqe_score_total, vomiting_episodes_24h, ketonuria_dipstick,
+          iv_fluid_balance_ml_24h, oral_fluid_intake_ml, potassium_mmol_l,
+          thiamine_administered, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingHg.id, sunitaId, hl.t, hl.d, hl.puqe, hl.vom, hl.keto, hl.iv, hl.oral, hl.k, hl.thia, hl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 37C: Pediatric Acute Scrotum & TWIST Score Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_acute_scrotum_episodes (
+      patient_id, admission_id, episode_code, onset_datetime, age_years,
+      affected_side, symptom_duration_hours,
+      twist_testis_swelling, twist_hard_testis, twist_absent_cremasteric_reflex,
+      twist_nausea_vomiting, twist_high_riding_testis,
+      doppler_ultrasound_performed, doppler_findings,
+      manual_detorsion_attempted, surgical_exploration_performed,
+      intraoperative_findings, bilateral_orchiopexy_performed,
+      status, consultant_id, clinical_notes,
+      created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'TWIST-20261108-101', '2026-11-08T03:30:00', 11.5,
+      'left', 2.5,
+      2, 2, 1,
+      1, 1,
+      0, 'not_performed',
+      1, 1,
+      'viable_testis_after_detorsion', 1,
+      'postop_scrotal_support_recovery', ?,
+      '11.5-year-old male presenting with acute, sudden-onset left scrotal pain waking him from sleep 2.5 hours prior (Golden Salvage Window < 6h). Clinical examination reveals high-riding, horizontally lie, severely swollen and tender left hemiscrotum with absent ipsilateral cremasteric reflex and nausea (TWIST Score 7/7, High Risk Torsion). Ultrasound bypassed to prevent critical ischemic delay. Bedside open-book manual detorsion attempted (medial to lateral rotation). Transferred immediately to the operating theatre for emergent scrotal exploration. Left testis found twisted 540 degrees clockwise. Detorted and wrapped in warm saline packs for 10 minutes with complete reperfusion and brisk bleeding on tunica albuginea puncture. Bilateral 3-point dartos pouch orchiopexy performed using 3-0 nonabsorbable sutures to fix both testes.',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingTwist = db.prepare('SELECT id FROM pediatric_acute_scrotum_episodes WHERE episode_code = ?').get('TWIST-20261108-101') as any;
+  if (existingTwist) {
+    const twistLogs = [
+      { hrs: 1.0, t: '2026-11-08T04:30:00', pain: 8, edema: 'severe_tense', reflex: 'absent', dress: 1, amb: 'bedrest_scrotal_elevation', notes: 'Pre-op in surgical holding. Strict NPO, IV fluid bolus, open-book manual detorsion partial relief.' },
+      { hrs: 4.0, t: '2026-11-08T07:30:00', pain: 4, edema: 'moderate', reflex: 'sluggish', dress: 1, amb: 'bedrest_scrotal_elevation', notes: 'Immediate post-op PACU. Bilateral 3-point dartos pouch orchiopexy completed. Scrotal ice pack and bridge support.' },
+      { hrs: 12.0, t: '2026-11-08T15:30:00', pain: 2, edema: 'mild', reflex: 'intact_normal', dress: 1, amb: 'gentle_ambulation_supported', notes: 'Day 1 Post-op: Pain well controlled on oral ibuprofen. Dressings dry and intact without scrotal hematoma. Gentle supported ambulation permitted.' },
+    ];
+    for (const tl of twistLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_acute_scrotum_flowsheet_logs (
+          scrotum_episode_id, patient_id, log_datetime, hours_from_presentation,
+          pain_score_flacc_or_vas, scrotal_edema_erythema, cremasteric_reflex_status,
+          wound_dressing_clean, ambulation_status, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?, ?
+        )
+      `).run(existingTwist.id, aaravId, tl.t, tl.hrs, tl.pain, tl.edema, tl.reflex, tl.dress, tl.amb, tl.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

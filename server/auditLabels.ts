@@ -711,6 +711,31 @@ export const ACTION_LABELS: Record<string, string> = {
   'pediatric_scfe.flowsheet_delete': 'Deleted pediatric SCFE flowsheet log',
   'pediatric_scfe.print': 'Printed pediatric SCFE & in-situ cannulated screw fixation clinical dossier',
 
+  // SERIES 37: Neonatal CDH, Obstetric Hyperemesis Gravidarum, Pediatric Acute Scrotum
+  'neonatal_cdh.create': 'Initiated neonatal congenital diaphragmatic hernia (CDH) & gentle ventilation protocol',
+  'neonatal_cdh.update': 'Updated neonatal CDH episode & gentle ventilation / repair plan',
+  'neonatal_cdh.status_change': 'Updated neonatal CDH episode status or repair timeline',
+  'neonatal_cdh.delete': 'Deleted neonatal CDH episode record',
+  'neonatal_cdh.flowsheet_add': 'Logged neonatal CDH ventilatory pressures, pre/post-ductal SpO2 & blood gas checkpoint',
+  'neonatal_cdh.flowsheet_delete': 'Deleted neonatal CDH flowsheet log',
+  'neonatal_cdh.print': 'Printed neonatal CDH & gentle ventilation clinical dossier',
+
+  'obstetric_hyperemesis.create': 'Initiated obstetric hyperemesis gravidarum (HG) & PUQE-24 protocol',
+  'obstetric_hyperemesis.update': 'Updated obstetric hyperemesis episode & antiemetic escalation plan',
+  'obstetric_hyperemesis.status_change': 'Updated obstetric hyperemesis episode status or rehydration progression',
+  'obstetric_hyperemesis.delete': 'Deleted obstetric hyperemesis episode record',
+  'obstetric_hyperemesis.flowsheet_add': 'Logged obstetric hyperemesis PUQE score, electrolytes & thiamine checkpoint',
+  'obstetric_hyperemesis.flowsheet_delete': 'Deleted obstetric hyperemesis flowsheet log',
+  'obstetric_hyperemesis.print': 'Printed obstetric hyperemesis gravidarum & PUQE clinical dossier',
+
+  'pediatric_acute_scrotum.create': 'Initiated pediatric acute scrotum & TWIST score protocol',
+  'pediatric_acute_scrotum.update': 'Updated pediatric acute scrotum episode & surgical exploration plan',
+  'pediatric_acute_scrotum.status_change': 'Updated pediatric acute scrotum episode status or golden window triage',
+  'pediatric_acute_scrotum.delete': 'Deleted pediatric acute scrotum episode record',
+  'pediatric_acute_scrotum.flowsheet_add': 'Logged pediatric acute scrotum pain, edema & ambulation checkpoint',
+  'pediatric_acute_scrotum.flowsheet_delete': 'Deleted pediatric acute scrotum flowsheet log',
+  'pediatric_acute_scrotum.print': 'Printed pediatric acute scrotum & TWIST score clinical dossier',
+
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

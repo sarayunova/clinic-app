@@ -11950,6 +11950,288 @@ export const deletePediatricScfeFlowsheet = (episodeId: number, flowsheetId: num
 export const deletePediatricScfeEpisode = (id: number): Promise<{ ok: boolean }> =>
   api('DELETE', `/api/pediatric-scfe/episodes/${id}`);
 
+// ==========================================
+// SERIES 37A: Neonatal Congenital Diaphragmatic Hernia (CDH) & Gentle Ventilation Protocol
+// ==========================================
+export interface NeonatalCdhRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  age_hours: number;
+  weight_kg: number;
+  defect_side: 'left_bochdalek' | 'right_bochdalek' | 'bilateral_bochdalek' | 'anterior_morgagni';
+  liver_herniation_up: number;
+  observed_expected_lhr_percent: number;
+  bag_mask_avoided_in_delivery_room: number;
+  replogle_sump_decompression_active: number;
+  preductal_spo2_percent: number;
+  postductal_spo2_percent: number;
+  peak_inspiratory_pressure_cmh2o: number;
+  peep_cmh2o: number;
+  paco2_mmhg: number;
+  inhaled_nitric_oxide_active: number;
+  sildenafil_infusion_active: number;
+  surgical_repair_status:
+    | 'preop_physiological_stabilization'
+    | 'ready_for_repair_criteria_met'
+    | 'primary_repair_performed'
+    | 'prosthetic_patch_repair_performed'
+    | 'ecmo_cannulated_bridge';
+  status:
+    | 'preop_gentle_ventilation'
+    | 'pulmonary_hypertension_crisis'
+    | 'in_operating_room_repair'
+    | 'postop_ventilatory_weaning'
+    | 'recovering_extubated'
+    | 'resolved_discharged_home';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  consultant_name?: string;
+  date_of_birth?: string;
+}
+
+export interface NeonatalCdhFlowsheetRecord {
+  id: number;
+  cdh_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_admission: number;
+  pip_cmh2o: number;
+  peep_cmh2o: number;
+  fio2_percent: number;
+  preductal_spo2: number;
+  postductal_spo2: number;
+  arterial_ph: number;
+  paco2_mmhg: number;
+  lactate_mmol_l: number;
+  mean_arterial_pressure_mmhg: number;
+  ino_ppm: number;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getNeonatalCdhEpisodes = (params?: { patientId?: number }): Promise<{ episodes: NeonatalCdhRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/neonatal-cdh/episodes${query}`);
+};
+
+export const getNeonatalCdhEpisode = (id: number): Promise<{ episode: NeonatalCdhRecord; evaluation: any; flowsheetLogs: NeonatalCdhFlowsheetRecord[] }> =>
+  api('GET', `/api/neonatal-cdh/episodes/${id}`);
+
+export const createNeonatalCdhEpisode = (payload: any): Promise<{ episode: NeonatalCdhRecord }> =>
+  api('POST', '/api/neonatal-cdh/episodes', payload);
+
+export const updateNeonatalCdhEpisode = (id: number, payload: any): Promise<{ episode: NeonatalCdhRecord }> =>
+  api('PUT', `/api/neonatal-cdh/episodes/${id}`, payload);
+
+export const patchNeonatalCdhStatus = (id: number, status: string): Promise<{ ok: boolean }> =>
+  api('PATCH', `/api/neonatal-cdh/episodes/${id}/status`, { status });
+
+export const deleteNeonatalCdhEpisode = (id: number): Promise<{ ok: boolean }> =>
+  api('DELETE', `/api/neonatal-cdh/episodes/${id}`);
+
+export const addNeonatalCdhFlowsheet = (episodeId: number, payload: any): Promise<{ flowsheetLog: NeonatalCdhFlowsheetRecord }> =>
+  api('POST', `/api/neonatal-cdh/episodes/${episodeId}/flowsheet`, payload);
+
+export const deleteNeonatalCdhFlowsheet = (episodeId: number, flowsheetId: number): Promise<{ ok: boolean }> =>
+  api('DELETE', `/api/neonatal-cdh/flowsheet/${flowsheetId}`);
+
+export const evaluateNeonatalCdhApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/neonatal-cdh/evaluate', payload);
+
+// ==========================================
+// SERIES 37B: Obstetric Hyperemesis Gravidarum (HG) & PUQE-24 Protocol
+// ==========================================
+export interface ObstetricHyperemesisRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  gestational_age_weeks: number;
+  puqe_nausea_hours: number;
+  puqe_vomiting_episodes: number;
+  puqe_retching_episodes: number;
+  weight_loss_percent: number;
+  ketonuria_level: 'negative' | 'trace' | 'one_plus' | 'two_plus' | 'three_plus' | 'four_plus';
+  serum_potassium_mmol_l: number;
+  serum_sodium_mmol_l: number;
+  serum_chloride_mmol_l: number;
+  bicarbonate_mmol_l: number;
+  parenteral_thiamine_given_before_dextrose: number;
+  wernicke_triad_symptoms_present: number;
+  current_antiemetic_tier:
+    | 'tier_1_doxylamine_pyridoxine'
+    | 'tier_2_dimenhydrinate_or_metoclopramide'
+    | 'tier_3_ondansetron_5ht3_antagonist'
+    | 'tier_4_corticosteroid_methylprednisolone_pulse'
+    | 'refractory_enteral_jejunostomy_tpn';
+  thromboprophylaxis_lmwh_prescribed: number;
+  status:
+    | 'inpatient_iv_hydration_thiamine'
+    | 'antiemetic_step_up_escalation'
+    | 'corticosteroid_pulse_therapy'
+    | 'oral_tolerance_dietary_reintroduction'
+    | 'outpatient_maintenance_surveillance'
+    | 'resolved_discharged_home';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  consultant_name?: string;
+  date_of_birth?: string;
+}
+
+export interface ObstetricHyperemesisFlowsheetRecord {
+  id: number;
+  hyperemesis_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  day_of_treatment: number;
+  puqe_score_total: number;
+  vomiting_episodes_24h: number;
+  ketonuria_dipstick: 'negative' | 'trace' | 'one_plus' | 'two_plus' | 'three_plus' | 'four_plus';
+  iv_fluid_balance_ml_24h: number;
+  oral_fluid_intake_ml: number;
+  potassium_mmol_l: number;
+  thiamine_administered: number;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getObstetricHyperemesisEpisodes = (params?: { patientId?: number }): Promise<{ episodes: ObstetricHyperemesisRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/obstetric-hyperemesis/episodes${query}`);
+};
+
+export const getObstetricHyperemesisEpisode = (id: number): Promise<{ episode: ObstetricHyperemesisRecord; evaluation: any; flowsheetLogs: ObstetricHyperemesisFlowsheetRecord[] }> =>
+  api('GET', `/api/obstetric-hyperemesis/episodes/${id}`);
+
+export const createObstetricHyperemesisEpisode = (payload: any): Promise<{ episode: ObstetricHyperemesisRecord }> =>
+  api('POST', '/api/obstetric-hyperemesis/episodes', payload);
+
+export const updateObstetricHyperemesisEpisode = (id: number, payload: any): Promise<{ episode: ObstetricHyperemesisRecord }> =>
+  api('PUT', `/api/obstetric-hyperemesis/episodes/${id}`, payload);
+
+export const patchObstetricHyperemesisStatus = (id: number, status: string): Promise<{ ok: boolean }> =>
+  api('PATCH', `/api/obstetric-hyperemesis/episodes/${id}/status`, { status });
+
+export const deleteObstetricHyperemesisEpisode = (id: number): Promise<{ ok: boolean }> =>
+  api('DELETE', `/api/obstetric-hyperemesis/episodes/${id}`);
+
+export const addObstetricHyperemesisFlowsheet = (episodeId: number, payload: any): Promise<{ flowsheetLog: ObstetricHyperemesisFlowsheetRecord }> =>
+  api('POST', `/api/obstetric-hyperemesis/episodes/${episodeId}/flowsheet`, payload);
+
+export const deleteObstetricHyperemesisFlowsheet = (episodeId: number, flowsheetId: number): Promise<{ ok: boolean }> =>
+  api('DELETE', `/api/obstetric-hyperemesis/flowsheet/${flowsheetId}`);
+
+export const evaluateObstetricHyperemesisApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/obstetric-hyperemesis/evaluate', payload);
+
+// ==========================================
+// SERIES 37C: Pediatric Acute Scrotum & TWIST Score Protocol
+// ==========================================
+export interface PediatricAcuteScrotumRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  age_years: number;
+  affected_side: 'right' | 'left' | 'bilateral';
+  symptom_duration_hours: number;
+  twist_testis_swelling: number;
+  twist_hard_testis: number;
+  twist_absent_cremasteric_reflex: number;
+  twist_nausea_vomiting: number;
+  twist_high_riding_testis: number;
+  doppler_ultrasound_performed: number;
+  doppler_findings:
+    | 'not_performed'
+    | 'absent_arterial_flow_torsion_confirmed'
+    | 'decreased_flow_partial_torsion'
+    | 'normal_flow_appendix_torsion_blue_dot'
+    | 'increased_hyperemic_flow_epididymo_orchitis';
+  manual_detorsion_attempted: number;
+  surgical_exploration_performed: number;
+  intraoperative_findings:
+    | 'preop_evaluation'
+    | 'viable_testis_after_detorsion'
+    | 'necrotic_nonviable_orchiectomy_performed'
+    | 'torsion_appendix_testis_excised'
+    | 'normal_testis_epididymitis_managed';
+  bilateral_orchiopexy_performed: number;
+  status:
+    | 'emergency_triage_under_6h'
+    | 'urgent_ultrasound_intermediate_risk'
+    | 'in_operating_room_exploration'
+    | 'postop_scrotal_support_recovery'
+    | 'resolved_discharged_home';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  consultant_name?: string;
+  date_of_birth?: string;
+}
+
+export interface PediatricAcuteScrotumFlowsheetRecord {
+  id: number;
+  scrotum_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_presentation: number;
+  pain_score_flacc_or_vas: number;
+  scrotal_edema_erythema: 'mild' | 'moderate' | 'severe_tense' | 'resolving';
+  cremasteric_reflex_status: 'absent' | 'sluggish' | 'intact_normal';
+  wound_dressing_clean: number;
+  ambulation_status: 'bedrest_scrotal_elevation' | 'gentle_ambulation_supported' | 'full_activity';
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getPediatricAcuteScrotumEpisodes = (params?: { patientId?: number }): Promise<{ episodes: PediatricAcuteScrotumRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/pediatric-acute-scrotum/episodes${query}`);
+};
+
+export const getPediatricAcuteScrotumEpisode = (id: number): Promise<{ episode: PediatricAcuteScrotumRecord; evaluation: any; flowsheetLogs: PediatricAcuteScrotumFlowsheetRecord[] }> =>
+  api('GET', `/api/pediatric-acute-scrotum/episodes/${id}`);
+
+export const createPediatricAcuteScrotumEpisode = (payload: any): Promise<{ episode: PediatricAcuteScrotumRecord }> =>
+  api('POST', '/api/pediatric-acute-scrotum/episodes', payload);
+
+export const updatePediatricAcuteScrotumEpisode = (id: number, payload: any): Promise<{ episode: PediatricAcuteScrotumRecord }> =>
+  api('PUT', `/api/pediatric-acute-scrotum/episodes/${id}`, payload);
+
+export const patchPediatricAcuteScrotumStatus = (id: number, status: string): Promise<{ ok: boolean }> =>
+  api('PATCH', `/api/pediatric-acute-scrotum/episodes/${id}/status`, { status });
+
+export const deletePediatricAcuteScrotumEpisode = (id: number): Promise<{ ok: boolean }> =>
+  api('DELETE', `/api/pediatric-acute-scrotum/episodes/${id}`);
+
+export const addPediatricAcuteScrotumFlowsheet = (episodeId: number, payload: any): Promise<{ flowsheetLog: PediatricAcuteScrotumFlowsheetRecord }> =>
+  api('POST', `/api/pediatric-acute-scrotum/episodes/${episodeId}/flowsheet`, payload);
+
+export const deletePediatricAcuteScrotumFlowsheet = (episodeId: number, flowsheetId: number): Promise<{ ok: boolean }> =>
+  api('DELETE', `/api/pediatric-acute-scrotum/flowsheet/${flowsheetId}`);
+
+export const evaluatePediatricAcuteScrotumApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/pediatric-acute-scrotum/evaluate', payload);
+
 
 
 
