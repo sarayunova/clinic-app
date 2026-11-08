@@ -2,10 +2,15 @@ import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isSea } from 'node:sea';
 
 export type DB = DatabaseSync;
 
-const MIGRATIONS_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'migrations');
+// Packaged as a single executable (Node SEA), there is no source file next to `migrations/` —
+// the migration .sql files ship as a plain folder beside the .exe instead of beside this module.
+const MIGRATIONS_DIR = isSea()
+  ? path.join(path.dirname(process.execPath), 'migrations')
+  : path.join(path.dirname(fileURLToPath(import.meta.url)), 'migrations');
 
 export function openDb(file: string): DB {
   if (file !== ':memory:') fs.mkdirSync(path.dirname(file), { recursive: true });

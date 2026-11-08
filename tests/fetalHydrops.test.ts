@@ -46,7 +46,6 @@ describe('Non-Immune Fetal Hydrops (NIHF) & Mirror Syndrome Engine (Pure Unit Te
   it('detects severe fetal hydrops with severe anemia (MCA MoM >= 1.50) and Maternal Mirror Syndrome', () => {
     const res = evaluateFetalHydrops({
       gestationalAgeWeeks: 26.5,
-      fetalCompartmentsInvolvedCount: 4,
       ascitesPresent: true,
       pleuralEffusionPresent: true,
       pericardialEffusionPresent: true,
@@ -77,7 +76,6 @@ describe('Non-Immune Fetal Hydrops (NIHF) & Mirror Syndrome Engine (Pure Unit Te
   it('evaluates isolated fetal ascites (< 2 compartments) as pre-hydrops / surveillance', () => {
     const res = evaluateFetalHydrops({
       gestationalAgeWeeks: 28.0,
-      fetalCompartmentsInvolvedCount: 1,
       ascitesPresent: true,
       pleuralEffusionPresent: false,
       pericardialEffusionPresent: false,
@@ -105,7 +103,6 @@ describe('Non-Immune Fetal Hydrops (NIHF) & Mirror Syndrome Engine (Pure Unit Te
   it('triggers antiarrhythmic transplacental therapy for fetal tachyarrhythmia hydrops', () => {
     const res = evaluateFetalHydrops({
       gestationalAgeWeeks: 24.0,
-      fetalCompartmentsInvolvedCount: 2,
       ascitesPresent: true,
       pleuralEffusionPresent: false,
       pericardialEffusionPresent: true,

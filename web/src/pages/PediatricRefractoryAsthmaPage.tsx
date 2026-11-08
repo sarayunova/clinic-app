@@ -161,7 +161,6 @@ export const PediatricRefractoryAsthmaPage: React.FC = () => {
                         <div className="font-medium text-slate-900 dark:text-white">
                           {ep.patient_name || `Patient #${ep.patient_id}`}
                         </div>
-                        <div className="text-xs text-slate-500">MRN: {ep.patient_mrn || '—'}</div>
                       </td>
                       <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                         {ep.age_years} yrs • {ep.weight_kg} kg

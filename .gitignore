@@ -1,6 +1,8 @@
 node_modules
 .devdata
 dist
+dist-exe
+installer/output
 *.sqlite*
 data
 *.cbk*

@@ -63,6 +63,10 @@ export interface PediatricRefractoryAsthmaEvaluation {
     infusionRateMgKgHr: number;
     maxRateMgKgHr: number;
   };
+  terbutalineLoadingDoseMcg: number;
+  terbutalineInfusionRange: string;
+  ketamineLoadingDoseMg: number;
+  ketamineInfusionDoseMgHr: number;
   aminophyllineLoadingDoseMg: number;
   helioxRecommendation: string;
   ventilatoryStrategyDirectives: {

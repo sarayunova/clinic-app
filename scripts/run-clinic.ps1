@@ -2,11 +2,16 @@
 .SYNOPSIS
   Runs the clinic server and keeps it running: restarts it if it stops, and writes a log file.
   Started automatically by the "ClinicApp" scheduled task (see docs/AUTO-START.md). You can also run it by hand.
+.DESCRIPTION
+  Launches the packaged clinic.exe when one is present (installer-based deployments), or falls
+  back to `node.exe` + `tsx` running server/index.ts from source (dev checkouts, docs/AUTO-START.md's
+  original setup) when it isn't. Pass -ExePath to point at a specific executable explicitly.
 #>
 param(
   [Parameter(Mandatory)] [string] $AppDir,
   [Parameter(Mandatory)] [string] $DataDir,
   [string] $Node = 'node.exe',
+  [string] $ExePath = '',
   [int]    $Port = 3080,
   [string] $ListenHost = '127.0.0.1',
   [string] $BackupDir = '',
@@ -18,7 +23,17 @@ $ErrorActionPreference = 'Stop'
 
 $cli = Join-Path $AppDir 'node_modules\tsx\dist\cli.mjs'
 $entry = Join-Path $AppDir 'server\index.ts'
-foreach ($f in @($cli, $entry)) { if (-not (Test-Path -LiteralPath $f)) { throw "Missing $f - run 'npm ci' in $AppDir" } }
+
+if (-not $ExePath) {
+  $defaultExe = Join-Path $AppDir 'clinic.exe'
+  if (Test-Path -LiteralPath $defaultExe) { $ExePath = $defaultExe }
+}
+$useExe = [bool]$ExePath
+if ($useExe) {
+  if (-not (Test-Path -LiteralPath $ExePath)) { throw "Missing $ExePath" }
+} else {
+  foreach ($f in @($cli, $entry)) { if (-not (Test-Path -LiteralPath $f)) { throw "Missing $f - run 'npm ci' in $AppDir, or pass -ExePath to a packaged clinic.exe" } }
+}
 
 $logDir = Join-Path $DataDir 'logs'
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
@@ -49,10 +64,17 @@ $delay = 5
 while ($true) {
   $day = Get-Date -Format 'yyyyMMdd'
   $started = Get-Date
-  $p = Start-Process -FilePath $Node -ArgumentList @("`"$cli`"", "`"$entry`"") -WorkingDirectory $AppDir `
-        -RedirectStandardOutput (Join-Path $logDir "server-$day.out.log") `
-        -RedirectStandardError (Join-Path $logDir "server-$day.err.log") `
-        -NoNewWindow -PassThru
+  $p = if ($useExe) {
+    Start-Process -FilePath $ExePath -ArgumentList @('server') -WorkingDirectory $AppDir `
+          -RedirectStandardOutput (Join-Path $logDir "server-$day.out.log") `
+          -RedirectStandardError (Join-Path $logDir "server-$day.err.log") `
+          -NoNewWindow -PassThru
+  } else {
+    Start-Process -FilePath $Node -ArgumentList @("`"$cli`"", "`"$entry`"") -WorkingDirectory $AppDir `
+          -RedirectStandardOutput (Join-Path $logDir "server-$day.out.log") `
+          -RedirectStandardError (Join-Path $logDir "server-$day.err.log") `
+          -NoNewWindow -PassThru
+  }
   Write-Log "Server started (process $($p.Id))"
   $null = $p.Handle   # keeps the process handle so ExitCode is available after it exits
   $p.WaitForExit()

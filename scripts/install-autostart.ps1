@@ -37,14 +37,25 @@ if (-not $AppDir) { $AppDir = Split-Path -Parent $PSScriptRoot }  # default: the
 $AppDir = (Resolve-Path -LiteralPath $AppDir).Path
 $run = Join-Path $AppDir 'scripts\run-clinic.ps1'
 if (-not (Test-Path -LiteralPath $run)) { Fail "Cannot find $run" }
-if (-not (Test-Path -LiteralPath (Join-Path $AppDir 'node_modules\tsx\dist\cli.mjs'))) { Fail "Dependencies are missing. Run 'npm ci' in $AppDir first." }
-if (-not (Test-Path -LiteralPath (Join-Path $AppDir 'dist\web\index.html'))) { Warn "The web screens are not built. Run 'npm run build' in $AppDir, otherwise only the API will be served." }
 
-$nodeCmd = Get-Command node.exe -ErrorAction SilentlyContinue
-if (-not $nodeCmd) { Fail 'Node.js was not found. Install Node.js 24 or newer first.' }
-$node = $nodeCmd.Source
-$major = [int]((& $node --version).TrimStart('v').Split('.')[0])
-if ($major -lt 24) { Fail "Node.js 24 or newer is required (found $(& $node --version))." }
+# An installer-based deployment ships clinic.exe (a packaged single executable: no Node.js,
+# npm, or node_modules required on this machine). A source checkout has neither and needs them.
+$exePath = Join-Path $AppDir 'clinic.exe'
+$useExe = Test-Path -LiteralPath $exePath
+$node = ''
+if ($useExe) {
+  if (-not (Test-Path -LiteralPath (Join-Path $AppDir 'dist\web\index.html'))) { Warn "The web screens (dist\web) are missing from this install. Only the API will be served." }
+  if (-not (Test-Path -LiteralPath (Join-Path $AppDir 'migrations'))) { Fail "Cannot find $(Join-Path $AppDir 'migrations') next to clinic.exe." }
+} else {
+  if (-not (Test-Path -LiteralPath (Join-Path $AppDir 'node_modules\tsx\dist\cli.mjs'))) { Fail "Dependencies are missing. Run 'npm ci' in $AppDir first, or install a package that includes clinic.exe." }
+  if (-not (Test-Path -LiteralPath (Join-Path $AppDir 'dist\web\index.html'))) { Warn "The web screens are not built. Run 'npm run build' in $AppDir, otherwise only the API will be served." }
+
+  $nodeCmd = Get-Command node.exe -ErrorAction SilentlyContinue
+  if (-not $nodeCmd) { Fail 'Node.js was not found. Install Node.js 24 or newer first.' }
+  $node = $nodeCmd.Source
+  $major = [int]((& $node --version).TrimStart('v').Split('.')[0])
+  if ($major -lt 24) { Fail "Node.js 24 or newer is required (found $(& $node --version))." }
+}
 
 # Things that commonly break an unattended start.
 if ($AppDir -match 'OneDrive|\\Desktop\\|\\Documents\\') { Warn "$AppDir looks like a cloud-synced or personal folder. At startup those files may not be available yet. Install the app under a plain folder such as C:\ClinicApp." }
@@ -61,7 +72,8 @@ if ($ListenHost -ne '127.0.0.1' -and $ListenHost -ne 'localhost' -and -not $TlsD
 
 $who = "$env:USERDOMAIN\$env:USERNAME"
 $argList = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', "`"$run`"",
-  '-AppDir', "`"$AppDir`"", '-DataDir', "`"$DataDir`"", '-Node', "`"$node`"", '-Port', $Port, '-ListenHost', $ListenHost)
+  '-AppDir', "`"$AppDir`"", '-DataDir', "`"$DataDir`"", '-Port', $Port, '-ListenHost', $ListenHost)
+if ($useExe) { $argList += @('-ExePath', "`"$exePath`"") } else { $argList += @('-Node', "`"$node`"") }
 if ($BackupDir) { $argList += @('-BackupDir', "`"$BackupDir`"") }
 if ($BackupPassphraseFile) { $argList += @('-BackupPassphraseFile', "`"$BackupPassphraseFile`"") }
 if ($TlsDir) { $argList += @('-TlsDir', "`"$TlsDir`"") }
