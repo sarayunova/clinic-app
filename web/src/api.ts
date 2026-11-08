@@ -12770,6 +12770,253 @@ export const deleteNeonatalHyperammonemiaFlowsheet = (episodeId: number, logId: 
 export const evaluateNeonatalHyperammonemiaApi = (payload: any): Promise<{ evaluation: any }> =>
   api('POST', '/api/neonatal-hyperammonemia/evaluate', payload);
 
+// ==========================================
+// SERIES 40: Non-Immune Fetal Hydrops, Obstetric CVST, Pediatric Refractory Asthma
+// ==========================================
+
+export interface FetalHydropsRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  diagnosis_datetime: string;
+  gestational_age_weeks: number;
+  fetal_compartments_involved_count: number;
+  ascites_present: number;
+  pleural_effusion_present: number;
+  pericardial_effusion_present: number;
+  skin_edema_present: number;
+  placental_edema_present: number;
+  polyhydramnios_present: number;
+  mca_psv_mom: number;
+  suspected_etiology_category: 'cardiovascular_structural_or_arrhythmia' | 'fetal_anemia_parvovirus_or_hemoglobinopathy' | 'chromosomal_genetic_aneuploidy' | 'thoracic_lymphatic_cpam_chylothorax' | 'twin_transfusion_ttts_or_taps' | 'inborn_errors_metabolism_lysosomal' | 'idiopathic_unexplained';
+  fetal_arrhythmia_detected: number;
+  maternal_mirror_syndrome_suspected: number;
+  maternal_systolic_bp_mmhg: number;
+  maternal_diastolic_bp_mmhg: number;
+  maternal_proteinuria_grade: 'nil' | 'trace' | '1_plus' | '2_plus' | '3_plus' | '4_plus';
+  maternal_generalized_anasarca: number;
+  in_utero_intervention_planned: 'intrauterine_blood_transfusion_iut' | 'fetal_thoracocentesis_or_pigtail_shunt' | 'antiarrhythmic_transplacental_therapy' | 'amnioreduction_serial' | 'conservative_surveillance' | 'emergent_delivery_indicated';
+  status: string;
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  consultant_name?: string;
+}
+
+export interface FetalHydropsFlowsheetRecord {
+  id: number;
+  episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  gestational_age_weeks: number;
+  fetal_heart_rate_bpm: number;
+  mca_psv_cm_s: number;
+  mca_psv_mom: number;
+  pleural_effusion_depth_mm: number;
+  ascites_depth_mm: number;
+  maternal_bp_systolic: number;
+  maternal_bp_diastolic: number;
+  maternal_weight_kg: number;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getFetalHydropsEpisodes = (params?: { patientId?: number }): Promise<{ episodes: FetalHydropsRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/fetal-hydrops/episodes${query}`);
+};
+
+export const getFetalHydropsEpisode = (id: number): Promise<{ episode: FetalHydropsRecord; evaluation: any; flowsheet: FetalHydropsFlowsheetRecord[] }> =>
+  api('GET', `/api/fetal-hydrops/episodes/${id}`);
+
+export const createFetalHydropsEpisode = (payload: any): Promise<{ episode: FetalHydropsRecord }> =>
+  api('POST', '/api/fetal-hydrops/episodes', payload);
+
+export const updateFetalHydropsEpisode = (id: number, payload: any): Promise<{ episode: FetalHydropsRecord }> =>
+  api('PUT', `/api/fetal-hydrops/episodes/${id}`, payload);
+
+export const patchFetalHydropsStatus = (id: number, status: string): Promise<{ episode: FetalHydropsRecord }> =>
+  api('PATCH', `/api/fetal-hydrops/episodes/${id}/status`, { status });
+
+export const deleteFetalHydropsEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/fetal-hydrops/episodes/${id}`);
+
+export const addFetalHydropsFlowsheet = (episodeId: number, payload: any): Promise<{ flowsheetLog: FetalHydropsFlowsheetRecord }> =>
+  api('POST', `/api/fetal-hydrops/episodes/${episodeId}/flowsheet`, payload);
+
+export const deleteFetalHydropsFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/fetal-hydrops/episodes/${episodeId}/flowsheet/${logId}`);
+
+export const evaluateFetalHydropsApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/fetal-hydrops/evaluate', payload);
+
+// Obstetric CVST
+export interface ObstetricCvstRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  gestational_age_weeks: number;
+  clinical_timing: 'antepartum_first_trimester' | 'antepartum_second_trimester' | 'antepartum_third_trimester' | 'early_postpartum_puerperium' | 'late_postpartum';
+  presenting_headache_type: 'thunderclap_sudden_severe' | 'progressive_unremitting_subacute' | 'postural_headache_mimicking_pdph' | 'mild_intermittent';
+  seizures_present: number;
+  papilledema_present: number;
+  focal_neurological_deficit: number;
+  altered_mental_status_coma: number;
+  thrombosed_sinus_locations_json: string;
+  intracranial_hemorrhagic_venous_infarct: number;
+  therapeutic_anticoagulation_active: number;
+  anticoagulant_agent: 'therapeutic_lmwh_enoxaparin_1mg_kg_q12h' | 'therapeutic_ufh_continuous_infusion' | 'withheld_severe_mass_effect_neurosurgery' | 'other';
+  intracranial_hypertension_management: 'elevate_head_bed_and_osmotherapy' | 'mannitol_or_hypertonic_saline_infusion' | 'decompressive_hemicraniectomy_eval' | 'conservative_monitoring';
+  antiepileptic_therapy_active: number;
+  status: string;
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  consultant_name?: string;
+}
+
+export interface ObstetricCvstFlowsheetRecord {
+  id: number;
+  episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  gcs_score: number;
+  pupillary_reactivity: 'equal_and_reactive' | 'sluggish' | 'unilateral_dilated' | 'bilateral_fixed';
+  headache_severity_nrs: number;
+  systolic_bp_mmhg: number;
+  diastolic_bp_mmhg: number;
+  heart_rate_bpm: number;
+  anti_xa_or_aptt_level: number;
+  seizure_activity_observed: number;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getObstetricCvstEpisodes = (params?: { patientId?: number }): Promise<{ episodes: ObstetricCvstRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/obstetric-cvst/episodes${query}`);
+};
+
+export const getObstetricCvstEpisode = (id: number): Promise<{ episode: ObstetricCvstRecord; evaluation: any; flowsheet: ObstetricCvstFlowsheetRecord[] }> =>
+  api('GET', `/api/obstetric-cvst/episodes/${id}`);
+
+export const createObstetricCvstEpisode = (payload: any): Promise<{ episode: ObstetricCvstRecord }> =>
+  api('POST', '/api/obstetric-cvst/episodes', payload);
+
+export const updateObstetricCvstEpisode = (id: number, payload: any): Promise<{ episode: ObstetricCvstRecord }> =>
+  api('PUT', `/api/obstetric-cvst/episodes/${id}`, payload);
+
+export const patchObstetricCvstStatus = (id: number, status: string): Promise<{ episode: ObstetricCvstRecord }> =>
+  api('PATCH', `/api/obstetric-cvst/episodes/${id}/status`, { status });
+
+export const deleteObstetricCvstEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-cvst/episodes/${id}`);
+
+export const addObstetricCvstFlowsheet = (episodeId: number, payload: any): Promise<{ flowsheetLog: ObstetricCvstFlowsheetRecord }> =>
+  api('POST', `/api/obstetric-cvst/episodes/${episodeId}/flowsheet`, payload);
+
+export const deleteObstetricCvstFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-cvst/episodes/${episodeId}/flowsheet/${logId}`);
+
+export const evaluateObstetricCvstApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/obstetric-cvst/evaluate', payload);
+
+// Pediatric Refractory Status Asthmaticus
+export interface PediatricRefractoryAsthmaRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  age_years: number;
+  weight_kg: number;
+  initial_pediatric_asthma_score: number;
+  respiratory_rate: number;
+  heart_rate_bpm: number;
+  spo2_percent: number;
+  pco2_mmhg: number;
+  ph_value: number;
+  silent_chest_or_exhaustion: number;
+  refractory_to_first_line: number;
+  continuous_iv_terbutaline_active: number;
+  terbutaline_dose_mcg_kg_min: number;
+  iv_ketamine_infusion_active: number;
+  ketamine_dose_mg_kg_hr: number;
+  heliox_inhalation_active: number;
+  heliox_mixture_ratio: 'none' | 'heliox_80_20' | 'heliox_70_30';
+  iv_theophylline_aminophylline_active: number;
+  ventilatory_support_mode: 'high_flow_nasal_cannula' | 'bipap_noninvasive_positive_pressure' | 'invasive_mechanical_ventilation_permissive_hypercapnia' | 'standard_low_flow_oxygen';
+  status: string;
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  consultant_name?: string;
+}
+
+export interface PediatricRefractoryAsthmaFlowsheetRecord {
+  id: number;
+  episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_picu_admission: number;
+  respiratory_rate: number;
+  heart_rate_bpm: number;
+  spo2_percent: number;
+  pco2_mmhg: number;
+  ph_value: number;
+  terbutaline_infusion_rate: number;
+  ketamine_infusion_rate: number;
+  inspiratory_expiratory_ratio: string;
+  air_entry_auscultation: 'bilateral_good_clear' | 'mild_expiratory_wheeze' | 'severe_widespread_wheezing' | 'markedly_reduced_poor_air_movement' | 'silent_chest';
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getPediatricRefractoryAsthmaEpisodes = (params?: { patientId?: number }): Promise<{ episodes: PediatricRefractoryAsthmaRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/pediatric-refractory-asthma/episodes${query}`);
+};
+
+export const getPediatricRefractoryAsthmaEpisode = (id: number): Promise<{ episode: PediatricRefractoryAsthmaRecord; evaluation: any; flowsheet: PediatricRefractoryAsthmaFlowsheetRecord[] }> =>
+  api('GET', `/api/pediatric-refractory-asthma/episodes/${id}`);
+
+export const createPediatricRefractoryAsthmaEpisode = (payload: any): Promise<{ episode: PediatricRefractoryAsthmaRecord }> =>
+  api('POST', '/api/pediatric-refractory-asthma/episodes', payload);
+
+export const updatePediatricRefractoryAsthmaEpisode = (id: number, payload: any): Promise<{ episode: PediatricRefractoryAsthmaRecord }> =>
+  api('PUT', `/api/pediatric-refractory-asthma/episodes/${id}`, payload);
+
+export const patchPediatricRefractoryAsthmaStatus = (id: number, status: string): Promise<{ episode: PediatricRefractoryAsthmaRecord }> =>
+  api('PATCH', `/api/pediatric-refractory-asthma/episodes/${id}/status`, { status });
+
+export const deletePediatricRefractoryAsthmaEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-refractory-asthma/episodes/${id}`);
+
+export const addPediatricRefractoryAsthmaFlowsheet = (episodeId: number, payload: any): Promise<{ flowsheetLog: PediatricRefractoryAsthmaFlowsheetRecord }> =>
+  api('POST', `/api/pediatric-refractory-asthma/episodes/${episodeId}/flowsheet`, payload);
+
+export const deletePediatricRefractoryAsthmaFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-refractory-asthma/episodes/${episodeId}/flowsheet/${logId}`);
+
+export const evaluatePediatricRefractoryAsthmaApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/pediatric-refractory-asthma/evaluate', payload);
+
+
 
 
 

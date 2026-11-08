@@ -5691,6 +5691,153 @@ async function seed() {
     }
   }
 
+  // --- SERIES 40A: Non-Immune Fetal Hydrops (NIHF) & Maternal Mirror Syndrome Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO fetal_hydrops_episodes (
+      patient_id, admission_id, episode_code, diagnosis_datetime, gestational_age_weeks,
+      fetal_compartments_involved_count, ascites_present, pleural_effusion_present,
+      pericardial_effusion_present, skin_edema_present, placental_edema_present,
+      polyhydramnios_present, mca_psv_mom, suspected_etiology_category,
+      fetal_arrhythmia_detected, maternal_mirror_syndrome_suspected, maternal_systolic_bp_mmhg,
+      maternal_diastolic_bp_mmhg, maternal_proteinuria_grade, maternal_generalized_anasarca,
+      in_utero_intervention_planned, status, consultant_id, clinical_notes,
+      created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'HYD-20261108-101', '2026-11-08T06:00:00', 26.4,
+      4, 1, 1,
+      1, 1, 1,
+      1, 1.72, 'fetal_anemia_parvovirus_or_hemoglobinopathy',
+      0, 1, 152,
+      96, '2_plus', 1,
+      'intrauterine_blood_transfusion_iut', 'in_utero_intervention_active', ?,
+      'Gravida 2 Para 1 at 26w4d referred for acute polyhydramnios and severe fetal hydrops. Comprehensive targeted neurosonogram and fetal echocardiogram revealed fluid accumulation in 4 anatomical compartments (fetal ascites, bilateral pleural effusions, 3.5 mm pericardial effusion, and diffuse scalp and body wall skin edema measuring 7.2 mm). Placentomegaly noted with placental thickness 5.8 cm (markedly enlarged for 26w). MCA Doppler peak systolic velocity markedly elevated at 64.0 cm/s (1.72 MoM for gestational age, well exceeding the 1.50 MoM threshold for severe fetal anemia). Maternal serology confirmed acute Parvovirus B19 IgM positivity and maternal viremia. Maternal examination notable for sudden 4.5 kg weight gain in 10 days, generalized facial and pretibial anasarca, elevated BP 152/96 mmHg, and 2+ proteinuria, confirming acute Maternal Mirror Syndrome (Ballantyne Syndrome). Emergency fetal cordocentesis and in-utero red blood cell transfusion (IUT) with CMV-negative, irradiated, packed O-negative RBCs performed under continuous ultrasound guidance. Maternal stabilization protocol active with IV labetalol and fluid restriction.',
+      ?, ?
+    )
+  `).run(anitaId, docId, now, now);
+
+  const existingHyd = db.prepare('SELECT id FROM fetal_hydrops_episodes WHERE episode_code = ?').get('HYD-20261108-101') as any;
+  if (existingHyd) {
+    const hydLogs = [
+      { t: '2026-11-08T06:30:00', ga: 26.4, fhr: 158, psv: 64.0, mom: 1.72, eff: 18.0, asc: 22.0, sbp: 152, dbp: 96, wt: 74.5, notes: 'Pre-IUT baseline ultrasound. Fetal hematocrit on initial umbilical vein sampling was 11.2%. IUT calculated volume 42 mL infused smoothly.' },
+      { t: '2026-11-08T09:30:00', ga: 26.4, fhr: 146, psv: 42.0, mom: 1.13, eff: 14.0, asc: 16.0, sbp: 144, dbp: 90, wt: 74.0, notes: 'Post-transfusion ultrasound surveillance. Repeat MCA PSV normalized to 1.13 MoM indicating successful correction of severe anemia. Post-transfusion fetal hematocrit 34.0%.' },
+      { t: '2026-11-08T15:30:00', ga: 26.5, fhr: 142, psv: 38.0, mom: 1.02, eff: 8.0, asc: 10.0, sbp: 136, dbp: 84, wt: 73.0, notes: '24h post-IUT checkpoint. Marked reduction in skin edema thickness and effusions. Fetal cardiac contractility brisk. Maternal blood pressure stabilized and diuresis commencing.' },
+    ];
+    for (const hl of hydLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO fetal_hydrops_flowsheet_logs (
+          episode_id, patient_id, log_datetime, gestational_age_weeks,
+          fetal_heart_rate_bpm, mca_psv_cm_s, mca_psv_mom,
+          pleural_effusion_depth_mm, ascites_depth_mm, maternal_bp_systolic,
+          maternal_bp_diastolic, maternal_weight_kg, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?, ?
+        )
+      `).run(existingHyd.id, anitaId, hl.t, hl.ga, hl.fhr, hl.psv, hl.mom, hl.eff, hl.asc, hl.sbp, hl.dbp, hl.wt, hl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 40B: Obstetric Cerebral Venous Sinus Thrombosis (CVST) & Puerperal Encephalopathy Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_cvst_episodes (
+      patient_id, admission_id, episode_code, onset_datetime, gestational_age_weeks,
+      clinical_timing, presenting_headache_type, seizures_present,
+      papilledema_present, focal_neurological_deficit, altered_mental_status_coma,
+      thrombosed_sinus_locations_json, intracranial_hemorrhagic_venous_infarct,
+      therapeutic_anticoagulation_active, anticoagulant_agent,
+      intracranial_hypertension_management, antiepileptic_therapy_active,
+      status, consultant_id, clinical_notes,
+      created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'CVST-20261108-101', '2026-11-08T07:15:00', 38.0,
+      'early_postpartum_puerperium', 'thunderclap_sudden_severe', 1,
+      1, 1, 0,
+      '["superior_sagittal_sinus","left_transverse_sinus","left_sigmoid_sinus"]', 1,
+      1, 'therapeutic_lmwh_enoxaparin_1mg_kg_q12h',
+      'elevate_head_bed_and_osmotherapy', 1,
+      'therapeutic_anticoagulation_active', ?,
+      'Postpartum Day 5 following uneventful labor, patient presented with sudden-onset explosive thunderclap headache (9/10 NRS), followed by a 3-minute generalized tonic-clonic seizure and right-sided faciobrachial hemiparesis. Urgent emergency non-contrast brain CT followed by MR venography (MRV) demonstrated extensive dural venous thrombosis involving the superior sagittal sinus, left transverse sinus, and left sigmoid sinus with an associated 18 mm left parietal hemorrhagic venous infarction and moderate mass effect. Fundoscopy confirmed bilateral Grade II papilledema. Crucial guideline directive: Per European Stroke Organisation (ESO) and AHA/ASA guidelines, therapeutic anticoagulation with full-dose LMWH (Enoxaparin 1 mg/kg BID = 70 mg SC q12h) is safe, indicated, and LIFE-SAVING even in the presence of baseline hemorrhagic venous infarction. Antiepileptic coverage initiated with IV Levetiracetam 1,000 mg IV load followed by 1,000 mg BID. Intracranial hypertension managed with head-of-bed elevation 30 degrees and 3% hypertonic saline osmotherapy.',
+      ?, ?
+    )
+  `).run(sunitaId, docId, now, now);
+
+  const existingCvst = db.prepare('SELECT id FROM obstetric_cvst_episodes WHERE episode_code = ?').get('CVST-20261108-101') as any;
+  if (existingCvst) {
+    const cvstLogs = [
+      { t: '2026-11-08T08:00:00', gcs: 13, pup: 'equal_and_reactive', nrs: 8, sbp: 142, dbp: 88, hr: 76, xa: 0.45, sz: 0, notes: 'First post-admission checkpoint. Patient awake, obeying simple commands. No recurrent seizure post-levetiracetam IV load. LMWH 70 mg administered.' },
+      { t: '2026-11-08T12:00:00', gcs: 14, pup: 'equal_and_reactive', nrs: 5, sbp: 134, dbp: 82, hr: 72, xa: 0.78, sz: 0, notes: 'Peak anti-Xa level 0.78 IU/mL (therapeutic target 0.6-1.0). Headache improving. Right upper extremity motor power improved to 4/5.' },
+      { t: '2026-11-08T18:00:00', gcs: 15, pup: 'equal_and_reactive', nrs: 3, sbp: 126, dbp: 78, hr: 68, xa: 0.82, sz: 0, notes: 'Full GCS 15. Repeat non-contrast CT showed stable hemorrhagic venous infarct without extension or worsening edema. Tolerating oral fluids.' },
+    ];
+    for (const cl of cvstLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_cvst_flowsheet_logs (
+          episode_id, patient_id, log_datetime, gcs_score,
+          pupillary_reactivity, headache_severity_nrs, systolic_bp_mmhg,
+          diastolic_bp_mmhg, heart_rate_bpm, anti_xa_or_aptt_level,
+          seizure_activity_observed, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingCvst.id, sunitaId, cl.t, cl.gcs, cl.pup, cl.nrs, cl.sbp, cl.dbp, cl.hr, cl.xa, cl.sz, cl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 40C: Pediatric Refractory Status Asthmaticus Resuscitation (PICU Rescue) Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_refractory_asthma_episodes (
+      patient_id, admission_id, episode_code, onset_datetime, age_years,
+      weight_kg, initial_pediatric_asthma_score, respiratory_rate, heart_rate_bpm,
+      spo2_percent, pco2_mmhg, ph_value, silent_chest_or_exhaustion,
+      refractory_to_first_line, continuous_iv_terbutaline_active,
+      terbutaline_dose_mcg_kg_min, iv_ketamine_infusion_active,
+      ketamine_dose_mg_kg_hr, heliox_inhalation_active, heliox_mixture_ratio,
+      iv_theophylline_aminophylline_active, ventilatory_support_mode,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'RAST-20261108-101', '2026-11-08T08:30:00', 6.5,
+      22.0, 11, 54, 162,
+      87.0, 46.0, 7.24, 1,
+      1, 1,
+      1.5, 1,
+      1.0, 1, 'heliox_70_30',
+      0, 'bipap_noninvasive_positive_pressure',
+      'second_line_iv_bronchodilator_infusion', ?,
+      'A 6.5-year-old boy (22 kg) with known severe brittle asthma admitted to PICU in impending respiratory failure refractory to 3 continuous back-to-back salbutamol nebulizations, IV methylprednisolone 2 mg/kg, and IV magnesium sulfate 50 mg/kg. Presenting with diaphragmatic exhaustion, silent chest on bilateral auscultation, marked intercostal and sternocleidomastoid retractions, severe lethargy, and agitation. Capillary blood gas demonstrated severe acute respiratory acidosis and hypercapnia (pH 7.24, pCO2 46.0 mmHg), which in a tachypneic child represents impending respiratory arrest. Transferred to PICU resuscitation bay. Commenced on continuous IV Terbutaline infusion (2 mcg/kg bolus followed by 1.5 mcg/kg/min continuous infusion) and IV Ketamine bronchodilator infusion (1 mg/kg bolus followed by 1.0 mg/kg/hr infusion). Inhaled Heliox 70:30 initiated to reduce turbulent airflow resistance. Non-invasive positive pressure ventilation (BiPAP: IPAP 12, EPAP 6) commenced with strict lung-protective guidelines (target prolonged I:E ratio 1:3, permissive hypercapnia pH >= 7.20). Senior airway team on standby for ketamine-facilitated intubation if clinical exhaustion worsens.',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingRast = db.prepare('SELECT id FROM pediatric_refractory_asthma_episodes WHERE episode_code = ?').get('RAST-20261108-101') as any;
+  if (existingRast) {
+    const rastLogs = [
+      { t: '2026-11-08T09:00:00', hrs: 0.5, rr: 50, hr: 158, spo2: 90.0, pco2: 44.0, ph: 7.26, terb: 1.5, ket: 1.0, ie: '1_to_3', ausc: 'markedly_reduced_poor_air_movement', notes: 'Ketamine bolus and infusion running. Patient visibly calmer, work of breathing noticeably diminished.' },
+      { t: '2026-11-08T11:00:00', hrs: 2.5, rr: 42, hr: 148, spo2: 93.0, pco2: 40.0, ph: 7.32, terb: 1.5, ket: 1.0, ie: '1_to_3', ausc: 'severe_widespread_wheezing', notes: 'Bilateral air movement restored with audible wheezing (positive sign compared to initial silent chest). pCO2 cleared from 46 to 40 mmHg.' },
+      { t: '2026-11-08T15:00:00', hrs: 6.5, rr: 32, hr: 126, spo2: 96.0, pco2: 37.0, ph: 7.38, terb: 1.0, ket: 0.5, ie: '1_to_2', ausc: 'mild_expiratory_wheeze', notes: 'Significant clinical recovery. Terbutaline weaned to 1.0 mcg/kg/min, Ketamine to 0.5 mg/kg/hr. BiPAP transitioned to high-flow nasal cannula (HFNC). Intubation successfully averted.' },
+    ];
+    for (const rl of rastLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_refractory_asthma_flowsheet_logs (
+          episode_id, patient_id, log_datetime, hours_from_picu_admission,
+          respiratory_rate, heart_rate_bpm, spo2_percent, pco2_mmhg,
+          ph_value, terbutaline_infusion_rate, ketamine_infusion_rate,
+          inspiratory_expiratory_ratio, air_entry_auscultation,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingRast.id, aaravId, rl.t, rl.hrs, rl.rr, rl.hr, rl.spo2, rl.pco2, rl.ph, rl.terb, rl.ket, rl.ie, rl.ausc, rl.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

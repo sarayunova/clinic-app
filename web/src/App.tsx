@@ -227,6 +227,12 @@ import { ObstetricMassivePePage } from './pages/ObstetricMassivePePage';
 import { ObstetricMassivePePrint } from './pages/ObstetricMassivePePrint';
 import { NeonatalHyperammonemiaPage } from './pages/NeonatalHyperammonemiaPage';
 import { NeonatalHyperammonemiaPrint } from './pages/NeonatalHyperammonemiaPrint';
+import { FetalHydropsPage } from './pages/FetalHydropsPage';
+import { FetalHydropsPrint } from './pages/FetalHydropsPrint';
+import { ObstetricCvstPage } from './pages/ObstetricCvstPage';
+import { ObstetricCvstPrint } from './pages/ObstetricCvstPrint';
+import { PediatricRefractoryAsthmaPage } from './pages/PediatricRefractoryAsthmaPage';
+import { PediatricRefractoryAsthmaPrint } from './pages/PediatricRefractoryAsthmaPrint';
 import { DeliveryWardPage } from './pages/DeliveryWardPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditPage } from './pages/AuditPage';
@@ -718,6 +724,18 @@ function Shell() {
           <Route path="/neonatal-hyperammonemia/:id/print" element={can('patient:read_clinical') ? <NeonatalHyperammonemiaPrint /> : <Navigate to="/neonatal-hyperammonemia" replace />} />
           <Route path="/neonatal-hyperammonemia/print/:id" element={can('patient:read_clinical') ? <NeonatalHyperammonemiaPrint /> : <Navigate to="/neonatal-hyperammonemia" replace />} />
           <Route path="/patients/:patientId/neonatal-hyperammonemia/:episodeId/print" element={can('patient:read_clinical') ? <NeonatalHyperammonemiaPrint /> : <Navigate to="/neonatal-hyperammonemia" replace />} />
+          <Route path="/fetal-hydrops" element={can('patient:read_clinical') ? <FetalHydropsPage /> : <Navigate to="/" replace />} />
+          <Route path="/fetal-hydrops/:id/print" element={can('patient:read_clinical') ? <FetalHydropsPrint /> : <Navigate to="/fetal-hydrops" replace />} />
+          <Route path="/fetal-hydrops/print/:id" element={can('patient:read_clinical') ? <FetalHydropsPrint /> : <Navigate to="/fetal-hydrops" replace />} />
+          <Route path="/patients/:patientId/fetal-hydrops/:episodeId/print" element={can('patient:read_clinical') ? <FetalHydropsPrint /> : <Navigate to="/fetal-hydrops" replace />} />
+          <Route path="/obstetric-cvst" element={can('patient:read_clinical') ? <ObstetricCvstPage /> : <Navigate to="/" replace />} />
+          <Route path="/obstetric-cvst/:id/print" element={can('patient:read_clinical') ? <ObstetricCvstPrint /> : <Navigate to="/obstetric-cvst" replace />} />
+          <Route path="/obstetric-cvst/print/:id" element={can('patient:read_clinical') ? <ObstetricCvstPrint /> : <Navigate to="/obstetric-cvst" replace />} />
+          <Route path="/patients/:patientId/obstetric-cvst/:episodeId/print" element={can('patient:read_clinical') ? <ObstetricCvstPrint /> : <Navigate to="/obstetric-cvst" replace />} />
+          <Route path="/pediatric-refractory-asthma" element={can('patient:read_clinical') ? <PediatricRefractoryAsthmaPage /> : <Navigate to="/" replace />} />
+          <Route path="/pediatric-refractory-asthma/:id/print" element={can('patient:read_clinical') ? <PediatricRefractoryAsthmaPrint /> : <Navigate to="/pediatric-refractory-asthma" replace />} />
+          <Route path="/pediatric-refractory-asthma/print/:id" element={can('patient:read_clinical') ? <PediatricRefractoryAsthmaPrint /> : <Navigate to="/pediatric-refractory-asthma" replace />} />
+          <Route path="/patients/:patientId/pediatric-refractory-asthma/:episodeId/print" element={can('patient:read_clinical') ? <PediatricRefractoryAsthmaPrint /> : <Navigate to="/pediatric-refractory-asthma" replace />} />
           <Route path="/delivery-ward" element={can('ipd:read_basic') || can('station:read') ? <DeliveryWardPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id" element={can('visit:read') ? <VisitPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id/print" element={can('visit:read') ? <PrescriptionPrint /> : <Navigate to="/" replace />} />
