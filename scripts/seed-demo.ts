@@ -3446,6 +3446,152 @@ async function seed() {
     }
   }
 
+  // --- SERIES 25A: Neonatal Polycythemia, Hyperviscosity & Partial Exchange Transfusion (PET) ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_polycythemia_episodes (
+      patient_id, admission_id, episode_code, diagnosis_datetime,
+      gestational_age_weeks, birth_weight_grams, chronological_age_hours, current_weight_kg,
+      sampling_site, venous_hematocrit_pct, hemoglobin_g_dl, blood_volume_ml_kg, target_hematocrit_pct,
+      symptoms_present, symptom_details, serum_glucose_mg_dl, platelet_count, serum_bilirubin_mg_dl,
+      partial_exchange_indicated, exchange_volume_ml, aliquot_size_ml, replacement_fluid,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'POLYCYT-20261108-101', '2026-11-08T06:00:00',
+      39.0, 3450, 12, 3.4,
+      'peripheral_venous', 71.5, 23.8, 80.0, 55.0,
+      1, 'plethora_ruddy_appearance', 42.0, 165000, 9.4,
+      1, 62.7, 17.0, 'normal_saline_0_9',
+      'pet_procedure_in_progress', ?,
+      'Term male infant born to mother with GDM. At 12 hours of life noted to have ruddy, plethoric appearance and marked peripheral cyanosis. Peripheral venous sample confirmed hematocrit 71.5% with hypoglycemia (42 mg/dL). Partial exchange transfusion indicated (exchange volume 62.7 mL Normal Saline 0.9%). Divided into 4 aliquots of 17 mL each via umbilical venous catheter.',
+      ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingPolycyt = db.prepare('SELECT id FROM neonatal_polycythemia_episodes WHERE episode_code = ?').get('POLYCYT-20261108-101') as { id: number } | undefined;
+  if (existingPolycyt) {
+    const polyLogs = [
+      { h: 0.5, num: 1, w: 17.0, inf: 17.0, cum: 17.0, hct: 67.5, hr: 144, rr: 46, map: 48, cr: 2.0, glu: 46, notes: 'Aliquot #1 exchanged smoothly over 3 minutes. Vitals stable.' },
+      { h: 1.0, num: 2, w: 17.0, inf: 17.0, cum: 34.0, hct: 63.0, hr: 138, rr: 42, map: 50, cr: 2.0, glu: 52, notes: 'Aliquot #2 completed. Good perfusion, pink peripheries.' },
+    ];
+    for (const pl of polyLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_polycythemia_flowsheet_logs (
+          polycythemia_episode_id, patient_id, log_datetime, hours_from_triage,
+          aliquot_number, volume_withdrawn_ml, volume_infused_ml, cumulative_exchanged_ml,
+          current_hematocrit_pct, heart_rate_bpm, respiratory_rate, mean_arterial_pressure_mmhg,
+          capillary_refill_seconds, blood_glucose_mg_dl, adverse_events_observed,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T06:30:00', ?,
+          ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, 'none',
+          ?, ?, ?
+        )
+      `).run(existingPolycyt.id, babyId, pl.h, pl.num, pl.w, pl.inf, pl.cum, pl.hct, pl.hr, pl.rr, pl.map, pl.cr, pl.glu, pl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 25B: Obstetric Shoulder Dystocia & HELPERR Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_shoulder_dystocia_episodes (
+      patient_id, admission_id, episode_code, delivery_datetime,
+      maternal_age, gestational_age_weeks, estimated_fetal_weight_grams, actual_birth_weight_grams,
+      gestational_diabetes, operative_vaginal_delivery,
+      turtle_sign_observed, head_delivery_datetime, body_delivery_datetime, head_to_body_interval_seconds,
+      help_called, episiotomy_performed, mcroberts_maneuver_success, suprapubic_pressure_success,
+      internal_rotational_maneuver, internal_rotational_success, posterior_arm_delivery_success,
+      gaskin_all_fours_success, advanced_maneuvers_required, fundal_pressure_avoided,
+      apgar_1min, apgar_5min, apgar_10min, umbilical_arterial_ph,
+      neonatal_injury, postpartum_hemorrhage_observed, perineal_tear_degree,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'DYSTOCIA-20261108-101', '2026-11-08T08:15:00',
+      29, 40.2, 4150, 4220,
+      1, 'spontaneous_vaginal',
+      1, '2026-11-08T08:15:00', '2026-11-08T08:17:45', 165,
+      1, 1, 0, 0,
+      'rubin_ii', 0, 1,
+      0, 'none', 1,
+      6, 9, 10, 7.22,
+      'none', 0, 'second_degree',
+      'postpartum_hie_monitoring', ?,
+      'Spontaneous vaginal vertex delivery complicated by shoulder dystocia with classic turtle sign. HELPERR protocol enacted immediately: Help called (pediatrics + second obstetrician), episiotomy extended, McRoberts hyperflexion and Rubin I suprapubic pressure applied. Posterior arm swept across chest and delivered at 165 seconds. Fundal pressure strictly avoided throughout. Infant cried after brief bag-mask ventilation, Apgar 6/9. Bilateral arm movements active.',
+      ?, ?
+    )
+  `).run(anitaId, docId, now, now);
+
+  const existingDystocia = db.prepare('SELECT id FROM obstetric_shoulder_dystocia_episodes WHERE episode_code = ?').get('DYSTOCIA-20261108-101') as { id: number } | undefined;
+  if (existingDystocia) {
+    const dysLogs = [
+      { sec: 60, m: 'mcroberts_hyperflexion' as const, o: 'failed_advance_to_next_step' as const, trac: 'gentle_axial_traction_only' as const, notes: 'Maternal hips hyperflexed to abdomen. Persistent impaction.' },
+      { sec: 165, m: 'delivery_posterior_arm' as const, o: 'successful_restitution_and_delivery' as const, trac: 'gentle_axial_traction_only' as const, notes: 'Posterior arm reached and swept across anterior chest wall. Full body delivery achieved at 2 min 45 sec.' },
+    ];
+    for (const dl of dysLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_shoulder_dystocia_flowsheet_logs (
+          shoulder_dystocia_episode_id, patient_id, log_datetime, seconds_from_head_delivery,
+          maneuver_attempted, maneuver_outcome, traction_applied,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T08:16:00', ?,
+          ?, ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingDystocia.id, anitaId, dl.sec, dl.m, dl.o, dl.trac, dl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 25C: Pediatric Foreign Body Airway Obstruction & Choking Emergency Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_foreign_body_episodes (
+      patient_id, admission_id, episode_code, incident_datetime,
+      age_months, weight_kg,
+      witnessed_choking_episode, suspected_foreign_body_nature, obstruction_severity,
+      stridor_or_aphonia, cyanosis_present, silent_chest_noted,
+      heart_rate_bpm, respiratory_rate, spo2_percent,
+      intervention_applied, blind_finger_sweep_avoided,
+      foreign_body_expelled, spontaneous_respiration_restored,
+      rigid_bronchoscopy_required, bronchoscopy_location,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'FBAO-20261108-101', '2026-11-08T10:15:00',
+      14, 10.8,
+      1, 'organic_food_nut_seed', 'severe_complete_ineffective_cough',
+      1, 1, 0,
+      152, 46, 88.0,
+      'subdiaphragmatic_heimlich_child', 1,
+      1, 1,
+      0, 'none',
+      'post_clearance_observation', ?,
+      'Toddler brought by parents in acute respiratory distress following witnessed ingestion of roasted peanuts. Silent, aphonic, unable to cry, with perioral cyanosis and suprasternal retractions (complete obstruction). Subdiaphragmatic Heimlich thrusts performed in rapid sequence. Peanut half expelled on 3rd thrust. Spontaneous vigorous crying and respiration restored immediately. Blind finger sweeps strictly avoided. SpO2 improved from 88% to 99% on room air.',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingFbao = db.prepare('SELECT id FROM pediatric_foreign_body_episodes WHERE episode_code = ?').get('FBAO-20261108-101') as { id: number } | undefined;
+  if (existingFbao) {
+    const fbaoLogs = [
+      { min: 1, ms: 'alert_vocalizing' as const, ap: 'clear_normal_air_entry' as const, hr: 140, rr: 38, spo2: 97.0, cyc: 'subdiaphragmatic_heimlich_thrusts' as const, vis: 1, notes: 'Peanut expelled onto exam sheet. Crying loudly with good bilateral air entry.' },
+      { min: 15, ms: 'alert_vocalizing' as const, ap: 'clear_normal_air_entry' as const, hr: 116, rr: 26, spo2: 99.0, cyc: 'reassurance_and_spontaneous_coughing' as const, vis: 0, notes: '15 minutes post-clearance. Stable vital signs, drinking water, no stridor or retractions.' },
+    ];
+    for (const fl of fbaoLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_foreign_body_flowsheet_logs (
+          foreign_body_episode_id, patient_id, log_datetime, minutes_from_choking,
+          mental_status, airway_patency, heart_rate_bpm, respiratory_rate, spo2_percent,
+          intervention_cycle, foreign_object_visualized_or_removed,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T10:16:00', ?,
+          ?, ?, ?, ?, ?,
+          ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingFbao.id, aaravId, fl.min, fl.ms, fl.ap, fl.hr, fl.rr, fl.spo2, fl.cyc, fl.vis, fl.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

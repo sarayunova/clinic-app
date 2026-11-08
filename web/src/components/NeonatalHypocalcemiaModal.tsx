@@ -21,7 +21,7 @@ export const NeonatalHypocalcemiaModal: React.FC<NeonatalHypocalcemiaModalProps>
   const [currentWeightKg, setCurrentWeightKg] = useState(1.25);
   const [etiologyCategory, setEtiologyCategory] = useState<string>('prematurity_respiratory_distress');
 
-  const [ionizedCalciumMmolL,钻IonizedCalciumMmolL] = useState(0.82);
+  const [ionizedCalciumMmolL, setIonizedCalciumMmolL] = useState(0.82);
   const [totalCalciumMgDl, setTotalCalciumMgDl] = useState(6.4);
   const [serumMagnesiumMgDl, setSerumMagnesiumMgDl] = useState(1.3);
   const [serumPhosphorusMgDl, setSerumPhosphorusMgDl] = useState<number | ''>(5.5);
@@ -233,7 +233,7 @@ export const NeonatalHypocalcemiaModal: React.FC<NeonatalHypocalcemiaModalProps>
                 max="2.5"
                 className="form-control"
                 value={ionizedCalciumMmolL}
-                onChange={(e) =>钻IonizedCalciumMmolL(Number(e.target.value))}
+                onChange={(e) => setIonizedCalciumMmolL(Number(e.target.value))}
                 required
               />
               <small className="muted">Cutoff: &lt; 1.0 mmol/L</small>

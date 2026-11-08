@@ -8752,6 +8752,273 @@ export const deletePediatricCroupFlowsheet = (episodeId: number, logId: number):
 export const calculatePediatricCroup = (payload: any): Promise<{ evalResult: any }> =>
   api('POST', '/api/pediatric-croup/evaluate', payload);
 
+// -------------------------------------------------------------
+// SERIES 25A: Neonatal Polycythemia & Partial Exchange Transfusion (PET)
+// -------------------------------------------------------------
+export interface NeonatalPolycythemiaRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  patient_number?: string | null;
+  date_of_birth?: string | null;
+  admission_id?: number | null;
+  episode_code: string;
+  diagnosis_datetime: string;
+  gestational_age_weeks: number;
+  birth_weight_grams: number;
+  chronological_age_hours: number;
+  current_weight_kg: number;
+  sampling_site: 'peripheral_venous' | 'umbilical_venous' | 'capillary_unconfirmed';
+  venous_hematocrit_pct: number;
+  hemoglobin_g_dl?: number | null;
+  blood_volume_ml_kg: number;
+  target_hematocrit_pct: number;
+  symptoms_present: number;
+  symptom_details: 'asymptomatic' | 'plethora_ruddy_appearance' | 'poor_feeding_lethargy' | 'jitteriness_tremors' | 'tachypnea_respiratory_distress' | 'hypoglycemia' | 'cyanosis_peripheral' | 'priapism_or_oliguria';
+  serum_glucose_mg_dl?: number | null;
+  platelet_count?: number | null;
+  serum_bilirubin_mg_dl?: number | null;
+  partial_exchange_indicated: number;
+  exchange_volume_ml: number;
+  aliquot_size_ml: number;
+  replacement_fluid: 'normal_saline_0_9' | '5_percent_albumin' | 'fresh_frozen_plasma';
+  status: 'hydration_surveillance' | 'pet_procedure_in_progress' | 'post_pet_observation' | 'eupolycythemic_resolved';
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NeonatalPolycythemiaFlowsheetRecord {
+  id: number;
+  polycythemia_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_triage: number;
+  aliquot_number: number;
+  volume_withdrawn_ml: number;
+  volume_infused_ml: number;
+  cumulative_exchanged_ml: number;
+  current_hematocrit_pct?: number | null;
+  heart_rate_bpm: number;
+  respiratory_rate: number;
+  mean_arterial_pressure_mmhg?: number | null;
+  capillary_refill_seconds?: number | null;
+  blood_glucose_mg_dl?: number | null;
+  adverse_events_observed: 'none' | 'hypotension_bradycardia' | 'catheter_thrombosis' | 'abdominal_distension_nec_suspicion' | 'hypoglycemia_recurrence';
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getNeonatalPolycythemiaEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: NeonatalPolycythemiaRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: NeonatalPolycythemiaRecord[] }>('GET', `/api/neonatal-polycythemia/episodes${queryStr}`);
+};
+
+export const getNeonatalPolycythemiaEpisode = (id: number): Promise<{ episode: NeonatalPolycythemiaRecord; logs: NeonatalPolycythemiaFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/neonatal-polycythemia/episodes/${id}`);
+
+export const createNeonatalPolycythemiaEpisode = (payload: any): Promise<{ episode: NeonatalPolycythemiaRecord; evalResult: any }> =>
+  api('POST', '/api/neonatal-polycythemia/episodes', payload);
+
+export const updateNeonatalPolycythemiaEpisode = (id: number, payload: any): Promise<{ episode: NeonatalPolycythemiaRecord }> =>
+  api('PATCH', `/api/neonatal-polycythemia/episodes/${id}`, payload);
+
+export const deleteNeonatalPolycythemiaEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-polycythemia/episodes/${id}`);
+
+export const addNeonatalPolycythemiaFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/neonatal-polycythemia/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteNeonatalPolycythemiaFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-polycythemia/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateNeonatalPolycythemia = (payload: any): Promise<{ evalResult: any }> =>
+  api('POST', '/api/neonatal-polycythemia/evaluate', payload);
+
+// -------------------------------------------------------------
+// SERIES 25B: Obstetric Shoulder Dystocia & HELPERR Protocol
+// -------------------------------------------------------------
+export interface ObstetricShoulderDystociaRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  patient_number?: string | null;
+  date_of_birth?: string | null;
+  admission_id?: number | null;
+  episode_code: string;
+  delivery_datetime: string;
+  maternal_age?: number | null;
+  gestational_age_weeks: number;
+  estimated_fetal_weight_grams?: number | null;
+  actual_birth_weight_grams: number;
+  gestational_diabetes: number;
+  operative_vaginal_delivery: 'spontaneous_vaginal' | 'vacuum_assisted' | 'forceps_assisted';
+  turtle_sign_observed: number;
+  head_delivery_datetime: string;
+  body_delivery_datetime: string;
+  head_to_body_interval_seconds: number;
+  help_called: number;
+  episiotomy_performed: number;
+  mcroberts_maneuver_success: number;
+  suprapubic_pressure_success: number;
+  internal_rotational_maneuver: 'none' | 'rubin_ii' | 'woods_screw' | 'reverse_woods_screw';
+  internal_rotational_success: number;
+  posterior_arm_delivery_success: number;
+  gaskin_all_fours_success: number;
+  advanced_maneuvers_required: 'none' | 'intentional_clavicle_fracture_cleidotomy' | 'zavanelli_cephalic_replacement' | 'symphysiotomy';
+  fundal_pressure_avoided: number;
+  apgar_1min?: number | null;
+  apgar_5min?: number | null;
+  apgar_10min?: number | null;
+  umbilical_arterial_ph?: number | null;
+  neonatal_injury: 'none' | 'brachial_plexus_erb_palsy' | 'brachial_plexus_klumpke' | 'clavicular_fracture' | 'humeral_fracture' | 'hypoxic_ischemic_encephalopathy';
+  postpartum_hemorrhage_observed: number;
+  perineal_tear_degree: 'none_or_first_degree' | 'second_degree' | 'third_degree_oasi' | 'fourth_degree_oasi';
+  status: 'resuscitation_active' | 'postpartum_hie_monitoring' | 'transferred_to_nicu' | 'discharged_stable';
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ObstetricShoulderDystociaFlowsheetRecord {
+  id: number;
+  shoulder_dystocia_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  seconds_from_head_delivery: number;
+  maneuver_attempted: 'call_help_timer_started' | 'mcroberts_hyperflexion' | 'suprapubic_rubin_i_pressure' | 'episiotomy_incision' | 'rubin_ii_internal_rotation' | 'woods_screw_rotation' | 'reverse_woods_rotation' | 'delivery_posterior_arm' | 'gaskin_all_fours_roll' | 'cleidotomy_fracture' | 'zavanelli_or_emergency_csection';
+  maneuver_outcome: 'successful_restitution_and_delivery' | 'failed_advance_to_next_step' | 'partial_rotation_incomplete';
+  traction_applied: 'none' | 'gentle_axial_traction_only' | 'excessive_lateral_traction_prevented';
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getObstetricShoulderDystociaEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: ObstetricShoulderDystociaRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: ObstetricShoulderDystociaRecord[] }>('GET', `/api/obstetric-shoulder-dystocia/episodes${queryStr}`);
+};
+
+export const getObstetricShoulderDystociaEpisode = (id: number): Promise<{ episode: ObstetricShoulderDystociaRecord; logs: ObstetricShoulderDystociaFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/obstetric-shoulder-dystocia/episodes/${id}`);
+
+export const createObstetricShoulderDystociaEpisode = (payload: any): Promise<{ episode: ObstetricShoulderDystociaRecord; evalResult: any }> =>
+  api('POST', '/api/obstetric-shoulder-dystocia/episodes', payload);
+
+export const updateObstetricShoulderDystociaEpisode = (id: number, payload: any): Promise<{ episode: ObstetricShoulderDystociaRecord }> =>
+  api('PATCH', `/api/obstetric-shoulder-dystocia/episodes/${id}`, payload);
+
+export const deleteObstetricShoulderDystociaEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-shoulder-dystocia/episodes/${id}`);
+
+export const addObstetricShoulderDystociaFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/obstetric-shoulder-dystocia/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteObstetricShoulderDystociaFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-shoulder-dystocia/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateObstetricShoulderDystocia = (payload: any): Promise<{ evalResult: any }> =>
+  api('POST', '/api/obstetric-shoulder-dystocia/evaluate', payload);
+
+// -------------------------------------------------------------
+// SERIES 25C: Pediatric Foreign Body Airway Obstruction & Choking
+// -------------------------------------------------------------
+export interface PediatricForeignBodyRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  patient_number?: string | null;
+  date_of_birth?: string | null;
+  admission_id?: number | null;
+  episode_code: string;
+  incident_datetime: string;
+  age_months: number;
+  weight_kg: number;
+  witnessed_choking_episode: number;
+  suspected_foreign_body_nature: 'organic_food_nut_seed' | 'small_toy_plastic_bead' | 'coin_metallic_battery' | 'balloon_latex' | 'unknown_material';
+  obstruction_severity: 'mild_incomplete_effective_cough' | 'severe_complete_ineffective_cough' | 'unconscious_cardiorespiratory_arrest';
+  stridor_or_aphonia: number;
+  cyanosis_present: number;
+  silent_chest_noted: number;
+  heart_rate_bpm: number;
+  respiratory_rate: number;
+  spo2_percent: number;
+  intervention_applied: 'encouraged_spontaneous_coughing' | 'back_blows_and_chest_thrusts_infant' | 'subdiaphragmatic_heimlich_child' | 'cpr_chest_compressions_ventilations' | 'rigid_bronchoscopy_or_surgical_airway';
+  blind_finger_sweep_avoided: number;
+  foreign_body_expelled: number;
+  spontaneous_respiration_restored: number;
+  rigid_bronchoscopy_required: number;
+  bronchoscopy_location: 'none' | 'trachea_carina' | 'right_main_bronchus' | 'left_main_bronchus' | 'segmental_bronchi';
+  status: 'acute_choking_management' | 'post_clearance_observation' | 'picu_escalation_bronchoscopy' | 'discharged_home_stable';
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PediatricForeignBodyFlowsheetRecord {
+  id: number;
+  foreign_body_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  minutes_from_choking: number;
+  mental_status: 'alert_vocalizing' | 'irritable_lethargic' | 'unresponsive_coma';
+  airway_patency: 'clear_normal_air_entry' | 'partial_wheeze_stridor' | 'silent_complete_obstruction';
+  heart_rate_bpm: number;
+  respiratory_rate: number;
+  spo2_percent: number;
+  intervention_cycle: 'reassurance_and_spontaneous_coughing' | 'five_back_slaps_five_chest_thrusts' | 'subdiaphragmatic_heimlich_thrusts' | 'cpr_with_direct_laryngoscopy_removal' | 'urgent_or_rigid_bronchoscopy';
+  foreign_object_visualized_or_removed: number;
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getPediatricForeignBodyEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: PediatricForeignBodyRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: PediatricForeignBodyRecord[] }>('GET', `/api/pediatric-foreign-body/episodes${queryStr}`);
+};
+
+export const getPediatricForeignBodyEpisode = (id: number): Promise<{ episode: PediatricForeignBodyRecord; logs: PediatricForeignBodyFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/pediatric-foreign-body/episodes/${id}`);
+
+export const createPediatricForeignBodyEpisode = (payload: any): Promise<{ episode: PediatricForeignBodyRecord; evalResult: any }> =>
+  api('POST', '/api/pediatric-foreign-body/episodes', payload);
+
+export const updatePediatricForeignBodyEpisode = (id: number, payload: any): Promise<{ episode: PediatricForeignBodyRecord }> =>
+  api('PATCH', `/api/pediatric-foreign-body/episodes/${id}`, payload);
+
+export const deletePediatricForeignBodyEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-foreign-body/episodes/${id}`);
+
+export const addPediatricForeignBodyFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/pediatric-foreign-body/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deletePediatricForeignBodyFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-foreign-body/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculatePediatricForeignBody = (payload: any): Promise<{ evalResult: any }> =>
+  api('POST', '/api/pediatric-foreign-body/evaluate', payload);
+
+
 
 
 

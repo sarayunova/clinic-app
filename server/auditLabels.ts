@@ -438,6 +438,28 @@ export const ACTION_LABELS: Record<string, string> = {
   'pediatric_croup.flowsheet_delete': 'Deleted pediatric croup flowsheet log',
   'pediatric_croup.print': 'Printed pediatric croup Westley scoring & emergency airway dossier',
 
+  // SERIES 25: Neonatal Polycythemia PET, Obstetric Shoulder Dystocia HELPERR, Pediatric Foreign Body Airway
+  'neonatal_polycythemia.create': 'Initiated neonatal polycythemia hyperviscosity evaluation & partial exchange transfusion calculation',
+  'neonatal_polycythemia.update': 'Updated neonatal polycythemia episode or exchange status',
+  'neonatal_polycythemia.delete': 'Deleted neonatal polycythemia episode record',
+  'neonatal_polycythemia.flowsheet_add': 'Logged neonatal partial exchange transfusion aliquot & vital signs checkpoint',
+  'neonatal_polycythemia.flowsheet_delete': 'Deleted neonatal PET flowsheet log',
+  'neonatal_polycythemia.print': 'Printed neonatal polycythemia hyperviscosity & PET clinical dossier',
+
+  'obstetric_shoulder_dystocia.create': 'Recorded obstetric shoulder dystocia emergency, head-to-body interval & HELPERR sequence',
+  'obstetric_shoulder_dystocia.update': 'Updated shoulder dystocia episode, neonatal injury or maternal tear status',
+  'obstetric_shoulder_dystocia.delete': 'Deleted obstetric shoulder dystocia episode record',
+  'obstetric_shoulder_dystocia.flowsheet_add': 'Logged shoulder dystocia HELPERR maneuver execution timestamp',
+  'obstetric_shoulder_dystocia.flowsheet_delete': 'Deleted shoulder dystocia maneuver flowsheet log',
+  'obstetric_shoulder_dystocia.print': 'Printed obstetric shoulder dystocia & HELPERR maneuver clinical dossier',
+
+  'pediatric_foreign_body.create': 'Initiated pediatric foreign body airway obstruction (FBAO) emergency evaluation',
+  'pediatric_foreign_body.update': 'Updated pediatric foreign body episode, clearance status or bronchoscopy referral',
+  'pediatric_foreign_body.delete': 'Deleted pediatric foreign body episode record',
+  'pediatric_foreign_body.flowsheet_add': 'Logged pediatric choking resuscitation cycle & airway patency checkpoint',
+  'pediatric_foreign_body.flowsheet_delete': 'Deleted pediatric choking flowsheet log',
+  'pediatric_foreign_body.print': 'Printed pediatric foreign body airway obstruction & resuscitation dossier',
+
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };
