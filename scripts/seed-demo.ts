@@ -4560,6 +4560,157 @@ async function seed() {
     }
   }
 
+  // --- SERIES 32A: Neonatal Bilious Emesis & Malrotation with Midgut Volvulus ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_volvulus_episodes (
+      patient_id, admission_id, episode_code, onset_datetime,
+      age_days, weight_kg, emesis_color, abdominal_distension,
+      abdominal_tenderness, rectal_bleeding_melena, peritonitis_signs,
+      hemodynamic_shock, serum_lactate_mmol_l, blood_ph, base_excess_meq_l,
+      plain_radiograph_finding, upper_gi_contrast_done, upper_gi_finding,
+      doppler_us_whirlpool_sign, doppler_sma_smv_inversion,
+      urgency_tier, ladd_procedure_indicated,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'VOLV-20261108-101', '2026-11-08T04:15:00',
+      4, 3.2, 'bilious_dark_green', 'mild_epigastric',
+      1, 0, 0,
+      0, 2.4, 7.32, -4.0,
+      'distended_stomach_scant_distal_gas', 1, 'corkscrew_duodenum_positive',
+      1, 1,
+      'immediate_operating_room_crash', 1,
+      'in_operating_room_ladd', ?, 'UGI series confirms corkscrew duodenum. Doppler shows clockwise whirlpool sign with SMA/SMV inversion. Emergent Ladd procedure initiated.', ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingVolv = db.prepare('SELECT id FROM neonatal_volvulus_episodes WHERE episode_code = ?').get('VOLV-20261108-101') as any;
+  if (existingVolv) {
+    const volvLogs = [
+      { h: 1.0, lac: 2.4, hr: 165, sbp: 66, dbp: 38, cr: 2.5, ng: 18.0, asp: 'Dark green bilious fluid', abd: 'Epigastrium full, soft', notes: 'Replogle 8 Fr placed to low continuous suction, NS bolus running.' },
+      { h: 2.5, lac: 2.2, hr: 155, sbp: 70, dbp: 40, cr: 2.0, ng: 12.0, asp: 'Green fluid clearing slightly', abd: 'Abdomen relaxed', notes: 'Pediatric surgery scrubbed, patient transferred to Operating Room 2.' },
+      { h: 5.0, lac: 1.6, hr: 142, sbp: 74, dbp: 42, cr: 2.0, ng: 6.0, asp: 'Serous aspirate', abd: 'Post-op dressings intact, soft', notes: 'Ladd detorsion, Ladd bands divided, appendectomy performed. Intestine viable.' },
+    ];
+    for (const vl of volvLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_volvulus_flowsheet_logs (
+          volvulus_episode_id, patient_id, log_datetime, hours_from_onset,
+          serum_lactate_mmol_l, heart_rate, blood_pressure_sys, blood_pressure_dia,
+          capillary_refill_seconds, ng_tube_output_ml, ng_aspirate_appearance,
+          abdominal_exam_notes, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T05:30:00', ?,
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingVolv.id, babyId, vl.h, vl.lac, vl.hr, vl.sbp, vl.dbp, vl.cr, vl.ng, vl.asp, vl.abd, vl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 32B: Obstetric External Cephalic Version (ECV) & Breech Conversion ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_ecv_episodes (
+      patient_id, admission_id, episode_code, procedure_datetime,
+      gestational_age_weeks, maternal_parity, maternal_bmi,
+      fetal_presentation_initial, placental_location, amniotic_fluid_index_cm,
+      estimated_fetal_weight_g, fetal_spine_position, fetal_engagement_level,
+      tocolytic_agent_administered, terbutaline_given, maternal_rh_negative,
+      rh_anti_d_administered, kleihauer_betke_sent, contraindications_present,
+      attempts_count, forward_roll_attempted, backward_flip_attempted,
+      ecv_outcome, calculated_success_probability_pct, status,
+      consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'ECV-20261108-101', '2026-11-08T07:15:00',
+      37.3, 1, 26.2,
+      'frank_breech', 'posterior', 13.2,
+      3150, 'lateral', 'high_unengaged_floating',
+      'terbutaline_0_25mg_sc', 1, 1,
+      1, 1, 0,
+      1, 1, 0,
+      'successful_cephalic_conversion', 78.0, 'successful_monitoring_discharge',
+      ?, 'Premedicated with Terbutaline 0.25 mg SC. Forward roll completed on attempt 1. Anti-D 300 mcg IM given and KB test sent.', ?, ?
+    )
+  `).run(meeraId, docId, now, now);
+
+  const existingEcv = db.prepare('SELECT id FROM obstetric_ecv_episodes WHERE episode_code = ?').get('ECV-20261108-101') as any;
+  if (existingEcv) {
+    const ecvLogs = [
+      { m: 0.0, hr: 82, sbp: 116, dbp: 72, fhr: 142, efm: 'reactive_reassuring', tone: 1, notes: 'Baseline NST reactive. Terbutaline 0.25 mg SC given at T-15m.' },
+      { m: 15.0, hr: 98, sbp: 112, dbp: 68, fhr: 138, efm: 'reactive_reassuring', tone: 1, notes: 'Uterus palpably soft. Single forward roll executed. Cephalic lie verified on ultrasound.' },
+      { m: 45.0, hr: 86, sbp: 118, dbp: 74, fhr: 140, efm: 'reactive_reassuring', tone: 1, notes: 'Post-procedure CTG reassuring, normal baseline variability, no decelerations.' },
+    ];
+    for (const el of ecvLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_ecv_flowsheet_logs (
+          ecv_episode_id, patient_id, log_datetime, minutes_from_start,
+          maternal_heart_rate, maternal_blood_pressure_sys, maternal_blood_pressure_dia,
+          fetal_heart_rate_baseline, efm_pattern, uterine_relaxation_adequate,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T07:30:00', ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingEcv.id, meeraId, el.m, el.hr, el.sbp, el.dbp, el.fhr, el.efm, el.tone, el.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 32C: Pediatric DKA Cerebral Edema & Emergent Hyperosmolar Rescue ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_dka_cerebral_edema_episodes (
+      patient_id, admission_id, episode_code, detection_datetime,
+      age_years, weight_kg, gcs_score, headache_severe_sudden,
+      lethargy_or_confusion, recurrent_emesis_post_hydration,
+      bradycardia_cushing_triad, hypertension_diastolic_ge_90,
+      cranial_nerve_palsy, pupillary_abnormality, decorticate_decerebrate_posturing,
+      blood_glucose_mg_dl, serum_sodium_measured_meq_l, serum_sodium_corrected_meq_l,
+      serum_potassium_meq_l, effective_serum_osmolality_mosm_kg, blood_ph,
+      serum_bicarbonate_meq_l, muir_criteria_category, primary_hyperosmolar_agent,
+      hyperosmolar_dose_ml, fluid_rate_reduced_by_30pct, head_of_bed_elevated_30deg,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'DKACE-20261108-101', '2026-11-08T05:45:00',
+      8.0, 25.0, 11, 1,
+      1, 1,
+      1, 1,
+      0, 'sluggish', 0,
+      620.0, 131.0, 139.3,
+      4.2, 296.4, 7.08,
+      6.5, 'diagnostic_cerebral_edema', 'hypertonic_saline_3pct',
+      125.0, 1, 1,
+      'hypertonic_saline_infusing', ?, 'Child with severe DKA developed sudden headache, lethargy, bradycardia (HR 62), and diastolic BP 94. 3% Hypertonic Saline 125 mL infused over 15 min.', ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingDkaCe = db.prepare('SELECT id FROM pediatric_dka_cerebral_edema_episodes WHERE episode_code = ?').get('DKACE-20261108-101') as any;
+  if (existingDkaCe) {
+    const dkaCeLogs = [
+      { h: 0.5, gcs: 11, pup: 'Sluggish 3mm bilateral', hr: 64, sbp: 132, dbp: 94, glu: 600, na: 131, corr: 139.0, agent: '3% NaCl 125 mL running', rate: 70, notes: 'Fluid rate dropped by 30%, head of bed elevated to 30 degrees.' },
+      { h: 1.5, gcs: 13, pup: 'Prompt 3mm bilateral', hr: 88, sbp: 120, dbp: 78, glu: 490, na: 135, corr: 141.2, agent: '3% NaCl completed', rate: 70, notes: 'Cushing triad resolving. Sensorium significantly improved. Alert to name.' },
+      { h: 4.0, gcs: 15, pup: 'Brisk 3mm equal', hr: 96, sbp: 112, dbp: 70, glu: 320, na: 138, corr: 141.5, agent: 'Maintenance with D5W 0.45% NaCl', rate: 75, notes: 'Full neurological recovery. GCS 15. Measured sodium safely rising as glucose declines.' },
+    ];
+    for (const dcl of dkaCeLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_dka_cerebral_edema_flowsheet_logs (
+          dka_cerebral_episode_id, patient_id, log_datetime, hours_from_detection,
+          gcs_score, pupil_size_and_reactivity, heart_rate,
+          blood_pressure_sys, blood_pressure_dia, blood_glucose_mg_dl,
+          serum_sodium_measured_meq_l, serum_sodium_corrected_meq_l,
+          hyperosmolar_agent_given, iv_fluid_rate_ml_hr,
+          neurological_exam_notes, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T06:30:00', ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?,
+          ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingDkaCe.id, aaravId, dcl.h, dcl.gcs, dcl.pup, dcl.hr, dcl.sbp, dcl.dbp, dcl.glu, dcl.na, dcl.corr, dcl.agent, dcl.rate, dcl.notes, dcl.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

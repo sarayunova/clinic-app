@@ -592,6 +592,28 @@ export const ACTION_LABELS: Record<string, string> = {
   'pediatric_kawasaki.flowsheet_delete': 'Deleted pediatric Kawasaki flowsheet log',
   'pediatric_kawasaki.print': 'Printed pediatric Kawasaki disease & coronary aneurysm prevention clinical dossier',
 
+  // SERIES 32: Neonatal Volvulus Malrotation, Obstetric ECV Breech, Pediatric DKA Cerebral Edema
+  'neonatal_volvulus.create': 'Initiated neonatal bilious emesis & malrotation with midgut volvulus evaluation',
+  'neonatal_volvulus.status_update': 'Updated neonatal volvulus episode, Ladd procedure or bowel recovery status',
+  'neonatal_volvulus.delete': 'Deleted neonatal volvulus episode record',
+  'neonatal_volvulus.flowsheet_add': 'Logged neonatal volvulus lactate, vitals & NG aspirate checkpoint',
+  'neonatal_volvulus.flowsheet_delete': 'Deleted neonatal volvulus flowsheet log',
+  'neonatal_volvulus.print': 'Printed neonatal malrotation, volvulus & emergent Ladd procedure clinical dossier',
+
+  'obstetric_ecv.create': 'Initiated obstetric external cephalic version (ECV) & tocolysis evaluation',
+  'obstetric_ecv.status_update': 'Updated obstetric ECV episode, cephalic conversion or delivery transfer status',
+  'obstetric_ecv.delete': 'Deleted obstetric ECV episode record',
+  'obstetric_ecv.flowsheet_add': 'Logged obstetric ECV maternal-fetal vitals & EFM pattern checkpoint',
+  'obstetric_ecv.flowsheet_delete': 'Deleted obstetric ECV flowsheet log',
+  'obstetric_ecv.print': 'Printed obstetric external cephalic version & breech conversion clinical dossier',
+
+  'pediatric_dka_ce.create': 'Initiated pediatric DKA cerebral edema evaluation & Muir criteria calculation',
+  'pediatric_dka_ce.status_update': 'Updated pediatric DKA cerebral edema episode or hyperosmolar therapy status',
+  'pediatric_dka_ce.delete': 'Deleted pediatric DKA cerebral edema episode record',
+  'pediatric_dka_ce.flowsheet_add': 'Logged pediatric DKA cerebral edema GCS, sodium & osmolar rescue checkpoint',
+  'pediatric_dka_ce.flowsheet_delete': 'Deleted pediatric DKA cerebral edema flowsheet log',
+  'pediatric_dka_ce.print': 'Printed pediatric DKA cerebral edema & emergent hyperosmolar rescue clinical dossier',
+
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

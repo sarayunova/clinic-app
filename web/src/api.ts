@@ -10613,6 +10613,255 @@ export const deletePediatricKawasakiFlowsheet = (episodeId: number, logId: numbe
 export const evaluatePediatricKawasakiApi = (payload: any): Promise<{ evaluation: any }> =>
   api('POST', '/api/pediatric-kawasaki/evaluate', payload);
 
+// ==========================================
+// SERIES 32A: NEONATAL BILIOUS EMESIS & VOLVULUS
+// ==========================================
+export interface NeonatalVolvulusRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  age_days: number;
+  weight_kg: number;
+  emesis_color: 'bilious_dark_green' | 'bilious_light_green_yellow' | 'non_bilious_gastric';
+  abdominal_distension: 'absent_scaphoid' | 'mild_epigastric' | 'marked_generalized';
+  abdominal_tenderness: number;
+  rectal_bleeding_melena: number;
+  peritonitis_signs: number;
+  hemodynamic_shock: number;
+  serum_lactate_mmol_l: number;
+  blood_ph: number | null;
+  base_excess_meq_l: number | null;
+  plain_radiograph_finding: 'normal_gas_pattern' | 'gasless_abdomen' | 'double_bubble' | 'distended_stomach_scant_distal_gas' | 'pneumoperitoneum_free_air';
+  upper_gi_contrast_done: number;
+  upper_gi_finding: 'corkscrew_duodenum_positive' | 'ligament_of_treitz_right_sided' | 'duodenal_beaking_complete_obstruction' | 'normal_c_loop_treitz_left' | 'deferred_emergency_laparotomy' | null;
+  doppler_us_whirlpool_sign: number;
+  doppler_sma_smv_inversion: number;
+  urgency_tier: 'immediate_operating_room_crash' | 'emergent_imaging_workup' | 'stable_observation';
+  ladd_procedure_indicated: number;
+  status: 'emergent_surgical_consult' | 'in_operating_room_ladd' | 'post_op_bowel_recovery' | 'resolved_feeding_tolerated' | 'short_bowel_syndrome_care';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  consultant_name?: string;
+}
+
+export interface NeonatalVolvulusFlowsheetRecord {
+  id: number;
+  volvulus_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_onset: number;
+  serum_lactate_mmol_l: number | null;
+  heart_rate: number;
+  blood_pressure_sys: number | null;
+  blood_pressure_dia: number | null;
+  capillary_refill_seconds: number | null;
+  ng_tube_output_ml: number | null;
+  ng_aspirate_appearance: string | null;
+  abdominal_exam_notes: string | null;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getNeonatalVolvulusEpisodes = (params?: { patientId?: number }): Promise<{ episodes: NeonatalVolvulusRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/neonatal-volvulus/episodes${query}`);
+};
+
+export const getNeonatalVolvulusEpisode = (id: number): Promise<{ episode: NeonatalVolvulusRecord; evaluation: any; flowsheet: NeonatalVolvulusFlowsheetRecord[]; flowsheetLogs: NeonatalVolvulusFlowsheetRecord[] }> =>
+  api('GET', `/api/neonatal-volvulus/episodes/${id}`);
+
+export const createNeonatalVolvulusEpisode = (payload: any): Promise<{ episodeId: number; id: number; episodeCode: string; urgencyTier: string; evaluation: any; success: boolean }> =>
+  api('POST', '/api/neonatal-volvulus/episodes', payload);
+
+export const updateNeonatalVolvulusStatus = (id: number, payload: any): Promise<{ success: boolean; status: string }> =>
+  api('PATCH', `/api/neonatal-volvulus/episodes/${id}/status`, payload);
+
+export const addNeonatalVolvulusFlowsheet = (episodeId: number, payload: any): Promise<{ id: number; logId: number; success: boolean }> =>
+  api('POST', `/api/neonatal-volvulus/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteNeonatalVolvulusFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-volvulus/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const evaluateNeonatalVolvulusApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/neonatal-volvulus/evaluate', payload);
+
+// ==========================================
+// SERIES 32B: OBSTETRIC EXTERNAL CEPHALIC VERSION (ECV)
+// ==========================================
+export interface ObstetricEcvRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  procedure_datetime: string;
+  gestational_age_weeks: number;
+  maternal_parity: number;
+  maternal_bmi: number;
+  fetal_presentation_initial: 'frank_breech' | 'complete_breech' | 'footling_incomplete_breech' | 'transverse_lie' | 'oblique_lie';
+  placental_location: 'posterior' | 'fundal' | 'lateral' | 'anterior' | 'low_lying_placenta_previa';
+  amniotic_fluid_index_cm: number;
+  estimated_fetal_weight_g: number;
+  fetal_spine_position: 'posterior' | 'lateral' | 'anterior';
+  fetal_engagement_level: 'high_unengaged_floating' | 'dipping_in_pelvis' | 'deeply_engaged';
+  tocolytic_agent_administered: 'terbutaline_0_25mg_sc' | 'salbutamol_iv' | 'nitroglycerin_sublingual' | 'none_attempted';
+  terbutaline_given: number;
+  maternal_rh_negative: number;
+  rh_anti_d_administered: number;
+  kleihauer_betke_sent: number;
+  contraindications_present: number;
+  attempts_count: number;
+  forward_roll_attempted: number;
+  backward_flip_attempted: number;
+  ecv_outcome: 'successful_cephalic_conversion' | 'failed_breech_persistent' | 'procedure_aborted_fhr_deceleration' | 'emergency_cesarean_transfer';
+  calculated_success_probability_pct: number;
+  status: 'pre_procedure_assessment' | 'tocolysis_in_progress' | 'version_attempts_active' | 'successful_monitoring_discharge' | 'emergency_delivery_transfer' | 'elective_cesarean_scheduled';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  consultant_name?: string;
+}
+
+export interface ObstetricEcvFlowsheetRecord {
+  id: number;
+  ecv_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  minutes_from_start: number;
+  maternal_heart_rate: number;
+  maternal_blood_pressure_sys: number | null;
+  maternal_blood_pressure_dia: number | null;
+  fetal_heart_rate_baseline: number;
+  efm_pattern: 'reactive_reassuring' | 'transient_bradycardia_self_resolved' | 'persistent_severe_bradycardia' | 'tachycardia_post_terbutaline';
+  uterine_relaxation_adequate: number;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getObstetricEcvEpisodes = (params?: { patientId?: number }): Promise<{ episodes: ObstetricEcvRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/obstetric-ecv/episodes${query}`);
+};
+
+export const getObstetricEcvEpisode = (id: number): Promise<{ episode: ObstetricEcvRecord; evaluation: any; flowsheet: ObstetricEcvFlowsheetRecord[]; flowsheetLogs: ObstetricEcvFlowsheetRecord[] }> =>
+  api('GET', `/api/obstetric-ecv/episodes/${id}`);
+
+export const createObstetricEcvEpisode = (payload: any): Promise<{ episodeId: number; id: number; episodeCode: string; successProbability: number; evaluation: any; success: boolean }> =>
+  api('POST', '/api/obstetric-ecv/episodes', payload);
+
+export const updateObstetricEcvStatus = (id: number, payload: any): Promise<{ success: boolean; status: string }> =>
+  api('PATCH', `/api/obstetric-ecv/episodes/${id}/status`, payload);
+
+export const addObstetricEcvFlowsheet = (episodeId: number, payload: any): Promise<{ id: number; logId: number; success: boolean }> =>
+  api('POST', `/api/obstetric-ecv/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteObstetricEcvFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-ecv/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const evaluateObstetricEcvApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/obstetric-ecv/evaluate', payload);
+
+// ==========================================
+// SERIES 32C: PEDIATRIC DKA CEREBRAL EDEMA
+// ==========================================
+export interface PediatricDkaCerebralEdemaRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  detection_datetime: string;
+  age_years: number;
+  weight_kg: number;
+  gcs_score: number;
+  headache_severe_sudden: number;
+  lethargy_or_confusion: number;
+  recurrent_emesis_post_hydration: number;
+  bradycardia_cushing_triad: number;
+  hypertension_diastolic_ge_90: number;
+  cranial_nerve_palsy: number;
+  pupillary_abnormality: 'normal_reactive' | 'sluggish' | 'unequal_anisocoria' | 'dilated_fixed';
+  decorticate_decerebrate_posturing: number;
+  blood_glucose_mg_dl: number;
+  serum_sodium_measured_meq_l: number;
+  serum_sodium_corrected_meq_l: number;
+  serum_potassium_meq_l: number;
+  effective_serum_osmolality_mosm_kg: number;
+  blood_ph: number;
+  serum_bicarbonate_meq_l: number;
+  muir_criteria_category: 'diagnostic_cerebral_edema' | 'impending_warning_signs' | 'standard_dka_no_edema';
+  primary_hyperosmolar_agent: 'hypertonic_saline_3pct' | 'mannitol_20pct' | 'dual_hyperosmolar_rescue';
+  hyperosmolar_dose_ml: number;
+  fluid_rate_reduced_by_30pct: number;
+  head_of_bed_elevated_30deg: number;
+  status: 'emergent_hyperosmolar_rescue' | 'hypertonic_saline_infusing' | 'picu_neuro_monitoring' | 'neurological_recovery_gcs15' | 'brainstem_herniation_critical';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  consultant_name?: string;
+}
+
+export interface PediatricDkaCerebralEdemaFlowsheetRecord {
+  id: number;
+  dka_cerebral_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_detection: number;
+  gcs_score: number;
+  pupil_size_and_reactivity: string;
+  heart_rate: number;
+  blood_pressure_sys: number;
+  blood_pressure_dia: number;
+  blood_glucose_mg_dl: number;
+  serum_sodium_measured_meq_l: number;
+  serum_sodium_corrected_meq_l: number;
+  hyperosmolar_agent_given: string | null;
+  iv_fluid_rate_ml_hr: number;
+  neurological_exam_notes: string | null;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getPediatricDkaCerebralEdemaEpisodes = (params?: { patientId?: number }): Promise<{ episodes: PediatricDkaCerebralEdemaRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/pediatric-dka-ce/episodes${query}`);
+};
+
+export const getPediatricDkaCerebralEdemaEpisode = (id: number): Promise<{ episode: PediatricDkaCerebralEdemaRecord; evaluation: any; flowsheet: PediatricDkaCerebralEdemaFlowsheetRecord[]; flowsheetLogs: PediatricDkaCerebralEdemaFlowsheetRecord[] }> =>
+  api('GET', `/api/pediatric-dka-ce/episodes/${id}`);
+
+export const createPediatricDkaCerebralEdemaEpisode = (payload: any): Promise<{ episodeId: number; id: number; episodeCode: string; category: string; evaluation: any; success: boolean }> =>
+  api('POST', '/api/pediatric-dka-ce/episodes', payload);
+
+export const updatePediatricDkaCerebralEdemaStatus = (id: number, payload: any): Promise<{ success: boolean; status: string }> =>
+  api('PATCH', `/api/pediatric-dka-ce/episodes/${id}/status`, payload);
+
+export const addPediatricDkaCerebralEdemaFlowsheet = (episodeId: number, payload: any): Promise<{ id: number; logId: number; success: boolean; serumSodiumCorrectedMeqL: number }> =>
+  api('POST', `/api/pediatric-dka-ce/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deletePediatricDkaCerebralEdemaFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-dka-ce/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const evaluatePediatricDkaCerebralEdemaApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/pediatric-dka-ce/evaluate', payload);
+
+
 
 
 
