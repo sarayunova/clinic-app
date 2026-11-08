@@ -636,6 +636,31 @@ export const ACTION_LABELS: Record<string, string> = {
   'pediatric_hus.flowsheet_delete': 'Deleted pediatric hemolytic uremic syndrome flowsheet log',
   'pediatric_hus.print': 'Printed pediatric hemolytic uremic syndrome (STEC/aHUS) clinical dossier',
 
+  // SERIES 34: Neonatal EA/TEF, Obstetric Vasa Previa, Pediatric Empyema
+  'neonatal_ea_tef.create': 'Initiated neonatal esophageal atresia / TEF & Replogle sump decompression protocol',
+  'neonatal_ea_tef.update': 'Updated neonatal esophageal atresia / TEF episode & surgical plan',
+  'neonatal_ea_tef.status_update': 'Updated neonatal esophageal atresia / TEF episode status or surgical clearance',
+  'neonatal_ea_tef.delete': 'Deleted neonatal esophageal atresia / TEF episode record',
+  'neonatal_ea_tef.flowsheet_add': 'Logged neonatal EA/TEF Replogle sump suction, aspirate & vitals checkpoint',
+  'neonatal_ea_tef.flowsheet_delete': 'Deleted neonatal EA/TEF flowsheet log',
+  'neonatal_ea_tef.print': 'Printed neonatal esophageal atresia & tracheoesophageal fistula clinical dossier',
+
+  'obstetric_vasa_previa.create': 'Initiated obstetric vasa previa & fetal exsanguination emergency protocol',
+  'obstetric_vasa_previa.update': 'Updated obstetric vasa previa episode & delivery timing plan',
+  'obstetric_vasa_previa.status_update': 'Updated obstetric vasa previa episode or crash cesarean status',
+  'obstetric_vasa_previa.delete': 'Deleted obstetric vasa previa episode record',
+  'obstetric_vasa_previa.flowsheet_add': 'Logged obstetric vasa previa CTG tracing, Apt test & bleeding severity checkpoint',
+  'obstetric_vasa_previa.flowsheet_delete': 'Deleted obstetric vasa previa flowsheet log',
+  'obstetric_vasa_previa.print': 'Printed obstetric vasa previa & emergent crash delivery clinical dossier',
+
+  'pediatric_empyema.create': 'Initiated pediatric empyema & complicated parapneumonic effusion protocol',
+  'pediatric_empyema.update': 'Updated pediatric empyema staging, chest tube or fibrinolytic therapy plan',
+  'pediatric_empyema.status_update': 'Updated pediatric empyema episode or VATS decortication status',
+  'pediatric_empyema.delete': 'Deleted pediatric empyema episode record',
+  'pediatric_empyema.flowsheet_add': 'Logged pediatric empyema chest drain output, effluent & tPA dwell checkpoint',
+  'pediatric_empyema.flowsheet_delete': 'Deleted pediatric empyema flowsheet log',
+  'pediatric_empyema.print': 'Printed pediatric empyema & intrapleural fibrinolysis clinical dossier',
+
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

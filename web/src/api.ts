@@ -11111,6 +11111,288 @@ export const deletePediatricHusFlowsheet = (episodeId: number, logId: number): P
 export const evaluatePediatricHusApi = (payload: any): Promise<{ evaluation: any }> =>
   api('POST', '/api/pediatric-hus/evaluate', payload);
 
+// ==========================================
+// SERIES 34A: Neonatal Esophageal Atresia & TEF (Gross Types A-E & Replogle Suction)
+// ==========================================
+export interface NeonatalEaTefRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  age_hours: number;
+  weight_kg: number;
+  frothy_oral_secretions: number;
+  choking_cyanosis_with_feed: number;
+  og_tube_coiling_distance_cm: number;
+  gross_classification_type:
+    | 'type_a_isolated_ea_no_fistula'
+    | 'type_b_ea_with_proximal_tef'
+    | 'type_c_ea_with_distal_tef'
+    | 'type_d_ea_with_both_fistulas'
+    | 'type_e_isolated_h_type_tef';
+  abdominal_gas_pattern:
+    | 'gasless_abdomen_no_distal_fistula'
+    | 'aerated_gastrointestinal_tract'
+    | 'massive_gastric_distension';
+  replogle_tube_in_situ: number;
+  replogle_suction_pressure_mmhg: number;
+  gap_length_classification:
+    | 'short_gap_primary_anastomosis'
+    | 'intermediate_gap_1_to_3_cm'
+    | 'long_gap_greater_3_cm_or_vertebrae';
+  vacterl_vertebral_anomaly: number;
+  vacterl_anorectal_malformation: number;
+  vacterl_cardiac_anomaly: number;
+  vacterl_right_aortic_arch: number;
+  vacterl_renal_ultrasound_abnormal: number;
+  vacterl_limb_radial_anomaly: number;
+  head_of_bed_elevated_30deg: number;
+  surgical_procedure_planned:
+    | 'primary_extrapleural_repair_fistula_ligation'
+    | 'thoracoscopic_repair_fistula_ligation'
+    | 'staged_gastrostomy_delayed_anastomosis'
+    | 'cervical_esophagostomy';
+  status:
+    | 'preop_replogle_sump_decompression'
+    | 'in_operating_room_thoracotomy'
+    | 'postop_transanastomotic_tube_recovery'
+    | 'esophagram_contrast_clearance'
+    | 'resolved_full_oral_feeding';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  consultant_name?: string;
+}
+
+export interface NeonatalEaTefFlowsheetRecord {
+  id: number;
+  ea_tef_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_admission: number;
+  replogle_saline_flushed: number;
+  replogle_aspirate_volume_ml: number | null;
+  replogle_aspirate_character: 'clear_saliva' | 'frothy_mucus' | 'blood_tinged' | 'bilious_reflux';
+  heart_rate: number;
+  respiratory_rate: number;
+  oxygen_saturation_pct: number;
+  abdominal_girth_cm: number | null;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getNeonatalEaTefEpisodes = (params?: { patientId?: number }): Promise<{ episodes: NeonatalEaTefRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/neonatal-ea-tef/episodes${query}`);
+};
+
+export const getNeonatalEaTefEpisode = (id: number): Promise<{ episode: NeonatalEaTefRecord; evaluation: any; flowsheetLogs: NeonatalEaTefFlowsheetRecord[] }> =>
+  api('GET', `/api/neonatal-ea-tef/episodes/${id}`);
+
+export const createNeonatalEaTefEpisode = (payload: any): Promise<{ episode: NeonatalEaTefRecord }> =>
+  api('POST', '/api/neonatal-ea-tef/episodes', payload);
+
+export const updateNeonatalEaTefEpisode = (id: number, payload: any): Promise<{ episode: NeonatalEaTefRecord }> =>
+  api('PUT', `/api/neonatal-ea-tef/episodes/${id}`, payload);
+
+export const addNeonatalEaTefFlowsheet = (episodeId: number, payload: any): Promise<{ log: NeonatalEaTefFlowsheetRecord }> =>
+  api('POST', `/api/neonatal-ea-tef/episodes/${episodeId}/flowsheet`, payload);
+
+export const evaluateNeonatalEaTefApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/neonatal-ea-tef/evaluate', payload);
+
+// ==========================================
+// SERIES 34B: Obstetric Vasa Previa & Fetal Exsanguination Emergency Protocol
+// ==========================================
+export interface ObstetricVasaPreviaRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  gestational_age_weeks: number;
+  vasa_previa_type:
+    | 'type_1_velamentous_cord'
+    | 'type_2_succenturiate_or_bilobed_lobe'
+    | 'undetermined_aberrant_vessel';
+  distance_to_internal_os_mm: number;
+  color_doppler_confirmed: number;
+  cervical_length_mm: number | null;
+  vaginal_bleeding_present: number;
+  apt_test_result:
+    | 'not_performed'
+    | 'positive_fetal_hemoglobin_pink'
+    | 'negative_maternal_hemoglobin_yellow_brown';
+  membrane_status:
+    | 'intact'
+    | 'ruptured_spontaneous'
+    | 'artificial_rupture_contraindicated';
+  fetal_heart_rate_bpm: number | null;
+  ctg_pattern:
+    | 'category_1_normal'
+    | 'category_2_variable_decelerations'
+    | 'category_3_sinusoidal_pattern'
+    | 'category_3_severe_prolonged_bradycardia';
+  corticosteroids_administered: number;
+  elective_delivery_window_weeks:
+    | '34_0_to_35_6_weeks'
+    | 'emergent_crash_cesarean'
+    | 'outpatient_surveillance_pre_34w';
+  status:
+    | 'antenatal_surveillance'
+    | 'inpatient_rupture_precautions'
+    | 'emergent_crash_cesarean_section'
+    | 'postpartum_neonatal_resuscitation'
+    | 'resolved_maternal_neonatal_discharge';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  consultant_name?: string;
+}
+
+export interface ObstetricVasaPreviaFlowsheetRecord {
+  id: number;
+  vasa_previa_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  gestational_age_weeks: number;
+  maternal_systolic_bp: number;
+  maternal_diastolic_bp: number;
+  maternal_heart_rate: number;
+  fetal_heart_rate_bpm: number;
+  ctg_baseline_variability: 'normal_moderate' | 'minimal' | 'absent' | 'sinusoidal';
+  vaginal_bleeding_severity: 'none' | 'spotting_pink_mucus' | 'frank_fetal_blood_active' | 'massive_hemorrhage';
+  uterine_contractions_per_10min: number;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getObstetricVasaPreviaEpisodes = (params?: { patientId?: number }): Promise<{ episodes: ObstetricVasaPreviaRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/obstetric-vasa-previa/episodes${query}`);
+};
+
+export const getObstetricVasaPreviaEpisode = (id: number): Promise<{ episode: ObstetricVasaPreviaRecord; evaluation: any; flowsheetLogs: ObstetricVasaPreviaFlowsheetRecord[] }> =>
+  api('GET', `/api/obstetric-vasa-previa/episodes/${id}`);
+
+export const createObstetricVasaPreviaEpisode = (payload: any): Promise<{ episode: ObstetricVasaPreviaRecord }> =>
+  api('POST', '/api/obstetric-vasa-previa/episodes', payload);
+
+export const updateObstetricVasaPreviaEpisode = (id: number, payload: any): Promise<{ episode: ObstetricVasaPreviaRecord }> =>
+  api('PUT', `/api/obstetric-vasa-previa/episodes/${id}`, payload);
+
+export const addObstetricVasaPreviaFlowsheet = (episodeId: number, payload: any): Promise<{ log: ObstetricVasaPreviaFlowsheetRecord }> =>
+  api('POST', `/api/obstetric-vasa-previa/episodes/${episodeId}/flowsheet`, payload);
+
+export const evaluateObstetricVasaPreviaApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/obstetric-vasa-previa/evaluate', payload);
+
+// ==========================================
+// SERIES 34C: Pediatric Empyema & Complicated Parapneumonic Effusion
+// ==========================================
+export interface PediatricEmpyemaRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  age_years: number;
+  weight_kg: number;
+  staging_phase:
+    | 'stage_1_exudative_simple'
+    | 'stage_2_fibrinopurulent_complicated'
+    | 'stage_3_organizing_pleural_peel';
+  ultrasound_findings:
+    | 'free_flowing_anechoic'
+    | 'fibrinous_strands_early_septation'
+    | 'dense_multiloculated_honeycomb'
+    | 'thickened_visceral_pleura_trapped_lung';
+  pleural_fluid_ph: number | null;
+  pleural_fluid_glucose_mg_dl: number | null;
+  pleural_fluid_ldh_u_l: number | null;
+  pleural_fluid_appearance:
+    | 'clear_serous'
+    | 'turbid_cloudy'
+    | 'frank_pus_purulent';
+  gram_stain_culture_isolated: string | null;
+  chest_tube_placed: number;
+  chest_tube_size_fr: number | null;
+  intrapleural_fibrinolytic_therapy:
+    | 'not_indicated_antibiotics_only'
+    | 'tpa_plus_dornase_alfa_twice_daily'
+    | 'single_agent_tpa'
+    | 'saline_flush_control';
+  doses_completed: number;
+  vats_decortication_indicated: number;
+  status:
+    | 'chest_tube_insertion'
+    | 'intrapleural_fibrinolysis_active'
+    | 'vats_surgical_decortication'
+    | 'resolving_drain_removal_phase'
+    | 'discharged_complete_resolution';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  consultant_name?: string;
+}
+
+export interface PediatricEmpyemaFlowsheetRecord {
+  id: number;
+  empyema_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_drain_placement: number;
+  chest_drain_output_ml: number;
+  drain_effluent_appearance:
+    | 'purulent_thick_pus'
+    | 'turbid_serosanguinous'
+    | 'serous_straw_colored'
+    | 'no_output_blocked';
+  air_leak_grade: 'none' | 'cough_only' | 'expiratory' | 'continuous';
+  temperature_celsius: number;
+  respiratory_rate: number;
+  oxygen_saturation_pct: number;
+  fibrinolytic_instilled_dwell_completed: number;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getPediatricEmpyemaEpisodes = (params?: { patientId?: number }): Promise<{ episodes: PediatricEmpyemaRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/pediatric-empyema/episodes${query}`);
+};
+
+export const getPediatricEmpyemaEpisode = (id: number): Promise<{ episode: PediatricEmpyemaRecord; evaluation: any; flowsheetLogs: PediatricEmpyemaFlowsheetRecord[] }> =>
+  api('GET', `/api/pediatric-empyema/episodes/${id}`);
+
+export const createPediatricEmpyemaEpisode = (payload: any): Promise<{ episode: PediatricEmpyemaRecord }> =>
+  api('POST', '/api/pediatric-empyema/episodes', payload);
+
+export const updatePediatricEmpyemaEpisode = (id: number, payload: any): Promise<{ episode: PediatricEmpyemaRecord }> =>
+  api('PUT', `/api/pediatric-empyema/episodes/${id}`, payload);
+
+export const addPediatricEmpyemaFlowsheet = (episodeId: number, payload: any): Promise<{ log: PediatricEmpyemaFlowsheetRecord }> =>
+  api('POST', `/api/pediatric-empyema/episodes/${episodeId}/flowsheet`, payload);
+
+export const evaluatePediatricEmpyemaApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/pediatric-empyema/evaluate', payload);
+
+
 
 
 

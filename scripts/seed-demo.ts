@@ -4858,6 +4858,142 @@ async function seed() {
     }
   }
 
+  // --- SERIES 34A: Neonatal Esophageal Atresia & TEF Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_ea_tef_episodes (
+      patient_id, admission_id, episode_code, onset_datetime, age_hours, weight_kg,
+      frothy_oral_secretions, choking_cyanosis_with_feed, og_tube_coiling_distance_cm,
+      gross_classification_type, abdominal_gas_pattern, replogle_tube_in_situ,
+      replogle_suction_pressure_mmhg, gap_length_classification,
+      vacterl_vertebral_anomaly, vacterl_anorectal_malformation, vacterl_cardiac_anomaly,
+      vacterl_right_aortic_arch, vacterl_renal_ultrasound_abnormal, vacterl_limb_radial_anomaly,
+      head_of_bed_elevated_30deg, surgical_procedure_planned, status, consultant_id, clinical_notes,
+      created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'EATEF-20261108-101', '2026-11-08T06:00:00', 8, 2.85,
+      1, 1, 10.0,
+      'type_c_ea_with_distal_tef', 'aerated_gastrointestinal_tract', 1,
+      25, 'short_gap_primary_anastomosis',
+      0, 0, 1,
+      0, 0, 0,
+      1, 'primary_extrapleural_repair_fistula_ligation', 'preop_replogle_sump_decompression', ?,
+      'Term neonate with profuse frothy oral secretions and choking with feeds. 8 Fr OG tube coils at 10 cm. Plain radiograph demonstrates aerated bowel confirming Gross Type C with distal TEF. Echocardiogram reveals perimembranous VSD with normal left-sided aortic arch (standard right thoracotomy approach). Replogle sump placed to continuous 25 mmHg suction.',
+      ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingEaTef = db.prepare('SELECT id FROM neonatal_ea_tef_episodes WHERE episode_code = ?').get('EATEF-20261108-101') as any;
+  if (existingEaTef) {
+    const eaLogs = [
+      { h: 1.0, flushed: 1, aspMl: 5.0, aspChar: 'frothy_mucus', hr: 146, rr: 42, spo2: 98, girth: 28.0, notes: 'Replogle 8 Fr in blind upper pouch on continuous 25 mmHg suction. Secretions clearing well.' },
+      { h: 3.0, flushed: 1, aspMl: 7.5, aspChar: 'frothy_mucus', hr: 140, rr: 38, spo2: 99, girth: 28.5, notes: 'Saline lumen flushed with 0.5 mL NS. Head of bed 35 degrees up. Abdomen soft, non-distended.' },
+      { h: 6.0, flushed: 1, aspMl: 6.0, aspChar: 'clear_saliva', hr: 138, rr: 40, spo2: 98, girth: 28.5, notes: 'Echocardiogram completed: normal left aortic arch confirmed. Crossmatched for OR primary repair.' },
+    ];
+    for (const el of eaLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_ea_tef_flowsheet_logs (
+          ea_tef_episode_id, patient_id, log_datetime, hours_from_admission,
+          replogle_saline_flushed, replogle_aspirate_volume_ml, replogle_aspirate_character,
+          heart_rate, respiratory_rate, oxygen_saturation_pct, abdominal_girth_cm,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T07:00:00', ?,
+          ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingEaTef.id, babyId, el.h, el.flushed, el.aspMl, el.aspChar, el.hr, el.rr, el.spo2, el.girth, el.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 34B: Obstetric Vasa Previa Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_vasa_previa_episodes (
+      patient_id, admission_id, episode_code, gestational_age_weeks,
+      vasa_previa_type, distance_to_internal_os_mm, color_doppler_confirmed,
+      cervical_length_mm, vaginal_bleeding_present, apt_test_result,
+      membrane_status, fetal_heart_rate_bpm, ctg_pattern,
+      corticosteroids_administered, elective_delivery_window_weeks, status,
+      consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'VASA-20261108-101', 33.5,
+      'type_1_velamentous_cord', 12.0, 1,
+      31.0, 0, 'not_performed',
+      'intact', 142, 'category_1_normal',
+      1, '34_0_to_35_6_weeks', 'inpatient_rupture_precautions',
+      ?, 'G2P1 at 33+5 weeks with known Type I vasa previa (velamentous cord insertion, fetal vessels 12 mm from internal cervical os on color Doppler). Admitted for inpatient rupture precautions and serial EFM. Betamethasone course completed. Scheduled elective cesarean delivery planned at 34+4 weeks.',
+      ?, ?
+    )
+  `).run(anitaId, docId, now, now);
+
+  const existingVasa = db.prepare('SELECT id FROM obstetric_vasa_previa_episodes WHERE episode_code = ?').get('VASA-20261108-101') as any;
+  if (existingVasa) {
+    const vasaLogs = [
+      { ga: 33.5, sbp: 116, dbp: 72, hr: 78, fhr: 144, ctg: 'normal_moderate', bld: 'none', uc: 0, notes: 'Admission NST reactive with moderate variability. Pelvic rest instructions reinforced.' },
+      { ga: 33.5, sbp: 120, dbp: 74, hr: 82, fhr: 140, ctg: 'normal_moderate', bld: 'none', uc: 0, notes: 'No uterine activity or fluid loss. Crossmatch verified with blood bank (O-neg neonatal units on standby).' },
+      { ga: 33.6, sbp: 118, dbp: 70, hr: 80, fhr: 142, ctg: 'normal_moderate', bld: 'none', uc: 0, notes: 'Evening CTG Category 1. Cervical length stable at 31 mm.' },
+    ];
+    for (const vl of vasaLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_vasa_previa_flowsheet_logs (
+          vasa_previa_episode_id, patient_id, log_datetime, gestational_age_weeks,
+          maternal_systolic_bp, maternal_diastolic_bp, maternal_heart_rate,
+          fetal_heart_rate_bpm, ctg_baseline_variability, vaginal_bleeding_severity,
+          uterine_contractions_per_10min, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T08:00:00', ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingVasa.id, anitaId, vl.ga, vl.sbp, vl.dbp, vl.hr, vl.fhr, vl.ctg, vl.bld, vl.uc, vl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 34C: Pediatric Empyema & Complicated Effusion Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_empyema_episodes (
+      patient_id, admission_id, episode_code, onset_datetime, age_years, weight_kg,
+      staging_phase, ultrasound_findings, pleural_fluid_ph, pleural_fluid_glucose_mg_dl,
+      pleural_fluid_ldh_u_l, pleural_fluid_appearance, gram_stain_culture_isolated,
+      chest_tube_placed, chest_tube_size_fr, intrapleural_fibrinolytic_therapy,
+      doses_completed, vats_decortication_indicated, status, consultant_id, clinical_notes,
+      created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'EMPY-20261108-101', '2026-11-08T02:00:00', 4.0, 16.5,
+      'stage_2_fibrinopurulent_complicated', 'dense_multiloculated_honeycomb', 7.08, 24.0,
+      2850.0, 'frank_pus_purulent', 'Streptococcus pneumoniae (Gram + lancet pairs)',
+      1, 10, 'tpa_plus_dornase_alfa_twice_daily',
+      2, 0, 'intrapleural_fibrinolysis_active', ?,
+      '4-year-old admitted with severe necrotizing pneumonia and complicated parapneumonic empyema. Thoracic ultrasound demonstrates dense fibrinous honeycombing with purulent fluid (pH 7.08, glucose 24 mg/dL, LDH 2850 U/L). 10 Fr pigtail drain inserted. Commenced on intrapleural Alteplase 1.6 mg + Dornase alfa 5.0 mg twice daily with 2-hour clamp dwell.',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingEmpy = db.prepare('SELECT id FROM pediatric_empyema_episodes WHERE episode_code = ?').get('EMPY-20261108-101') as any;
+  if (existingEmpy) {
+    const emLogs = [
+      { h: 2.0, out: 120.0, eff: 'purulent_thick_pus', leak: 'none', temp: 38.6, rr: 32, spo2: 95, dwell: 0, notes: 'Initial 10 Fr drain placement. Thick purulent pus drained under gravity.' },
+      { h: 6.0, out: 180.0, eff: 'turbid_serosanguinous', leak: 'none', temp: 38.0, rr: 28, spo2: 97, dwell: 1, notes: 'Dose #1 tPA (1.6 mg) + DNase (5 mg) given, clamped 2h. Post-dwell copious lysis of fibrinous debris.' },
+      { h: 18.0, out: 240.0, eff: 'turbid_serosanguinous', leak: 'none', temp: 37.4, rr: 24, spo2: 98, dwell: 1, notes: 'Dose #2 tPA + DNase completed. Significant clearing of effusion on clinical exam; lung aerating well.' },
+    ];
+    for (const eml of emLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_empyema_flowsheet_logs (
+          empyema_episode_id, patient_id, log_datetime, hours_from_drain_placement,
+          chest_drain_output_ml, drain_effluent_appearance, air_leak_grade,
+          temperature_celsius, respiratory_rate, oxygen_saturation_pct,
+          fibrinolytic_instilled_dwell_completed, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T03:00:00', ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingEmpy.id, aaravId, eml.h, eml.out, eml.eff, eml.leak, eml.temp, eml.rr, eml.spo2, eml.dwell, eml.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },
