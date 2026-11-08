@@ -4711,6 +4711,153 @@ async function seed() {
     }
   }
 
+  // --- SERIES 33A: Neonatal Meconium Ileus & Cystic Fibrosis Gastrografin Decompression ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_meconium_ileus_episodes (
+      patient_id, admission_id, episode_code, onset_datetime,
+      age_hours, weight_kg, meconium_passed_yet, abdominal_distension,
+      emesis_character, palpable_doughy_masses, family_history_cystic_fibrosis,
+      plain_abdominal_xray_findings, contrast_enema_performed, contrast_enema_type,
+      microcolon_confirmed, meconium_pellets_visualized, complication_present,
+      enema_attempts_count, enema_success_outcome, surgery_indicated,
+      surgical_procedure_planned, cftr_gene_mutation_sent, pancreatic_enzyme_replacement_started,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'MECIL-20261108-101', '2026-11-08T04:00:00',
+      24, 3.1, 0, 'marked_tense',
+      'bilious_green', 1, 0,
+      'neuhauser_soap_bubble_sign', 1, 'gastrografin_dilute',
+      1, 1, 'uncomplicated_simple_ileus',
+      1, 'successful_evacuation_reflux_into_ileum', 0,
+      'none_medical_decompression', 1, 0,
+      'initial_contrast_decompression', ?, 'Neonate with failure to pass meconium, bilious emesis, RLQ doughy masses and Neuhauser sign on KUB. Therapeutic dilute Gastrografin (1:3) fluoroscopic enema performed with reflux into dilated terminal ileum and evacuation of inspissated plugs.', ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingMecIl = db.prepare('SELECT id FROM neonatal_meconium_ileus_episodes WHERE episode_code = ?').get('MECIL-20261108-101') as any;
+  if (existingMecIl) {
+    const mecLogs = [
+      { h: 2.0, girth: 32.0, aspMl: 14, aspCol: 'Dark green bilious', evac: 'large_thick_meconium_plug', hyd: 'euvolemic', uop: 2.1, na: 139, hr: 152, notes: 'Enema reflux into dilated distal ileum achieved under fluoroscopy. Passage of thick dark plugs with mucus.' },
+      { h: 6.0, girth: 30.5, aspMl: 6, aspCol: 'Light green gastric', evac: 'copious_liquid_meconium', hyd: 'euvolemic', uop: 2.8, na: 138, hr: 144, notes: 'Abdomen softer, girth decreased by 1.5 cm. Continued evacuation of liquefied meconium. IV maintenance running.' },
+      { h: 12.0, girth: 29.0, aspMl: 2, aspCol: 'Clear gastric', evac: 'copious_liquid_meconium', hyd: 'euvolemic', uop: 3.2, na: 140, hr: 138, notes: 'Complete relief of obstruction. Normal active bowel sounds. Awaiting CFTR mutation panel.' },
+    ];
+    for (const ml of mecLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_meconium_ileus_flowsheet_logs (
+          meconium_ileus_episode_id, patient_id, log_datetime, hours_from_onset,
+          abdominal_girth_cm, gastric_aspirate_ml, gastric_aspirate_color,
+          meconium_evacuated_amount, hydration_status, urine_output_ml_kg_hr,
+          serum_sodium_meq_l, heart_rate, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T05:00:00', ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?, ?
+        )
+      `).run(existingMecIl.id, babyId, ml.h, ml.girth, ml.aspMl, ml.aspCol, ml.evac, ml.hyd, ml.uop, ml.na, ml.hr, ml.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 33B: Obstetric Placental Abruption & Consumptive Coagulopathy ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_placental_abruption_episodes (
+      patient_id, admission_id, episode_code, presentation_datetime,
+      gestational_age_weeks, maternal_parity, vaginal_bleeding_severity,
+      abdominal_pain_character, uterine_tonus, fetal_heart_rate_status,
+      maternal_systolic_bp, maternal_diastolic_bp, maternal_heart_rate,
+      serum_fibrinogen_mg_dl, platelet_count, hemoglobin_g_dl, pt_inr,
+      kleihauer_betke_sent, ultrasound_retroplacental_hematoma, page_classification_grade,
+      mtp_activated, prbc_units_transfused, ffp_units_transfused,
+      cryoprecipitate_pools_transfused, delivery_mode_indicated,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'ABRUPT-20261108-101', '2026-11-08T05:30:00',
+      35.5, 1, 'moderate_bleeding',
+      'severe_constant_knife_like', 'tetanic_woody_hard', 'severe_bradycardia_category_3',
+      92, 54, 128,
+      135.0, 92000, 8.4, 1.4,
+      1, 'retroplacental_hematoma_present', 'grade_3_severe_maternal_shock_demise_or_dic',
+      1, 2, 2,
+      2, 'emergent_crash_cesarean',
+      'crash_cesarean_in_progress', ?, 'G2P1 at 35+5 weeks presented with sudden woody rigid uterus, dark vaginal bleeding, shock index 1.39, severe fetal bradycardia (FHR 90 bpm), and hypofibrinogenemia 135 mg/dL. Code Crimson / Crash Cesarean Category 1 initiated with MTP 1:1:1 and Cryoprecipitate.', ?, ?
+    )
+  `).run(anitaId, docId, now, now);
+
+  const existingAbrupt = db.prepare('SELECT id FROM obstetric_placental_abruption_episodes WHERE episode_code = ?').get('ABRUPT-20261108-101') as any;
+  if (existingAbrupt) {
+    const abLogs = [
+      { m: 10.0, hr: 130, sbp: 90, dbp: 52, fhr: 88, tone: 'woody_rigid', loss: 500, fib: 135, prod: 'Pack 1 MTP requested, 2U O-neg PRBC on rapid warmer', notes: 'Crash Category 1 cesarean call activated, transfer to OT 1.' },
+      { m: 25.0, hr: 114, sbp: 98, dbp: 58, fhr: 95, tone: 'woody_rigid', loss: 850, fib: 145, prod: '2U PRBC and 2 pools Cryoprecipitate infusing', notes: 'Rapid delivery of live male infant, APGAR 4/7, NICU resus team present. Retropacental clot ~400 mL evacuated.' },
+      { m: 60.0, hr: 92, sbp: 112, dbp: 70, fhr: null, tone: 'soft_relaxed_between_contractions', loss: 1050, fib: 215, prod: 'Cryo 2 pools completed, TXA 1g IV finished', notes: 'Couvelaire uterus noted, uterine hemostasis secured with B-Lynch suture and Carbetocin. Fibrinogen corrected to >200 mg/dL.' },
+    ];
+    for (const abl of abLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_placental_abruption_flowsheet_logs (
+          abruption_episode_id, patient_id, log_datetime, minutes_from_presentation,
+          maternal_heart_rate, maternal_blood_pressure_sys, maternal_blood_pressure_dia,
+          fetal_heart_rate, uterine_tone_assessment, vaginal_blood_loss_ml,
+          fibrinogen_mg_dl, blood_products_infused, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T05:40:00', ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?, ?
+        )
+      `).run(existingAbrupt.id, anitaId, abl.m, abl.hr, abl.sbp, abl.dbp, abl.fhr, abl.tone, abl.loss, abl.fib, abl.prod, abl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 33C: Pediatric Hemolytic Uremic Syndrome (STEC-HUS & aHUS) ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_hus_episodes (
+      patient_id, admission_id, episode_code, onset_datetime,
+      age_years, weight_kg, prodromal_bloody_diarrhea, shiga_toxin_tested,
+      shiga_toxin_result, hemoglobin_g_dl, platelet_count, serum_creatinine_mg_dl,
+      baseline_creatinine_mg_dl, kdigo_aki_stage, schistocytes_present_pct,
+      serum_ldh_u_l, direct_coombs_test, serum_potassium_meq_l,
+      oliguria_anuria_duration_hours, hypertension_present, neurological_involvement,
+      hus_phenotype, antibiotics_avoided_strict, antimotility_agents_avoided,
+      dialysis_rrt_indicated, dialysis_modality, eculizumab_indicated,
+      status, consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'HUS-20261108-101', '2026-11-08T03:00:00',
+      4.5, 16.0, 1, 1,
+      'positive_stec', 7.1, 38000, 2.9,
+      0.4, 'stage_3_failure', 3.8,
+      2240, 'negative', 5.6,
+      18.0, 1, 'lethargy_irritability',
+      'typical_stec_d_plus', 1, 1,
+      1, 'peritoneal_dialysis', 0,
+      'active_fluid_electrolyte_management', ?, '4.5-year-old presenting 5 days post bloody diarrhea with classic STEC-HUS triad: Coombs-negative MAHA (Hb 7.1, schistocytes 3.8%, LDH 2240), severe thrombocytopenia (38k), and KDIGO stage 3 anuric AKI (Cr 2.9 vs base 0.4). Strict withholding of antibiotics; PD catheter placement arranged for volume overload and hyperkalemia.', ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingHus = db.prepare('SELECT id FROM pediatric_hus_episodes WHERE episode_code = ?').get('HUS-20261108-101') as any;
+  if (existingHus) {
+    const husLogs = [
+      { h: 2.0, uop: 0.2, bal: 150, plt: 36000, cr: 3.0, k: 5.7, sbp: 122, dbp: 78, neuro: 'irritable', uf: 0, notes: 'Strict fluid restriction to insensible losses (400 mL/m2/day) + UOP. Kayexalate 1g/kg given PR for K+ 5.7.' },
+      { h: 6.0, uop: 0.1, bal: 80, plt: 34000, cr: 3.3, k: 5.4, sbp: 118, dbp: 74, neuro: 'somnolent', uf: 180, notes: 'Peritoneal dialysis initiated with 1.5% Dianeal 15 mL/kg dwell cycles. Serum potassium controlled.' },
+      { h: 12.0, uop: 0.4, bal: -120, plt: 42000, cr: 2.8, k: 4.8, sbp: 110, dbp: 68, neuro: 'alert', uf: 340, notes: 'Good ultrafiltration on PD. Sensorium normalized, alert and drinking sips. Platelets stabilizing.' },
+    ];
+    for (const hl of husLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_hus_flowsheet_logs (
+          hus_episode_id, patient_id, log_datetime, hours_from_onset,
+          urine_output_ml_kg_hr, fluid_balance_24h_ml, platelet_count,
+          serum_creatinine_mg_dl, serum_potassium_meq_l, blood_pressure_sys,
+          blood_pressure_dia, neurological_status, dialysis_ultrafiltration_ml,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T04:00:00', ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingHus.id, aaravId, hl.h, hl.uop, hl.bal, hl.plt, hl.cr, hl.k, hl.sbp, hl.dbp, hl.neuro, hl.uf, hl.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },

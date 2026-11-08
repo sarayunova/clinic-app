@@ -614,6 +614,28 @@ export const ACTION_LABELS: Record<string, string> = {
   'pediatric_dka_ce.flowsheet_delete': 'Deleted pediatric DKA cerebral edema flowsheet log',
   'pediatric_dka_ce.print': 'Printed pediatric DKA cerebral edema & emergent hyperosmolar rescue clinical dossier',
 
+  // SERIES 33: Neonatal Meconium Ileus, Obstetric Placental Abruption, Pediatric HUS
+  'neonatal_meconium_ileus.create': 'Initiated neonatal meconium ileus & Cystic Fibrosis Gastrografin protocol calculation',
+  'neonatal_meconium_ileus.status_update': 'Updated neonatal meconium ileus episode, enema outcome or surgical clearance',
+  'neonatal_meconium_ileus.delete': 'Deleted neonatal meconium ileus episode record',
+  'neonatal_meconium_ileus.flowsheet_add': 'Logged neonatal meconium ileus abdominal girth, enema passage & hydration checkpoint',
+  'neonatal_meconium_ileus.flowsheet_delete': 'Deleted neonatal meconium ileus flowsheet log',
+  'neonatal_meconium_ileus.print': 'Printed neonatal meconium ileus & CF Gastrografin decompression clinical dossier',
+
+  'obstetric_placental_abruption.create': 'Initiated obstetric placental abruption & Page classification assessment',
+  'obstetric_placental_abruption.status_update': 'Updated obstetric placental abruption episode, MTP or crash cesarean status',
+  'obstetric_placental_abruption.delete': 'Deleted obstetric placental abruption episode record',
+  'obstetric_placental_abruption.flowsheet_add': 'Logged obstetric placental abruption shock index, fibrinogen & uterine tone checkpoint',
+  'obstetric_placental_abruption.flowsheet_delete': 'Deleted obstetric placental abruption flowsheet log',
+  'obstetric_placental_abruption.print': 'Printed obstetric placental abruption & consumptive coagulopathy clinical dossier',
+
+  'pediatric_hus.create': 'Initiated pediatric hemolytic uremic syndrome (STEC / aHUS) triad evaluation',
+  'pediatric_hus.status_update': 'Updated pediatric HUS episode, renal replacement or Eculizumab therapy status',
+  'pediatric_hus.delete': 'Deleted pediatric hemolytic uremic syndrome episode record',
+  'pediatric_hus.flowsheet_add': 'Logged pediatric HUS urine output, fluid balance, schistocyte & creatinine checkpoint',
+  'pediatric_hus.flowsheet_delete': 'Deleted pediatric hemolytic uremic syndrome flowsheet log',
+  'pediatric_hus.print': 'Printed pediatric hemolytic uremic syndrome (STEC/aHUS) clinical dossier',
+
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

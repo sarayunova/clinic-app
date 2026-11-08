@@ -10861,6 +10861,257 @@ export const deletePediatricDkaCerebralEdemaFlowsheet = (episodeId: number, logI
 export const evaluatePediatricDkaCerebralEdemaApi = (payload: any): Promise<{ evaluation: any }> =>
   api('POST', '/api/pediatric-dka-ce/evaluate', payload);
 
+// ==========================================
+// SERIES 33A: Neonatal Meconium Ileus & Cystic Fibrosis Gastrografin Decompression
+// ==========================================
+export interface NeonatalMeconiumIleusRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  age_hours: number;
+  weight_kg: number;
+  meconium_passed_yet: number;
+  abdominal_distension: 'absent' | 'mild' | 'marked_tense';
+  emesis_character: 'none' | 'gastric_clear' | 'bilious_green';
+  palpable_doughy_masses: number;
+  family_history_cystic_fibrosis: number;
+  plain_abdominal_xray_findings: 'neuhauser_soap_bubble_sign' | 'dilated_loops_no_fluid_levels' | 'calcifications_meconium_peritonitis' | 'pneumoperitoneum_free_air' | 'non_specific_distension';
+  contrast_enema_performed: number;
+  contrast_enema_type: 'gastrografin_dilute' | 'omnipaque_water_soluble' | 'barium_contraindicated' | 'none';
+  microcolon_confirmed: number;
+  meconium_pellets_visualized: number;
+  complication_present: 'uncomplicated_simple_ileus' | 'volvulus_gangrene' | 'atresia_segmental' | 'meconium_peritonitis_pseudocyst' | 'perforation_free_air';
+  enema_attempts_count: number;
+  enema_success_outcome: 'successful_evacuation_reflux_into_ileum' | 'partial_evacuation_repeat_indicated' | 'failed_refractory_obstruction' | 'procedure_aborted_perforation_risk' | 'not_attempted_surgery_first';
+  surgery_indicated: number;
+  surgical_procedure_planned: 'none_medical_decompression' | 'bishop_koop_t_tube_enterostomy' | 'santulli_enterostomy' | 'resection_primary_anastomosis' | 'laparotomy_enterotomy_irrigation';
+  cftr_gene_mutation_sent: number;
+  pancreatic_enzyme_replacement_started: number;
+  status: 'initial_contrast_decompression' | 'repeat_enema_observation' | 'in_operating_room_enterostomy' | 'post_op_stoma_recovery' | 'resolved_normal_stooling';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  consultant_name?: string;
+}
+
+export interface NeonatalMeconiumIleusFlowsheetRecord {
+  id: number;
+  meconium_ileus_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_onset: number;
+  abdominal_girth_cm: number;
+  gastric_aspirate_ml: number | null;
+  gastric_aspirate_color: string | null;
+  meconium_evacuated_amount: 'none' | 'scant_mucus' | 'small_hard_pellets' | 'large_thick_meconium_plug' | 'copious_liquid_meconium';
+  hydration_status: 'euvolemic' | 'mild_hypovolemia' | 'moderate_dehydration' | 'severe_shock';
+  urine_output_ml_kg_hr: number | null;
+  serum_sodium_meq_l: number | null;
+  heart_rate: number;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getNeonatalMeconiumIleusEpisodes = (params?: { patientId?: number }): Promise<{ episodes: NeonatalMeconiumIleusRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/neonatal-meconium-ileus/episodes${query}`);
+};
+
+export const getNeonatalMeconiumIleusEpisode = (id: number): Promise<{ episode: NeonatalMeconiumIleusRecord; evaluation: any; flowsheet: NeonatalMeconiumIleusFlowsheetRecord[]; flowsheetLogs: NeonatalMeconiumIleusFlowsheetRecord[] }> =>
+  api('GET', `/api/neonatal-meconium-ileus/episodes/${id}`);
+
+export const createNeonatalMeconiumIleusEpisode = (payload: any): Promise<{ episodeId: number; id: number; episodeCode: string; surgeryIndicated: boolean; evaluation: any; success: boolean }> =>
+  api('POST', '/api/neonatal-meconium-ileus/episodes', payload);
+
+export const updateNeonatalMeconiumIleusStatus = (id: number, payload: any): Promise<{ success: boolean; status: string }> =>
+  api('PATCH', `/api/neonatal-meconium-ileus/episodes/${id}/status`, payload);
+
+export const addNeonatalMeconiumIleusFlowsheet = (episodeId: number, payload: any): Promise<{ id: number; logId: number; success: boolean }> =>
+  api('POST', `/api/neonatal-meconium-ileus/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteNeonatalMeconiumIleusFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-meconium-ileus/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const evaluateNeonatalMeconiumIleusApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/neonatal-meconium-ileus/evaluate', payload);
+
+// ==========================================
+// SERIES 33B: Obstetric Placental Abruption & Consumptive Coagulopathy
+// ==========================================
+export interface ObstetricPlacentalAbruptionRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  presentation_datetime: string;
+  gestational_age_weeks: number;
+  maternal_parity: number;
+  vaginal_bleeding_severity: 'concealed_no_external_bleeding' | 'mild_spotting' | 'moderate_bleeding' | 'severe_massive_hemorrhage';
+  abdominal_pain_character: 'none' | 'mild_cramping' | 'severe_constant_knife_like';
+  uterine_tonus: 'normal_soft' | 'increased_hypertonic' | 'tetanic_woody_hard';
+  fetal_heart_rate_status: 'reassuring_category_1' | 'indeterminate_category_2' | 'severe_bradycardia_category_3' | 'intrauterine_fetal_demise_confirmed';
+  maternal_systolic_bp: number;
+  maternal_diastolic_bp: number;
+  maternal_heart_rate: number;
+  serum_fibrinogen_mg_dl: number;
+  platelet_count: number;
+  hemoglobin_g_dl: number;
+  pt_inr: number | null;
+  kleihauer_betke_sent: number;
+  ultrasound_retroplacental_hematoma: 'none_visualized_abruption_not_excluded' | 'marginal_collection' | 'retroplacental_hematoma_present' | 'couvelaire_uterus_suspected';
+  page_classification_grade: 'grade_0_retrospective_asymptomatic' | 'grade_1_mild_no_fetal_compromise' | 'grade_2_moderate_fetal_distress_live' | 'grade_3_severe_maternal_shock_demise_or_dic';
+  mtp_activated: number;
+  prbc_units_transfused: number;
+  ffp_units_transfused: number;
+  cryoprecipitate_pools_transfused: number;
+  delivery_mode_indicated: 'emergent_crash_cesarean' | 'urgent_cesarean_transfer' | 'augmented_vaginal_delivery_under_monitoring' | 'conservative_surveillance_preterm';
+  status: 'emergent_stabilization' | 'crash_cesarean_in_progress' | 'postpartum_dic_resuscitation' | 'stabilized_ward_observation' | 'resolved_discharged';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  consultant_name?: string;
+}
+
+export interface ObstetricPlacentalAbruptionFlowsheetRecord {
+  id: number;
+  abruption_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  minutes_from_presentation: number;
+  maternal_heart_rate: number;
+  maternal_blood_pressure_sys: number;
+  maternal_blood_pressure_dia: number;
+  fetal_heart_rate: number | null;
+  uterine_tone_assessment: 'soft_relaxed_between_contractions' | 'tense_hypertonic' | 'woody_rigid';
+  vaginal_blood_loss_ml: number | null;
+  fibrinogen_mg_dl: number | null;
+  blood_products_infused: string | null;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getObstetricPlacentalAbruptionEpisodes = (params?: { patientId?: number }): Promise<{ episodes: ObstetricPlacentalAbruptionRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/obstetric-placental-abruption/episodes${query}`);
+};
+
+export const getObstetricPlacentalAbruptionEpisode = (id: number): Promise<{ episode: ObstetricPlacentalAbruptionRecord; evaluation: any; flowsheet: ObstetricPlacentalAbruptionFlowsheetRecord[]; flowsheetLogs: ObstetricPlacentalAbruptionFlowsheetRecord[] }> =>
+  api('GET', `/api/obstetric-placental-abruption/episodes/${id}`);
+
+export const createObstetricPlacentalAbruptionEpisode = (payload: any): Promise<{ episodeId: number; id: number; episodeCode: string; pageGrade: string; evaluation: any; success: boolean }> =>
+  api('POST', '/api/obstetric-placental-abruption/episodes', payload);
+
+export const updateObstetricPlacentalAbruptionStatus = (id: number, payload: any): Promise<{ success: boolean; status: string }> =>
+  api('PATCH', `/api/obstetric-placental-abruption/episodes/${id}/status`, payload);
+
+export const addObstetricPlacentalAbruptionFlowsheet = (episodeId: number, payload: any): Promise<{ id: number; logId: number; success: boolean; shockIndex: number }> =>
+  api('POST', `/api/obstetric-placental-abruption/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteObstetricPlacentalAbruptionFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-placental-abruption/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const evaluateObstetricPlacentalAbruptionApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/obstetric-placental-abruption/evaluate', payload);
+
+// ==========================================
+// SERIES 33C: Pediatric Hemolytic Uremic Syndrome (STEC-HUS & aHUS)
+// ==========================================
+export interface PediatricHusRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  age_years: number;
+  weight_kg: number;
+  prodromal_bloody_diarrhea: number;
+  shiga_toxin_tested: number;
+  shiga_toxin_result: 'positive_stec' | 'negative' | 'pending';
+  hemoglobin_g_dl: number;
+  platelet_count: number;
+  serum_creatinine_mg_dl: number;
+  baseline_creatinine_mg_dl: number;
+  kdigo_aki_stage: 'stage_1' | 'stage_2' | 'stage_3_failure';
+  schistocytes_present_pct: number;
+  serum_ldh_u_l: number;
+  direct_coombs_test: 'negative' | 'positive_non_stec' | 'not_performed';
+  serum_potassium_meq_l: number;
+  oliguria_anuria_duration_hours: number;
+  hypertension_present: number;
+  neurological_involvement: 'none' | 'lethargy_irritability' | 'seizures_altered_mental_status' | 'coma_stroke';
+  hus_phenotype: 'typical_stec_d_plus' | 'atypical_complement_mediated_ahus' | 'secondary_pneumococcal_or_other';
+  antibiotics_avoided_strict: number;
+  antimotility_agents_avoided: number;
+  dialysis_rrt_indicated: number;
+  dialysis_modality: 'none' | 'peritoneal_dialysis' | 'crrt_cvvhdf' | 'hemodialysis';
+  eculizumab_indicated: number;
+  status: 'active_fluid_electrolyte_management' | 'dialysis_crrt_running' | 'eculizumab_infusion' | 'renal_recovery_phase' | 'resolved_normal_renal_function';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  consultant_name?: string;
+}
+
+export interface PediatricHusFlowsheetRecord {
+  id: number;
+  hus_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_onset: number;
+  urine_output_ml_kg_hr: number;
+  fluid_balance_24h_ml: number | null;
+  platelet_count: number;
+  serum_creatinine_mg_dl: number;
+  serum_potassium_meq_l: number;
+  blood_pressure_sys: number;
+  blood_pressure_dia: number;
+  neurological_status: 'alert' | 'irritable' | 'somnolent' | 'seizure_activity';
+  dialysis_ultrafiltration_ml: number | null;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getPediatricHusEpisodes = (params?: { patientId?: number }): Promise<{ episodes: PediatricHusRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/pediatric-hus/episodes${query}`);
+};
+
+export const getPediatricHusEpisode = (id: number): Promise<{ episode: PediatricHusRecord; evaluation: any; flowsheet: PediatricHusFlowsheetRecord[]; flowsheetLogs: PediatricHusFlowsheetRecord[] }> =>
+  api('GET', `/api/pediatric-hus/episodes/${id}`);
+
+export const createPediatricHusEpisode = (payload: any): Promise<{ episodeId: number; id: number; episodeCode: string; kdigoStage: string; dialysisIndicated: boolean; evaluation: any; success: boolean }> =>
+  api('POST', '/api/pediatric-hus/episodes', payload);
+
+export const updatePediatricHusStatus = (id: number, payload: any): Promise<{ success: boolean; status: string }> =>
+  api('PATCH', `/api/pediatric-hus/episodes/${id}/status`, payload);
+
+export const addPediatricHusFlowsheet = (episodeId: number, payload: any): Promise<{ id: number; logId: number; success: boolean }> =>
+  api('POST', `/api/pediatric-hus/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deletePediatricHusFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-hus/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const evaluatePediatricHusApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/pediatric-hus/evaluate', payload);
+
+
 
 
 
