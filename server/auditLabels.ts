@@ -661,6 +661,31 @@ export const ACTION_LABELS: Record<string, string> = {
   'pediatric_empyema.flowsheet_delete': 'Deleted pediatric empyema flowsheet log',
   'pediatric_empyema.print': 'Printed pediatric empyema & intrapleural fibrinolysis clinical dossier',
 
+  // SERIES 35: Neonatal Wall Defects, Obstetric SPT, Pediatric Osteomyelitis
+  'neonatal_abdominal_defects.create': 'Initiated neonatal gastroschisis / omphalocele staged silo reduction protocol',
+  'neonatal_abdominal_defects.update': 'Updated neonatal abdominal wall defect episode & reduction parameters',
+  'neonatal_abdominal_defects.status_update': 'Updated neonatal wall defect episode or fascial closure status',
+  'neonatal_abdominal_defects.delete': 'Deleted neonatal abdominal wall defect episode record',
+  'neonatal_abdominal_defects.flowsheet_add': 'Logged neonatal silo reduction, bladder pressure & perfusion checkpoint',
+  'neonatal_abdominal_defects.flowsheet_delete': 'Deleted neonatal abdominal wall defect flowsheet log',
+  'neonatal_abdominal_defects.print': 'Printed neonatal abdominal wall defect & silo reduction clinical dossier',
+
+  'obstetric_spt.create': 'Initiated obstetric septic pelvic thrombophlebitis & heparin challenge protocol',
+  'obstetric_spt.update': 'Updated obstetric SPT episode & anticoagulation regimen',
+  'obstetric_spt.status_update': 'Updated obstetric SPT episode or heparin challenge response status',
+  'obstetric_spt.delete': 'Deleted obstetric SPT episode record',
+  'obstetric_spt.flowsheet_add': 'Logged obstetric SPT fever curve, aPTT & heparin titration checkpoint',
+  'obstetric_spt.flowsheet_delete': 'Deleted obstetric SPT flowsheet log',
+  'obstetric_spt.print': 'Printed obstetric septic pelvic thrombophlebitis clinical dossier',
+
+  'pediatric_osteomyelitis.create': 'Initiated pediatric acute osteomyelitis & subperiosteal abscess protocol',
+  'pediatric_osteomyelitis.update': 'Updated pediatric osteomyelitis staging & antimicrobial regimen',
+  'pediatric_osteomyelitis.status_update': 'Updated pediatric osteomyelitis episode or surgical drainage status',
+  'pediatric_osteomyelitis.delete': 'Deleted pediatric osteomyelitis episode record',
+  'pediatric_osteomyelitis.flowsheet_add': 'Logged pediatric osteomyelitis CRP trajectory, fever & pain checkpoint',
+  'pediatric_osteomyelitis.flowsheet_delete': 'Deleted pediatric osteomyelitis flowsheet log',
+  'pediatric_osteomyelitis.print': 'Printed pediatric acute hematogenous osteomyelitis clinical dossier',
+
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

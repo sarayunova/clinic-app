@@ -11392,6 +11392,275 @@ export const addPediatricEmpyemaFlowsheet = (episodeId: number, payload: any): P
 export const evaluatePediatricEmpyemaApi = (payload: any): Promise<{ evaluation: any }> =>
   api('POST', '/api/pediatric-empyema/evaluate', payload);
 
+// ==========================================
+// SERIES 35A: Neonatal Omphalocele vs Gastroschisis Staged Silo Reduction Protocol
+// ==========================================
+export interface NeonatalAbdominalDefectRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  defect_type: 'gastroschisis' | 'omphalocele_intact' | 'omphalocele_ruptured';
+  defect_diameter_cm: number;
+  cord_insertion_site: 'normal_left_of_defect' | 'sac_apex' | 'disrupted';
+  membrane_sac_present: number;
+  eviscerated_organs: 'small_and_large_bowel' | 'bowel_and_liver' | 'bowel_liver_spleen_gonads';
+  bowel_condition: 'healthy_normal_peristalsis' | 'edematous_fibrin_peel' | 'ischemic_gangrenous' | 'perforated_atresia';
+  closure_approach: 'primary_bedside_sutureless' | 'primary_operative_closure' | 'staged_silo_reduction' | 'delayed_escharotic_paint_and_wait';
+  silo_type: 'none' | 'preformed_spring_loaded_bedside' | 'surgically_fashioned_dacron_silo';
+  silo_height_cm: number | null;
+  current_bladder_pressure_mmhg: number;
+  peak_inspiratory_pressure_cmh2o: number;
+  beckwith_wiedemann_suspected: number;
+  cardiac_echo_completed: number;
+  associated_anomalies_note: string | null;
+  status:
+    | 'initial_stabilization_silo_placement'
+    | 'active_daily_serial_reduction'
+    | 'ready_for_fascial_closure'
+    | 'post_closure_compartment_monitoring'
+    | 'resolved_enteral_feeds_established';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  consultant_name?: string;
+}
+
+export interface NeonatalAbdominalDefectFlowsheetRecord {
+  id: number;
+  wall_defect_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  day_of_reduction: number;
+  silo_height_reduced_cm: number;
+  residual_silo_height_cm: number;
+  bladder_pressure_mmhg: number;
+  peak_inspiratory_pressure_cmh2o: number;
+  urine_output_ml_kg_hr: number;
+  lower_extremity_perfusion: 'warm_pink_pulses_brisk' | 'sluggish_cap_refill_delayed' | 'pale_cool_pulses_diminished';
+  bowel_visceral_color: 'pink_viable' | 'hyperemic_mild_edema' | 'dusky_venous_congestion' | 'ischemic_black';
+  heart_rate: number;
+  respiratory_rate: number;
+  mean_arterial_pressure_mmhg: number;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getNeonatalAbdominalDefectsEpisodes = (params?: { patientId?: number }): Promise<{ episodes: NeonatalAbdominalDefectRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/neonatal-abdominal-defects/episodes${query}`);
+};
+
+export const getNeonatalAbdominalDefectsEpisode = (id: number): Promise<{ episode: NeonatalAbdominalDefectRecord; evaluation: any; flowsheetLogs: NeonatalAbdominalDefectFlowsheetRecord[] }> =>
+  api('GET', `/api/neonatal-abdominal-defects/episodes/${id}`);
+
+export const createNeonatalAbdominalDefectsEpisode = (payload: any): Promise<{ episode: NeonatalAbdominalDefectRecord }> =>
+  api('POST', '/api/neonatal-abdominal-defects/episodes', payload);
+
+export const updateNeonatalAbdominalDefectsEpisode = (id: number, payload: any): Promise<{ episode: NeonatalAbdominalDefectRecord }> =>
+  api('PUT', `/api/neonatal-abdominal-defects/episodes/${id}`, payload);
+
+export const addNeonatalAbdominalDefectsFlowsheet = (episodeId: number, payload: any): Promise<{ log: NeonatalAbdominalDefectFlowsheetRecord }> =>
+  api('POST', `/api/neonatal-abdominal-defects/episodes/${episodeId}/flowsheet`, payload);
+
+export const evaluateNeonatalAbdominalDefectsApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/neonatal-abdominal-defects/evaluate', payload);
+
+// ==========================================
+// SERIES 35B: Obstetric Septic Pelvic Thrombophlebitis (SPT) & Heparin Challenge
+// ==========================================
+export interface ObstetricSptRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  delivery_datetime: string;
+  delivery_mode: 'cesarean_section' | 'operative_vaginal' | 'spontaneous_vaginal';
+  postpartum_day: number;
+  spt_phenotype: 'ovarian_vein_thrombosis' | 'deep_septic_pelvic_thrombophlebitis' | 'undifferentiated_refractory_fever';
+  affected_vein: 'right_ovarian_vein' | 'left_ovarian_vein' | 'bilateral_ovarian_veins' | 'internal_iliac_plexus' | 'not_visualized_clinical_diagnosis';
+  peak_temperature_celsius: number;
+  hours_refractory_triple_antibiotics: number;
+  pelvic_ct_mri_findings: 'thrombus_with_rim_enhancement' | 'pelvic_phlebitis_perivascular_stranding' | 'negative_no_thrombus_seen' | 'imaging_pending';
+  pelvic_abscess_ruled_out: number;
+  heparin_challenge_initiated: number;
+  heparin_challenge_start_datetime: string | null;
+  anticoagulant_regimen: 'iv_unfractionated_heparin_infusion' | 'therapeutic_lmwh_weight_based' | 'transition_to_oral_anticoagulation';
+  target_aptt_seconds: string;
+  defervescence_hours: number | null;
+  heparin_challenge_response: 'pending_under_48h' | 'positive_defervescence_within_48_72h' | 'refractory_persistent_fever' | 'alternative_pathology_identified';
+  status:
+    | 'heparin_challenge_eval'
+    | 'active_therapeutic_anticoagulation'
+    | 'afebrile_antibiotic_completion'
+    | 'outpatient_anticoagulation_bridge'
+    | 'resolved_thrombus_recanalized';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  consultant_name?: string;
+}
+
+export interface ObstetricSptFlowsheetRecord {
+  id: number;
+  spt_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_since_heparin_start: number;
+  temperature_celsius: number;
+  heart_rate: number;
+  systolic_bp: number;
+  diastolic_bp: number;
+  aptt_seconds: number | null;
+  anti_xa_activity_iu_ml: number | null;
+  heparin_infusion_rate_units_hr: number | null;
+  bleeding_signs: 'none' | 'mild_lochia_rubra' | 'wound_hematoma' | 'major_pelvic_hemorrhage';
+  flank_abdominal_pain_score: number;
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getObstetricSptEpisodes = (params?: { patientId?: number }): Promise<{ episodes: ObstetricSptRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/obstetric-spt/episodes${query}`);
+};
+
+export const getObstetricSptEpisode = (id: number): Promise<{ episode: ObstetricSptRecord; evaluation: any; flowsheetLogs: ObstetricSptFlowsheetRecord[] }> =>
+  api('GET', `/api/obstetric-spt/episodes/${id}`);
+
+export const createObstetricSptEpisode = (payload: any): Promise<{ episode: ObstetricSptRecord }> =>
+  api('POST', '/api/obstetric-spt/episodes', payload);
+
+export const updateObstetricSptEpisode = (id: number, payload: any): Promise<{ episode: ObstetricSptRecord }> =>
+  api('PUT', `/api/obstetric-spt/episodes/${id}`, payload);
+
+export const addObstetricSptFlowsheet = (episodeId: number, payload: any): Promise<{ log: ObstetricSptFlowsheetRecord }> =>
+  api('POST', `/api/obstetric-spt/episodes/${episodeId}/flowsheet`, payload);
+
+export const evaluateObstetricSptApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/obstetric-spt/evaluate', payload);
+
+// ==========================================
+// SERIES 35C: Pediatric Acute Hematogenous Osteomyelitis (AHO) & Subperiosteal Abscess
+// ==========================================
+export interface PediatricOsteomyelitisRecord {
+  id: number;
+  patient_id: number;
+  admission_id: number | null;
+  episode_code: string;
+  onset_datetime: string;
+  age_years: number;
+  weight_kg: number;
+  bone_involved:
+    | 'distal_femur'
+    | 'proximal_tibia'
+    | 'distal_tibia'
+    | 'proximal_humerus'
+    | 'fibula'
+    | 'radius_ulna'
+    | 'pelvis'
+    | 'other_bone';
+  laterality: 'right' | 'left' | 'bilateral';
+  kocher_fever_gt_38_5: number;
+  kocher_non_weight_bearing: number;
+  kocher_esr_gt_40: number;
+  kocher_wbc_gt_12k: number;
+  crp_admission_mg_l: number;
+  crp_peak_mg_l: number;
+  subperiosteal_abscess_present: number;
+  abscess_size_depth_mm: number;
+  imaging_modality_confirmatory:
+    | 'ultrasound_subperiosteal_fluid'
+    | 'mri_with_contrast'
+    | 'plain_radiograph_lytic_changes'
+    | 'ct_scan';
+  surgical_decompression_performed: number;
+  surgical_procedure:
+    | 'none_medical_management'
+    | 'percutaneous_needle_aspiration'
+    | 'cortical_fenestration_and_drainage'
+    | 'extensive_debridement_sequestrectomy';
+  isolated_pathogen:
+    | 'staphylococcus_aureus_mssa'
+    | 'staphylococcus_aureus_mrsa'
+    | 'streptococcus_pyogenes_group_a'
+    | 'kingella_kingae'
+    | 'pseudomonas_aeruginosa'
+    | 'culture_negative_clinical_aho';
+  current_antibiotic_regimen:
+    | 'iv_cefazolin'
+    | 'iv_vancomycin'
+    | 'iv_clindamycin'
+    | 'iv_ceftriaxone'
+    | 'oral_cephalexin'
+    | 'oral_clindamycin'
+    | 'oral_amoxicillin_clavulanate';
+  oral_switch_criteria_met: number;
+  status:
+    | 'initial_iv_empiric_therapy'
+    | 'surgical_drainage_and_culture'
+    | 'pathogen_directed_iv_therapy'
+    | 'oral_step_down_therapy'
+    | 'resolved_treatment_completed';
+  consultant_id: number;
+  clinical_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  date_of_birth?: string;
+  consultant_name?: string;
+}
+
+export interface PediatricOsteomyelitisFlowsheetRecord {
+  id: number;
+  osteomyelitis_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  day_of_therapy: number;
+  temperature_celsius: number;
+  crp_level_mg_l: number;
+  esr_mm_hr: number | null;
+  pain_score_flacc_or_vas: number;
+  weight_bearing_status: 'unable_refuses_pseudoparalysis' | 'partial_weight_bearing_limp' | 'full_weight_bearing_pain_free';
+  local_signs: 'marked_edema_erythema_warmth' | 'moderately_tender_improving' | 'mild_tenderness_no_swelling' | 'completely_quiescent';
+  route_of_administration: 'iv_infusion' | 'oral_step_down';
+  notes: string | null;
+  logged_by_id: number;
+  created_at: string;
+  logged_by_name?: string;
+}
+
+export const getPediatricOsteomyelitisEpisodes = (params?: { patientId?: number }): Promise<{ episodes: PediatricOsteomyelitisRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/pediatric-osteomyelitis/episodes${query}`);
+};
+
+export const getPediatricOsteomyelitisEpisode = (id: number): Promise<{ episode: PediatricOsteomyelitisRecord; evaluation: any; flowsheetLogs: PediatricOsteomyelitisFlowsheetRecord[] }> =>
+  api('GET', `/api/pediatric-osteomyelitis/episodes/${id}`);
+
+export const createPediatricOsteomyelitisEpisode = (payload: any): Promise<{ episode: PediatricOsteomyelitisRecord }> =>
+  api('POST', '/api/pediatric-osteomyelitis/episodes', payload);
+
+export const updatePediatricOsteomyelitisEpisode = (id: number, payload: any): Promise<{ episode: PediatricOsteomyelitisRecord }> =>
+  api('PUT', `/api/pediatric-osteomyelitis/episodes/${id}`, payload);
+
+export const addPediatricOsteomyelitisFlowsheet = (episodeId: number, payload: any): Promise<{ log: PediatricOsteomyelitisFlowsheetRecord }> =>
+  api('POST', `/api/pediatric-osteomyelitis/episodes/${episodeId}/flowsheet`, payload);
+
+export const evaluatePediatricOsteomyelitisApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/pediatric-osteomyelitis/evaluate', payload);
+
+
 
 
 

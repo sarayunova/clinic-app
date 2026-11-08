@@ -4994,6 +4994,145 @@ async function seed() {
     }
   }
 
+  // --- SERIES 35A: Neonatal Abdominal Wall Defects & Staged Silo Reduction ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_wall_defect_episodes (
+      patient_id, admission_id, episode_code, defect_type, defect_diameter_cm,
+      cord_insertion_site, membrane_sac_present, eviscerated_organs, bowel_condition,
+      closure_approach, silo_type, silo_height_cm, current_bladder_pressure_mmhg,
+      peak_inspiratory_pressure_cmh2o, beckwith_wiedemann_suspected,
+      cardiac_echo_completed, associated_anomalies_note, status, consultant_id, clinical_notes,
+      created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'DEFECT-20261108-101', 'gastroschisis', 3.8,
+      'normal_left_of_defect', 0, 'small_and_large_bowel', 'edematous_fibrin_peel',
+      'staged_silo_reduction', 'preformed_spring_loaded_bedside', 7.0, 9.5,
+      17.0, 0,
+      1, 'Echocardiogram demonstrates normal intracardiac anatomy, patent foramen ovale with L-to-R shunt. Karyotype 46XY normal.',
+      'active_daily_serial_reduction', ?,
+      'Term neonate born with right paraumbilical gastroschisis and eviscerated small/large bowel with fibrinous peel. Bedside spring-loaded silo placed in NICU without general anesthesia. Replogle tube on continuous -25 mmHg suction. Serial bladder manometry and daily 1 cm reduction protocol active.',
+      ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingDefect = db.prepare('SELECT id FROM neonatal_wall_defect_episodes WHERE episode_code = ?').get('DEFECT-20261108-101') as any;
+  if (existingDefect) {
+    const defectLogs = [
+      { d: 1, red: 0.0, res: 8.0, bp: 8.0, pip: 16.0, uo: 2.8, perf: 'warm_pink_pulses_brisk', col: 'pink_viable', map: 44, notes: 'Day 1: Spring-loaded 4 cm silo positioned over defect. Viscera easily placed into silo, bowel pink and viable.' },
+      { d: 2, red: 1.0, res: 7.0, bp: 9.5, pip: 17.0, uo: 2.5, perf: 'warm_pink_pulses_brisk', col: 'hyperemic_mild_edema', map: 46, notes: 'Day 2: 1.0 cm reduction performed under sterile technique. Post-reduction bladder pressure 9.5 mmHg, brisk urine output maintained.' },
+      { d: 3, red: 1.0, res: 6.0, bp: 10.0, pip: 17.5, uo: 2.6, perf: 'warm_pink_pulses_brisk', col: 'pink_viable', map: 45, notes: 'Day 3: Second 1.0 cm serial reduction. Abdomen soft, excellent lower extremity perfusion with rapid capillary refill.' },
+    ];
+    for (const dl of defectLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_wall_defect_flowsheet_logs (
+          wall_defect_episode_id, patient_id, log_datetime, day_of_reduction,
+          silo_height_reduced_cm, residual_silo_height_cm, bladder_pressure_mmhg,
+          peak_inspiratory_pressure_cmh2o, urine_output_ml_kg_hr, lower_extremity_perfusion,
+          bowel_visceral_color, heart_rate, respiratory_rate, mean_arterial_pressure_mmhg,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T06:00:00', ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, 142, 42, ?,
+          ?, ?, ?
+        )
+      `).run(existingDefect.id, babyId, dl.d, dl.red, dl.res, dl.bp, dl.pip, dl.uo, dl.perf, dl.col, dl.map, dl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 35B: Obstetric Septic Pelvic Thrombophlebitis & Heparin Challenge ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_spt_episodes (
+      patient_id, admission_id, episode_code, delivery_datetime, delivery_mode,
+      postpartum_day, spt_phenotype, affected_vein, peak_temperature_celsius,
+      hours_refractory_triple_antibiotics, pelvic_ct_mri_findings, pelvic_abscess_ruled_out,
+      heparin_challenge_initiated, heparin_challenge_start_datetime, anticoagulant_regimen,
+      target_aptt_seconds, defervescence_hours, heparin_challenge_response,
+      status, consultant_id, clinical_notes,
+      created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'SPT-20261108-101', '2026-11-04T14:30:00', 'cesarean_section',
+      4, 'ovarian_vein_thrombosis', 'right_ovarian_vein', 38.9,
+      52, 'thrombus_with_rim_enhancement', 1,
+      1, '2026-11-07T08:00:00', 'iv_unfractionated_heparin_infusion',
+      '60-85s (1.5-2.5x control)', 32.0, 'positive_defervescence_within_48_72h',
+      'active_therapeutic_anticoagulation', ?,
+      'Postpartum day 4 following emergency cesarean section presenting with persistent spiking fever refractory to 52 hours of IV Ampicillin, Gentamicin, and Clindamycin. Contrast pelvic CT demonstrates right ovarian vein thrombosis with central filling defect and rim enhancement. Pelvic abscess excluded. Therapeutic IV heparin challenge commenced with complete defervescence observed at hour 32.',
+      ?, ?
+    )
+  `).run(sunitaId, docId, now, now);
+
+  const existingSpt = db.prepare('SELECT id FROM obstetric_spt_episodes WHERE episode_code = ?').get('SPT-20261108-101') as any;
+  if (existingSpt) {
+    const sptLogs = [
+      { h: 6.0, temp: 38.8, hr: 104, sbp: 122, dbp: 76, aptt: 48.0, rate: 1200, pain: 6, notes: 'Heparin infusion initiated at 18 U/kg/h. Right lower quadrant tenderness noted. Initial aPTT subtherapeutic at 48s; rate increased.' },
+      { h: 18.0, temp: 38.2, hr: 88, sbp: 118, dbp: 72, aptt: 72.0, rate: 1350, pain: 4, notes: 'aPTT therapeutic at 72s. Temperature downtrending. Patient feels distinctly more comfortable.' },
+      { h: 32.0, temp: 37.2, hr: 76, sbp: 114, dbp: 70, aptt: 68.0, rate: 1350, pain: 2, notes: 'Complete defervescence documented (37.2°C). Heparin challenge response positive. Continue therapeutic anticoagulation and IV antibiotics.' },
+    ];
+    for (const sl of sptLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_spt_flowsheet_logs (
+          spt_episode_id, patient_id, log_datetime, hours_since_heparin_start,
+          temperature_celsius, heart_rate, systolic_bp, diastolic_bp,
+          aptt_seconds, anti_xa_activity_iu_ml, heparin_infusion_rate_units_hr,
+          bleeding_signs, flank_abdominal_pain_score, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T04:00:00', ?,
+          ?, ?, ?, ?,
+          ?, NULL, ?,
+          'none', ?, ?, ?, ?
+        )
+      `).run(existingSpt.id, sunitaId, sl.h, sl.temp, sl.hr, sl.sbp, sl.dbp, sl.aptt, sl.rate, sl.pain, sl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 35C: Pediatric Acute Hematogenous Osteomyelitis (AHO) ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_osteomyelitis_episodes (
+      patient_id, admission_id, episode_code, onset_datetime, age_years, weight_kg,
+      bone_involved, laterality, kocher_fever_gt_38_5, kocher_non_weight_bearing,
+      kocher_esr_gt_40, kocher_wbc_gt_12k, crp_admission_mg_l, crp_peak_mg_l,
+      subperiosteal_abscess_present, abscess_size_depth_mm, imaging_modality_confirmatory,
+      surgical_decompression_performed, surgical_procedure, isolated_pathogen,
+      current_antibiotic_regimen, oral_switch_criteria_met,
+      status, consultant_id, clinical_notes,
+      created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'OSTEO-20261108-101', '2026-11-05T09:00:00', 4.5, 17.5,
+      'distal_femur', 'right', 1, 1,
+      1, 1, 74.0, 98.0,
+      1, 3.8, 'mri_with_contrast',
+      1, 'cortical_fenestration_and_drainage', 'staphylococcus_aureus_mssa',
+      'iv_cefazolin', 0,
+      'pathogen_directed_iv_therapy', ?,
+      '4.5-year-old presenting with refusal to bear weight on right leg, high fevers, and point tenderness over distal femur metaphysis. Kocher score 4/4. MRI confirmed acute osteomyelitis with 3.8 mm subperiosteal abscess. Urgent cortical fenestration and I&D performed. Intraoperative pus culture grew MSSA. Maintained on IV Cefazolin with rapid CRP decline.',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingOsteo = db.prepare('SELECT id FROM pediatric_osteomyelitis_episodes WHERE episode_code = ?').get('OSTEO-20261108-101') as any;
+  if (existingOsteo) {
+    const osteoLogs = [
+      { d: 1, temp: 38.8, crp: 98.0, esr: 52, pain: 8, wt: 'unable_refuses_pseudoparalysis', loc: 'marked_edema_erythema_warmth', notes: 'Immediate post-op cortical fenestration and drainage. Leg splinted in extension.' },
+      { d: 2, temp: 37.8, crp: 64.0, esr: 44, pain: 5, wt: 'unable_refuses_pseudoparalysis', loc: 'moderately_tender_improving', notes: 'Day 2 on IV Cefazolin 150 mg/kg/day. Fever breaking, wound clean and dry.' },
+      { d: 4, temp: 37.0, crp: 26.0, esr: 30, pain: 2, wt: 'partial_weight_bearing_limp', loc: 'mild_tenderness_no_swelling', notes: 'Day 4: CRP dropped 73% from peak (98 -> 26 mg/L). Child walking with slight antalgic limp. Preparing for oral Cephalexin step-down.' },
+    ];
+    for (const ol of osteoLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_osteomyelitis_flowsheet_logs (
+          osteomyelitis_episode_id, patient_id, log_datetime, day_of_therapy,
+          temperature_celsius, crp_level_mg_l, esr_mm_hr, pain_score_flacc_or_vas,
+          weight_bearing_status, local_signs, route_of_administration, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T05:00:00', ?,
+          ?, ?, ?, ?,
+          ?, ?, 'iv_infusion', ?, ?, ?
+        )
+      `).run(existingOsteo.id, aaravId, ol.d, ol.temp, ol.crp, ol.esr, ol.pain, ol.wt, ol.loc, ol.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },
