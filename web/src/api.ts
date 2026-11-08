@@ -7918,6 +7918,302 @@ export const deletePediatricPolytraumaFlowsheet = (episodeId: number, logId: num
 export const calculatePediatricPolytraumaPts = (payload: any): Promise<any> =>
   api('POST', '/api/pediatric-polytrauma/calculate-pts', payload);
 
+// ==========================================
+// SERIES 22A: Neonatal hsPDA McNamara Staging & Pharmacotherapy
+// ==========================================
+
+export interface NeonatalHspdaRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  patient_number?: string | null;
+  date_of_birth?: string | null;
+  admission_id?: number | null;
+  episode_code: string;
+  echo_datetime: string;
+  gestational_age_weeks: number;
+  birth_weight_grams: number;
+  chronological_age_days: number;
+  current_weight_grams: number;
+  ductal_diameter_mm: number;
+  ductal_velocity_vmax_ms: number;
+  shunt_direction: 'left_to_right' | 'bidirectional' | 'right_to_left';
+  la_ao_ratio: number;
+  lpa_diastolic_velocity_ms: number;
+  descending_aorta_diastolic_flow: 'antegrade_normal' | 'absent_diastolic' | 'retrograde_steal';
+  cardiomegaly_present: number;
+  pulmonary_edema_present: number;
+  bounding_pulses: number;
+  hypotension_wide_pulse_pressure: number;
+  metabolic_acidosis: number;
+  oliguria_present: number;
+  respiratory_support_escalation: number;
+  mcnamara_echo_stage: 'stage_1_mild' | 'stage_2_moderate' | 'stage_3_severe';
+  mcnamara_clinical_stage: 'stage_1_mild' | 'stage_2_moderate' | 'stage_3_severe';
+  hspda_confirmed: number;
+  pharmacotherapy_selected: 'none_conservative' | 'iv_ibuprofen' | 'iv_indomethacin' | 'iv_paracetamol' | 'contraindicated';
+  paracetamol_rationale?: string | null;
+  contraindications_present: number;
+  interventional_referral: 'none' | 'catheter_closure' | 'surgical_ligation';
+  status: 'echocardiographic_surveillance' | 'medical_therapy_active' | 'post_therapy_echo_reassessment' | 'interventional_referral' | 'resolved_closed';
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NeonatalHspdaFlowsheetRecord {
+  id: number;
+  hspda_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_initiation: number;
+  heart_rate_bpm: number;
+  sbp_mmhg: number;
+  dbp_mmhg: number;
+  map_mmhg: number;
+  pulse_pressure_mmhg: number;
+  respiratory_support_type: string;
+  fio2_percent: number;
+  spo2_percent: number;
+  urine_output_ml_kg_hr?: number | null;
+  serum_creatinine_mg_dl?: number | null;
+  platelet_count?: number | null;
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getNeonatalHspdaEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: NeonatalHspdaRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: NeonatalHspdaRecord[] }>('GET', `/api/neonatal-hspda/episodes${queryStr}`);
+};
+
+export const getNeonatalHspdaEpisode = (id: number): Promise<{ episode: NeonatalHspdaRecord; logs: NeonatalHspdaFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/neonatal-hspda/episodes/${id}`);
+
+export const createNeonatalHspdaEpisode = (payload: any): Promise<{ episode: NeonatalHspdaRecord; evalResult: any }> =>
+  api('POST', '/api/neonatal-hspda/episodes', payload);
+
+export const updateNeonatalHspdaEpisode = (id: number, payload: any): Promise<{ episode: NeonatalHspdaRecord }> =>
+  api('PATCH', `/api/neonatal-hspda/episodes/${id}`, payload);
+
+export const deleteNeonatalHspdaEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-hspda/episodes/${id}`);
+
+export const logNeonatalHspdaFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/neonatal-hspda/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteNeonatalHspdaFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/neonatal-hspda/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateNeonatalHspda = (payload: any): Promise<{ evalResult: any }> =>
+  api('POST', '/api/neonatal-hspda/evaluate', payload);
+
+// ==========================================
+// SERIES 22B: Obstetric DKA & Euglycemic Ketoacidosis Protocol
+// ==========================================
+
+export interface ObstetricDkaRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  patient_number?: string | null;
+  date_of_birth?: string | null;
+  admission_id?: number | null;
+  episode_code: string;
+  presentation_datetime: string;
+  gestation_weeks: number;
+  diabetes_type: 'pregestational_type1' | 'pregestational_type2' | 'gestational_gdm' | 'new_onset';
+  precipitating_trigger: 'infection_sepsis' | 'antenatal_steroid_betamethasone' | 'emesis_starvation' | 'insulin_omission' | 'pump_failure' | 'beta_mimetic_tocolysis' | 'unknown';
+  blood_glucose_mg_dl: number;
+  is_euglycemic_dka: number;
+  arterial_or_venous_ph: number;
+  serum_bicarbonate_meq_l: number;
+  serum_ketones_beta_ohb_mmol_l?: number | null;
+  urine_ketones: 'negative' | 'trace' | '1_plus' | '2_plus' | '3_plus' | '4_plus';
+  serum_sodium_meq_l: number;
+  serum_potassium_meq_l: number;
+  serum_chloride_meq_l: number;
+  calculated_anion_gap: number;
+  corrected_sodium_meq_l: number;
+  effective_osmolality_mosm_kg?: number | null;
+  fetal_heart_rate_baseline_bpm?: number | null;
+  fetal_variability?: 'normal_moderate' | 'minimal' | 'absent' | 'marked' | null;
+  decelerations_present?: 'none' | 'early' | 'variable' | 'late' | 'prolonged' | null;
+  efm_category?: 'category_1_normal' | 'category_2_indeterminate' | 'category_3_abnormal' | null;
+  intrauterine_resuscitation_advisement?: string | null;
+  dka_severity_tier: 'mild' | 'moderate' | 'severe_critical';
+  insulin_infusion_rate_units_hr: number;
+  dextrose_added_to_fluids: number;
+  status: 'active_acidosis_resuscitation' | 'euglycemic_dextrose_infusion' | 'acidosis_resolved_transitioning' | 'resolved_subcutaneous_insulin';
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ObstetricDkaFlowsheetRecord {
+  id: number;
+  dka_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  hours_from_presentation: number;
+  blood_glucose_mg_dl: number;
+  insulin_rate_units_hr: number;
+  iv_fluid_type: string;
+  iv_fluid_rate_ml_hr: number;
+  vbg_ph?: number | null;
+  serum_bicarbonate_meq_l?: number | null;
+  calculated_anion_gap?: number | null;
+  serum_potassium_meq_l: number;
+  potassium_replacement_meq_l: number;
+  fhr_baseline_bpm?: number | null;
+  fhr_variability?: string | null;
+  fhr_decelerations?: string | null;
+  maternal_sbp_mmhg?: number | null;
+  maternal_dbp_mmhg?: number | null;
+  maternal_hr_bpm?: number | null;
+  urine_output_ml_hr?: number | null;
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getObstetricDkaEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: ObstetricDkaRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: ObstetricDkaRecord[] }>('GET', `/api/obstetric-dka/episodes${queryStr}`);
+};
+
+export const getObstetricDkaEpisode = (id: number): Promise<{ episode: ObstetricDkaRecord; logs: ObstetricDkaFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/obstetric-dka/episodes/${id}`);
+
+export const createObstetricDkaEpisode = (payload: any): Promise<{ episode: ObstetricDkaRecord; evalResult: any }> =>
+  api('POST', '/api/obstetric-dka/episodes', payload);
+
+export const updateObstetricDkaEpisode = (id: number, payload: any): Promise<{ episode: ObstetricDkaRecord }> =>
+  api('PATCH', `/api/obstetric-dka/episodes/${id}`, payload);
+
+export const deleteObstetricDkaEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-dka/episodes/${id}`);
+
+export const logObstetricDkaFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/obstetric-dka/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deleteObstetricDkaFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/obstetric-dka/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculateObstetricDka = (payload: any): Promise<{ evalResult: any }> =>
+  api('POST', '/api/obstetric-dka/evaluate', payload);
+
+// ==========================================
+// SERIES 22C: Pediatric Anaphylaxis Emergency Resuscitation & Refractory Shock
+// ==========================================
+
+export interface PediatricAnaphylaxisRecord {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  patient_number?: string | null;
+  date_of_birth?: string | null;
+  admission_id?: number | null;
+  episode_code: string;
+  triage_datetime: string;
+  age_months: number;
+  weight_kg: number;
+  trigger_type: 'food_peanut_nut_milk_egg' | 'insect_venom_bee_wasp' | 'medication_antibiotic_nsaid' | 'vaccine_biologic' | 'latex' | 'exercise_or_cold' | 'idiopathic';
+  trigger_details?: string | null;
+  skin_mucosal_involvement: number;
+  respiratory_compromise: number;
+  cardiovascular_hypotension: number;
+  persistent_gastrointestinal: number;
+  anaphylaxis_criteria_met: number;
+  severity_tier: 'mild_moderate' | 'severe_life_threatening' | 'refractory_shock';
+  weight_adjusted_epinephrine_im_dose_mg: number;
+  autoinjector_recommended: 'syringe_drawn' | 'epipen_jr_0_15mg' | 'epipen_adult_0_30mg';
+  im_epinephrine_doses_given: number;
+  epinephrine_first_dose_datetime: string;
+  epinephrine_second_dose_datetime?: string | null;
+  refractory_shock_declared: number;
+  iv_epinephrine_infusion_active: number;
+  epinephrine_infusion_rate_mcg_kg_min?: number | null;
+  second_line_h1_antihistamine_given: number;
+  second_line_h2_antihistamine_given: number;
+  systemic_steroid_given: number;
+  glucagon_administered: number;
+  fluid_bolus_volume_ml: number;
+  biphasic_surveillance_recommended_hours: number;
+  status: 'acute_resuscitation_bay' | 'refractory_picu_infusion' | 'biphasic_surveillance_observation' | 'discharged_auto_injector_prescribed';
+  consultant_id: number;
+  consultant_name?: string | null;
+  clinical_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PediatricAnaphylaxisFlowsheetRecord {
+  id: number;
+  anaphylaxis_episode_id: number;
+  patient_id: number;
+  log_datetime: string;
+  minutes_from_arrival: number;
+  sbp_mmhg: number;
+  dbp_mmhg?: number | null;
+  heart_rate_bpm: number;
+  respiratory_rate: number;
+  spo2_percent: number;
+  stridor_present: number;
+  wheeze_severity: 'none' | 'mild' | 'moderate' | 'severe';
+  urticaria_coverage: 'none' | 'localized' | 'generalized';
+  epinephrine_iv_rate_mcg_kg_min?: number | null;
+  cumulative_im_epinephrine_doses: number;
+  cumulative_crystalloid_ml: number;
+  notes?: string | null;
+  logged_by_id: number;
+  logged_by_name?: string | null;
+  created_at: string;
+}
+
+export const getPediatricAnaphylaxisEpisodes = (params?: { patientId?: number; status?: string }): Promise<{ episodes: PediatricAnaphylaxisRecord[] }> => {
+  const query = new URLSearchParams();
+  if (params?.patientId) query.set('patientId', String(params.patientId));
+  if (params?.status) query.set('status', params.status);
+  const queryStr = query.toString() ? `?${query.toString()}` : '';
+  return api<{ episodes: PediatricAnaphylaxisRecord[] }>('GET', `/api/pediatric-anaphylaxis/episodes${queryStr}`);
+};
+
+export const getPediatricAnaphylaxisEpisode = (id: number): Promise<{ episode: PediatricAnaphylaxisRecord; logs: PediatricAnaphylaxisFlowsheetRecord[]; evalResult: any }> =>
+  api('GET', `/api/pediatric-anaphylaxis/episodes/${id}`);
+
+export const createPediatricAnaphylaxisEpisode = (payload: any): Promise<{ episode: PediatricAnaphylaxisRecord; evalResult: any }> =>
+  api('POST', '/api/pediatric-anaphylaxis/episodes', payload);
+
+export const updatePediatricAnaphylaxisEpisode = (id: number, payload: any): Promise<{ episode: PediatricAnaphylaxisRecord }> =>
+  api('PATCH', `/api/pediatric-anaphylaxis/episodes/${id}`, payload);
+
+export const deletePediatricAnaphylaxisEpisode = (id: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-anaphylaxis/episodes/${id}`);
+
+export const logPediatricAnaphylaxisFlowsheet = (episodeId: number, payload: any): Promise<{ logId: number }> =>
+  api('POST', `/api/pediatric-anaphylaxis/episodes/${episodeId}/flowsheet-logs`, payload);
+
+export const deletePediatricAnaphylaxisFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean }> =>
+  api('DELETE', `/api/pediatric-anaphylaxis/episodes/${episodeId}/flowsheet-logs/${logId}`);
+
+export const calculatePediatricAnaphylaxis = (payload: any): Promise<{ evalResult: any }> =>
+  api('POST', '/api/pediatric-anaphylaxis/evaluate', payload);
+
+
 
 
 

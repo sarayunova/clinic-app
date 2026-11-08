@@ -362,6 +362,32 @@ export const ACTION_LABELS: Record<string, string> = {
   'pediatric_polytrauma.flowsheet_log': 'Logged pediatric polytrauma vital signs, GCS, blood products & TXA checkpoint',
   'pediatric_polytrauma.flowsheet_delete': 'Deleted pediatric polytrauma flowsheet log',
   'pediatric_polytrauma.print': 'Printed pediatric polytrauma PTS score & damage control resuscitation dossier',
+
+  // SERIES 22: Neonatal hsPDA, Obstetric DKA & Pediatric Anaphylaxis
+  'neonatal_hspda.episode_create': 'Initiated neonatal hsPDA McNamara echocardiographic staging & pharmacotherapy evaluation',
+  'neonatal_hspda.episode_update': 'Updated neonatal hsPDA episode, pharmacotherapy or interventional referral',
+  'neonatal_hspda.episode_delete': 'Deleted neonatal hsPDA episode record',
+  'neonatal_hspda.flowsheet_create': 'Logged neonatal hsPDA pulse pressure, vital signs, and renal surveillance checkpoint',
+  'neonatal_hspda.flowsheet_log': 'Logged neonatal hsPDA pulse pressure, vital signs, and renal surveillance checkpoint',
+  'neonatal_hspda.flowsheet_delete': 'Deleted neonatal hsPDA flowsheet log',
+  'neonatal_hspda.print': 'Printed neonatal hsPDA echocardiographic staging & pharmacotherapy dossier',
+
+  'obstetric_dka.episode_create': 'Initiated obstetric DKA / euglycemic ketoacidosis resuscitation protocol',
+  'obstetric_dka.episode_update': 'Updated obstetric DKA episode, insulin titration or dextrose addition',
+  'obstetric_dka.episode_delete': 'Deleted obstetric DKA episode record',
+  'obstetric_dka.flowsheet_create': 'Logged obstetric DKA blood glucose, anion gap, potassium & EFM checkpoint',
+  'obstetric_dka.flowsheet_log': 'Logged obstetric DKA blood glucose, anion gap, potassium & EFM checkpoint',
+  'obstetric_dka.flowsheet_delete': 'Deleted obstetric DKA flowsheet log',
+  'obstetric_dka.print': 'Printed obstetric DKA intrauterine resuscitation & anion gap closure dossier',
+
+  'pediatric_anaphylaxis.episode_create': 'Initiated pediatric anaphylaxis emergency resuscitation & IM epinephrine protocol',
+  'pediatric_anaphylaxis.episode_update': 'Updated pediatric anaphylaxis episode, repeat doses or IV infusion status',
+  'pediatric_anaphylaxis.episode_delete': 'Deleted pediatric anaphylaxis episode record',
+  'pediatric_anaphylaxis.flowsheet_create': 'Logged pediatric anaphylaxis vitals, stridor/wheeze & epinephrine checkpoint',
+  'pediatric_anaphylaxis.flowsheet_log': 'Logged pediatric anaphylaxis vitals, stridor/wheeze & epinephrine checkpoint',
+  'pediatric_anaphylaxis.flowsheet_delete': 'Deleted pediatric anaphylaxis flowsheet log',
+  'pediatric_anaphylaxis.print': 'Printed pediatric anaphylaxis WAO resuscitation & biphasic surveillance dossier',
+
   'backup.failed': 'Backup failed',
   'audit.view': 'Looked at the audit log',
 };

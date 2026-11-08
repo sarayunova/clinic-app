@@ -2987,6 +2987,172 @@ async function seed() {
     }
   }
 
+  // --- SERIES 22A: Neonatal Hemodynamically Significant Patent Ductus Arteriosus (hsPDA) ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_hspda_episodes (
+      patient_id, admission_id, episode_code, echo_datetime,
+      gestational_age_weeks, birth_weight_grams, chronological_age_days, current_weight_grams,
+      ductal_diameter_mm, ductal_velocity_vmax_ms, shunt_direction,
+      la_ao_ratio, lpa_diastolic_velocity_ms, descending_aorta_diastolic_flow,
+      cardiomegaly_present, pulmonary_edema_present, bounding_pulses,
+      hypotension_wide_pulse_pressure, metabolic_acidosis, oliguria_present,
+      respiratory_support_escalation, mcnamara_echo_stage, mcnamara_clinical_stage,
+      hspda_confirmed, pharmacotherapy_selected, paracetamol_rationale,
+      contraindications_present, interventional_referral, status, consultant_id,
+      clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'PDA-20261108-101', '2026-11-08T09:00:00',
+      26.5, 820, 5, 840,
+      2.4, 1.4, 'left_to_right',
+      1.65, 0.32, 'retrograde_steal',
+      1, 1, 1,
+      1, 0, 0,
+      1, 'stage_3_severe', 'stage_3_severe',
+      1, 'iv_paracetamol', 'Platelets 42,000/uL and borderline creatinine contraindicate NSAIDs (Ibuprofen/Indomethacin).',
+      1, 'none', 'medical_therapy_active', ?,
+      'Born 26+5w. Echo shows large PDA 2.4 mm with holodiastolic reversal in descending aorta and LA:Ao 1.65. Initiated IV Paracetamol 15 mg/kg q6h due to severe thrombocytopenia.',
+      ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingPda = db.prepare('SELECT id FROM neonatal_hspda_episodes WHERE episode_code = ?').get('PDA-20261108-101') as { id: number } | undefined;
+  if (existingPda) {
+    const pdaLogs = [
+      { h: 2.0, hr: 158, sbp: 60, dbp: 26, map: 37, pp: 34, supp: 'HFOV', fio2: 35.0, spo2: 93.0, uo: 1.5, cr: 0.9, plt: 42000, notes: 'Paracetamol dose 1 infused over 15 min. Mild precordial hyperactivity noted.' },
+      { h: 6.0, hr: 152, sbp: 64, dbp: 30, map: 41, pp: 34, supp: 'HFOV', fio2: 30.0, spo2: 95.0, uo: 1.8, cr: 0.85, plt: 45000, notes: 'FiO2 successfully reduced from 35% to 30%. Urine output reassuring at 1.8 mL/kg/h.' },
+    ];
+    for (const pl of pdaLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_hspda_flowsheet_logs (
+          hspda_episode_id, patient_id, log_datetime, hours_from_initiation,
+          heart_rate_bpm, sbp_mmhg, dbp_mmhg, map_mmhg, pulse_pressure_mmhg,
+          respiratory_support_type, fio2_percent, spo2_percent,
+          urine_output_ml_kg_hr, serum_creatinine_mg_dl, platelet_count,
+          notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T11:00:00', ?,
+          ?, ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingPda.id, babyId, pl.h, pl.hr, pl.sbp, pl.dbp, pl.map, pl.pp, pl.supp, pl.fio2, pl.spo2, pl.uo, pl.cr, pl.plt, pl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 22B: Obstetric Diabetic Ketoacidosis (DKA) & Euglycemic DKA Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_dka_episodes (
+      patient_id, admission_id, episode_code, presentation_datetime,
+      gestation_weeks, diabetes_type, precipitating_trigger,
+      blood_glucose_mg_dl, is_euglycemic_dka, arterial_or_venous_ph,
+      serum_bicarbonate_meq_l, serum_ketones_beta_ohb_mmol_l, urine_ketones,
+      serum_sodium_meq_l, serum_potassium_meq_l, serum_chloride_meq_l,
+      calculated_anion_gap, corrected_sodium_meq_l, effective_osmolality_mosm_kg,
+      fetal_heart_rate_baseline_bpm, fetal_variability, decelerations_present, efm_category,
+      intrauterine_resuscitation_advisement, dka_severity_tier,
+      insulin_infusion_rate_units_hr, dextrose_added_to_fluids, status,
+      consultant_id, clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'OBDKA-20261108-101', '2026-11-08T09:30:00',
+      31.5, 'pregestational_type1', 'infection_sepsis',
+      175.0, 1, 7.22,
+      11.0, 4.8, '3_plus',
+      137.0, 4.1, 104.0,
+      22.0, 138.2, 283.7,
+      155, 'minimal', 'late', 'category_2_indeterminate',
+      'DO NOT PERFORM IMMEDIATE CESAREAN DELIVERY FOR ABNORMAL FHR DURING ACUTE DKA: Fetal decelerations, tachycardia, and loss of variability reflect maternal acidemia and dehydration. Intrauterine resuscitation via maternal hydration, insulin, left lateral decubitus, and oxygen will restore reassuring fetal status.',
+      'moderate',
+      3.4, 1, 'euglycemic_dextrose_infusion', ?,
+      'Euglycemic DKA presenting at 31+4w with pyelonephritis/sepsis. POC glucose 175 mg/dL, pH 7.22, HCO3 11 mEq/L, Anion gap 22. D5W with 0.45% NS started with continuous regular insulin 3.4 U/hr.',
+      ?, ?
+    )
+  `).run(anitaId, docId, now, now);
+
+  const existingObDka = db.prepare('SELECT id FROM obstetric_dka_episodes WHERE episode_code = ?').get('OBDKA-20261108-101') as { id: number } | undefined;
+  if (existingObDka) {
+    const dkaLogs = [
+      { h: 1.0, glu: 170.0, rate: 3.4, fluid: 'd5_half_normal_saline', fluidRate: 250.0, ph: 7.24, hco3: 12.0, gap: 21.0, k: 4.0, kcl: 20.0, fhr: 150, fhrVar: 'minimal', sbp: 118, dbp: 74, hr: 98, uo: 45.0, notes: 'Initiated intrauterine resuscitation: left lateral positioning, O2 via face mask. Glucose stable.' },
+      { h: 3.0, glu: 160.0, rate: 3.4, fluid: 'd5_half_normal_saline', fluidRate: 250.0, ph: 7.29, hco3: 15.0, gap: 17.0, k: 4.1, kcl: 20.0, fhr: 144, fhrVar: 'normal_moderate', sbp: 120, dbp: 76, hr: 88, uo: 60.0, notes: 'Anion gap closing (17 mEq/L). FHR baseline normalized to 144 bpm with return of moderate variability. Late decelerations resolved.' },
+    ];
+    for (const dl of dkaLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_dka_flowsheet_logs (
+          dka_episode_id, patient_id, log_datetime, hours_from_presentation,
+          blood_glucose_mg_dl, insulin_rate_units_hr, iv_fluid_type, iv_fluid_rate_ml_hr,
+          vbg_ph, serum_bicarbonate_meq_l, calculated_anion_gap,
+          serum_potassium_meq_l, potassium_replacement_meq_l,
+          fhr_baseline_bpm, fhr_variability, fhr_decelerations,
+          maternal_sbp_mmhg, maternal_dbp_mmhg, maternal_hr_bpm,
+          urine_output_ml_hr, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T11:30:00', ?,
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?,
+          ?, ?, 'none',
+          ?, ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingObDka.id, anitaId, dl.h, dl.glu, dl.rate, dl.fluid, dl.fluidRate, dl.ph, dl.hco3, dl.gap, dl.k, dl.kcl, dl.fhr, dl.fhrVar, dl.sbp, dl.dbp, dl.hr, dl.uo, dl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 22C: Pediatric Anaphylaxis Emergency Resuscitation & Refractory Shock ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_anaphylaxis_episodes (
+      patient_id, admission_id, episode_code, triage_datetime,
+      age_months, weight_kg, trigger_type, trigger_details,
+      skin_mucosal_involvement, respiratory_compromise, cardiovascular_hypotension,
+      persistent_gastrointestinal, anaphylaxis_criteria_met, severity_tier,
+      weight_adjusted_epinephrine_im_dose_mg, autoinjector_recommended,
+      im_epinephrine_doses_given, epinephrine_first_dose_datetime, epinephrine_second_dose_datetime,
+      refractory_shock_declared, iv_epinephrine_infusion_active, epinephrine_infusion_rate_mcg_kg_min,
+      second_line_h1_antihistamine_given, second_line_h2_antihistamine_given,
+      systemic_steroid_given, glucagon_administered, fluid_bolus_volume_ml,
+      biphasic_surveillance_recommended_hours, status, consultant_id,
+      clinical_notes, created_at, updated_at
+    ) VALUES (
+      ?, NULL, 'ANAPH-20261108-101', '2026-11-08T10:00:00',
+      60, 18.0, 'food_peanut_nut_milk_egg', 'Ingestion of peanut-containing snack at preschool.',
+      1, 1, 0,
+      1, 1, 'mild_moderate',
+      0.18, 'epipen_jr_0_15mg',
+      1, '2026-11-08T10:05:00', NULL,
+      0, 0, NULL,
+      1, 0,
+      1, 0, 360.0,
+      6, 'biphasic_surveillance_observation', ?,
+      '5yo male presented with generalized urticaria, wheezing, and vomiting within 15 min of eating peanut snack. WAO criteria met. IM Epinephrine 0.18 mg given in right vastus lateralis. Rapid clinical recovery.',
+      ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingAnaph = db.prepare('SELECT id FROM pediatric_anaphylaxis_episodes WHERE episode_code = ?').get('ANAPH-20261108-101') as { id: number } | undefined;
+  if (existingAnaph) {
+    const anaphLogs = [
+      { min: 10, sbp: 92, dbp: 54, hr: 128, rr: 28, spo2: 96.0, stridor: 0, wheeze: 'moderate', urticaria: 'generalized', epiIv: null, imDoses: 1, crys: 360.0, notes: 'IM Epinephrine 0.18 mg injected right mid-thigh. Normal saline 360 mL bolus infusing. Placed supine with legs elevated.' },
+      { min: 30, sbp: 96, dbp: 58, hr: 110, rr: 22, spo2: 99.0, stridor: 0, wheeze: 'none', urticaria: 'localized', epiIv: null, imDoses: 1, crys: 360.0, notes: 'Wheeze cleared, urticaria fading. Child interactive and asking for water. Initiating 6-hour biphasic surveillance.' },
+    ];
+    for (const anl of anaphLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_anaphylaxis_flowsheet_logs (
+          anaphylaxis_episode_id, patient_id, log_datetime, minutes_from_arrival,
+          sbp_mmhg, dbp_mmhg, heart_rate_bpm, respiratory_rate, spo2_percent,
+          stridor_present, wheeze_severity, urticaria_coverage,
+          epinephrine_iv_rate_mcg_kg_min, cumulative_im_epinephrine_doses,
+          cumulative_crystalloid_ml, notes, logged_by_id, created_at
+        ) VALUES (
+          ?, ?, '2026-11-08T10:15:00', ?,
+          ?, ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingAnaph.id, aaravId, anl.min, anl.sbp, anl.dbp, anl.hr, anl.rr, anl.spo2, anl.stridor, anl.wheeze, anl.urticaria, anl.epiIv, anl.imDoses, anl.crys, anl.notes, nurseId, now);
+    }
+  }
+
   // Book today's outpatient appointments for the active queue
   const appts = [
     { pid: anitaId, time: '09:30:00', reason: 'Antenatal Checkup (32w Growth & Doppler)', status: 'completed' },
