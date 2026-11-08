@@ -52,6 +52,7 @@ Source: "..\scripts\uninstall-autostart.ps1"; DestDir: "{app}\scripts"; Flags: i
 Source: "..\docs\AUTO-START.md"; DestDir: "{app}\docs"; Flags: ignoreversion
 Source: "..\docs\HTTPS-SETUP.md"; DestDir: "{app}\docs"; Flags: ignoreversion
 Source: "..\docs\BACKUP-AND-RESTORE.md"; DestDir: "{app}\docs"; Flags: ignoreversion
+Source: "..\docs\CLINIC-OPERATIONS-MANUAL.md"; DestDir: "{app}\docs"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\Open Clinic App"; Filename: "http://127.0.0.1:3080"
