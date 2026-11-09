@@ -62,74 +62,83 @@ export function useSpeechRecognition({
   useEffect(() => {
     if (!isSupported) return;
 
-    const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!Ctor) return;
+    try {
+      const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!Ctor) return;
 
-    const recognition = new Ctor();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = lang;
+      const recognition = new Ctor();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = lang;
 
-    recognition.onstart = () => {
-      setIsListening(true);
-      setError(null);
-      setInterimText('');
-    };
+      recognition.onstart = () => {
+        setIsListening(true);
+        setError(null);
+        setInterimText('');
+      };
 
-    recognition.onend = () => {
-      setIsListening(false);
-      setInterimText('');
-    };
+      recognition.onend = () => {
+        setIsListening(false);
+        setInterimText('');
+      };
 
-    recognition.onerror = (e) => {
-      setIsListening(false);
-      setInterimText('');
-      if (e.error === 'no-speech') {
-        // Ignorable idle event
-        return;
-      }
-      if (e.error === 'not-allowed') {
-        setError('Microphone permission denied. Allow microphone access in your browser to dictate.');
-      } else {
-        setError(`Speech recognition: ${e.error}`);
-      }
-    };
-
-    recognition.onresult = (event: SpeechRecognitionEventLike) => {
-      let finalChunk = '';
-      let currentInterim = '';
-
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        const item = event.results[i];
-        if (!item || !item[0]) continue;
-        const transcript = item[0].transcript;
-        if (item.isFinal) {
-          finalChunk += transcript + ' ';
+      recognition.onerror = (e) => {
+        setIsListening(false);
+        setInterimText('');
+        if (e.error === 'no-speech') {
+          // Ignorable idle event
+          return;
+        }
+        if (e.error === 'not-allowed') {
+          setError('Microphone permission denied. Allow microphone access in your browser to dictate.');
         } else {
-          currentInterim += transcript;
+          setError(`Speech recognition: ${e.error}`);
         }
-      }
+      };
 
-      if (finalChunk.trim()) {
-        const formatted = formatDictationTranscript(finalChunk);
-        if (formatted) {
-          onFinalTextRef.current(formatted);
+      recognition.onresult = (event: SpeechRecognitionEventLike) => {
+        try {
+          let finalChunk = '';
+          let currentInterim = '';
+
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            const item = event.results[i];
+            if (!item || !item[0]) continue;
+            const transcript = item[0].transcript;
+            if (item.isFinal) {
+              finalChunk += transcript + ' ';
+            } else {
+              currentInterim += transcript;
+            }
+          }
+
+          if (finalChunk.trim()) {
+            const formatted = formatDictationTranscript(finalChunk);
+            if (formatted) {
+              onFinalTextRef.current(formatted);
+            }
+          }
+
+          setInterimText(currentInterim);
+        } catch (err) {
+          console.error('Error handling speech recognition results:', err);
         }
-      }
+      };
 
-      setInterimText(currentInterim);
-    };
+      recognitionRef.current = recognition;
 
-    recognitionRef.current = recognition;
-
-    return () => {
-      try {
-        recognition.abort();
-      } catch {
-        // cleanup ignore
-      }
+      return () => {
+        try {
+          recognition.abort();
+        } catch {
+          // cleanup ignore
+        }
+        recognitionRef.current = null;
+      };
+    } catch (err) {
+      console.warn('SpeechRecognition initialization failed:', err);
       recognitionRef.current = null;
-    };
+    }
   }, [isSupported, lang]);
 
   const startListening = () => {
@@ -325,7 +334,7 @@ export function DictationToolbar({
           <button
             type="button"
             className="chip-btn"
-            onClick={() => insertPunctuation('\n')}
+            onClick={() => insertPunctuation('\r\n')}
             title="Insert new line"
           >
             ↵ New Line

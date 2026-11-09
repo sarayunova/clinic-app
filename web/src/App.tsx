@@ -245,6 +245,7 @@ import { CollectionReportPage } from './pages/CollectionReport';
 import { TvQueuePage } from './pages/TvQueuePage';
 import { ScreenLock } from './components/ScreenLock';
 import { ProtocolsHubPage, CLINICAL_PROTOCOLS } from './pages/ProtocolsHubPage';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 export function App() {
   const location = useLocation();
@@ -458,7 +459,8 @@ const primaryLinks = [
       </nav>
       <main className="main">
         {can('backup:manage') && <SystemWarning />}
-        <Routes>
+        <ErrorBoundary>
+          <Routes>
           <Route path="/protocols" element={can('patient:read_clinical') ? <ProtocolsHubPage /> : <Navigate to="/" replace />} />
           <Route path="/" element={<Dashboard />} />
           <Route path="/patients" element={<PatientsPage />} />
@@ -796,6 +798,7 @@ const primaryLinks = [
           <Route path="/help" element={<HelpPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </ErrorBoundary>
       </main>
     </div>
     </>

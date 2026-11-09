@@ -460,7 +460,7 @@ export interface PrescriptionSafetyEvaluation {
  * Searches the medication database by generic name or common brand aliases.
  */
 export function findMedicationSafetyRule(query: string): MedicationSafetyRule | null {
-  if (!query || query.trim() === '') return null;
+  if (!query || typeof query !== 'string' || query.trim() === '') return null;
   const q = query.toLowerCase().trim();
 
   // 1. Direct or alias match
