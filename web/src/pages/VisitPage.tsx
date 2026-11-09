@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ApiError, api, type PrescriptionItem, type Visit, type VitalsEntry } from '../api';
 import { useAuth } from '../auth';
@@ -17,7 +17,7 @@ import {
   ROUTE_CHIPS,
   MEDICINE_SUGGESTIONS,
 } from '../medicationCatalog';
-import { DictationToolbar, VoiceFieldMic } from '../components/VoiceDictation';
+import { DictationToolbar, VoiceFieldMic, useSpeechRecognition } from '../components/VoiceDictation';
 import { appendDictatedText } from '../voiceDictationUtils';
 import { CommunicationModal } from '../components/CommunicationModal';
 import { evaluatePrescriptionSafety, getRiskBadgeStyle } from '../pregnancyMedicationSafety';
@@ -126,11 +126,32 @@ export function VisitPage() {
   const [activeDictationField, setActiveDictationField] = useState<TextKey>('complaints');
   const [viewing, setViewing] = useState<{ no: number; snapshot: Record<string, unknown> & { prescriptionItems: PrescriptionItem[] } } | null>(null);
 
+  const activeDictationFieldRef = useRef<TextKey>('complaints');
+  activeDictationFieldRef.current = activeDictationField;
+
   const handleAppendDictation = (fieldKey: string, text: string) => {
     setForm((prev) => ({
       ...prev,
       [fieldKey]: appendDictatedText(prev[fieldKey as FormKey] || '', text),
     }));
+  };
+
+  const dictation = useSpeechRecognition({
+    onFinalText: (formatted) => {
+      handleAppendDictation(activeDictationFieldRef.current, formatted);
+    },
+  });
+
+  const toggleFieldDictation = (fieldKey: TextKey) => {
+    if (dictation.isListening && activeDictationField === fieldKey) {
+      dictation.stopListening();
+    } else {
+      setActiveDictationField(fieldKey);
+      activeDictationFieldRef.current = fieldKey;
+      if (!dictation.isListening) {
+        dictation.startListening();
+      }
+    }
   };
 
   const adopt = useCallback((v: Visit) => {
@@ -368,8 +389,13 @@ export function VisitPage() {
             <DictationToolbar
               activeField={activeDictationField}
               fieldLabels={Object.fromEntries(TEXT_FIELDS.map((f) => [f.key, f.label]))}
-              onSelectField={(k) => setActiveDictationField(k as TextKey)}
+              onSelectField={(k) => {
+                const tk = k as TextKey;
+                setActiveDictationField(tk);
+                activeDictationFieldRef.current = tk;
+              }}
               onAppendText={handleAppendDictation}
+              speechRecognition={dictation}
             />
           )}
 
@@ -379,9 +405,13 @@ export function VisitPage() {
                 {editable && (
                   <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 1 }}>
                     <VoiceFieldMic
-                      isListening={activeDictationField === f.key}
-                      onToggle={() => setActiveDictationField(f.key)}
-                      title={`Select ${f.label} for voice dictation`}
+                      isListening={dictation.isListening && activeDictationField === f.key}
+                      onToggle={() => toggleFieldDictation(f.key)}
+                      title={
+                        dictation.isListening && activeDictationField === f.key
+                          ? `Click to stop listening to ${f.label}`
+                          : `Click to dictate into ${f.label} by voice`
+                      }
                     />
                   </div>
                 )}
@@ -389,7 +419,10 @@ export function VisitPage() {
                   <textarea
                     rows={3}
                     value={form[f.key]}
-                    onFocus={() => setActiveDictationField(f.key)}
+                    onFocus={() => {
+                      setActiveDictationField(f.key);
+                      activeDictationFieldRef.current = f.key;
+                    }}
                     onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
                   />
                 </Field>
