@@ -176,6 +176,23 @@ export function VisitPage() {
   }, [visit, base, form, items]);
   const dirty = Object.keys(changes).length > 0;
 
+  const isMaternity = Boolean(visit?.lastMenstrualPeriod || visit?.gravida != null || visit?.antenatalNotes);
+  const currentGa = calculateGestationalAge(visit?.lastMenstrualPeriod);
+
+  const prescriptionSafetyAlerts = useMemo(() => {
+    if (!isMaternity) return [];
+    return (items ?? [])
+      .map((it, idx) => {
+        const med = typeof it?.medicine === 'string' ? it.medicine.trim() : '';
+        return {
+          index: idx,
+          medicine: med,
+          evaluation: med ? evaluatePrescriptionSafety(med, currentGa?.weeks ?? null) : null,
+        };
+      })
+      .filter((r) => r.evaluation && (r.evaluation.evaluatedRiskLevel === 'contraindicated' || r.evaluation.evaluatedRiskLevel === 'high_risk'));
+  }, [isMaternity, items, currentGa?.weeks]);
+
   if (loadError) return <div className="page narrow"><ErrorBanner error={loadError} /><Link to="/">Back to Today</Link></div>;
   if (!visit) return <p className="muted">Loading…</p>;
 
@@ -204,22 +221,6 @@ export function VisitPage() {
   const fe = fieldErrorsOf(error);
   const conflict = error instanceof ApiError && error.status === 409;
 
-  const isMaternity = Boolean(visit.lastMenstrualPeriod || visit.gravida != null || visit.antenatalNotes);
-  const currentGa = calculateGestationalAge(visit.lastMenstrualPeriod);
-
-  const prescriptionSafetyAlerts = useMemo(() => {
-    if (!isMaternity) return [];
-    return (items ?? [])
-      .map((it, idx) => {
-        const med = typeof it?.medicine === 'string' ? it.medicine.trim() : '';
-        return {
-          index: idx,
-          medicine: med,
-          evaluation: med ? evaluatePrescriptionSafety(med, currentGa?.weeks ?? null) : null,
-        };
-      })
-      .filter((r) => r.evaluation && (r.evaluation.evaluatedRiskLevel === 'contraindicated' || r.evaluation.evaluatedRiskLevel === 'high_risk'));
-  }, [isMaternity, items, currentGa?.weeks]);
 
   async function run(fn: () => Promise<Visit | void>, okMsg?: string) {
     setBusy(true);
