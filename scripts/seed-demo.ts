@@ -5,7 +5,7 @@ import { hashPassword } from '../server/auth.js';
 import { nowIso } from '../server/time.js';
 import { generateSyntheticCtgTrace } from '../web/src/ctgEngine.js';
 
-const DATA_DIR = path.resolve('.devdata');
+const DATA_DIR = process.env.CLINIC_DATA_DIR ? path.resolve(process.env.CLINIC_DATA_DIR) : path.resolve('.devdata');
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
@@ -5940,7 +5940,7 @@ async function seed() {
       0.58, 1, 1,
       0, 1, 1, 1,
       'active',
-      'A 4.5-year-old child (17.5 kg) presenting with a 5-day history of prodromal fever, progressive jaundice, and acute onset of day-night sleep reversal, marked lethargy, and flapping tremor (asterixis), consistent with Grade 2 Hepatic Encephalopathy. No prior history of chronic hepatopathy. Laboratory workup revealed marked biochemical liver necrosis: ALT 1,820 U/L, AST 1,940 U/L, Total Bilirubin 14.8 mg/dL, and uncorrectable coagulopathy with INR 2.85 (fulfilling PALF criteria: INR >= 1.5 with encephalopathy). Arterial ammonia elevated at 126 µmol/L (threshold for cerebral edema risk > 100). Viral serologies pending; autoimmune and metabolic screens sent. King\'s College non-APAP criteria assessed: child fulfills 3 adverse prognostic indicators (age < 10 years, INR > 3.5 impending, non-APAP etiology), warranting urgent liver transplant center contact and pre-listing workup. Multi-modal PICU neuroprotection bundle initiated: 30-degree head elevation in midline, continuous 3% hypertonic saline infusion targeting serum sodium 145-150 mEq/L (current Na 146 mEq/L), continuous IV N-Acetylcysteine (NAC) 100 mg/kg/day antioxidant infusion, and oral lactulose (10 mL q8h) titrated to 3 soft stools per day. Continuous arterial line and pupillary reflex monitoring established.',
+      'A 4.5-year-old child (17.5 kg) presenting with a 5-day history of prodromal fever, progressive jaundice, and acute onset of day-night sleep reversal, marked lethargy, and flapping tremor (asterixis), consistent with Grade 2 Hepatic Encephalopathy. No prior history of chronic hepatopathy. Laboratory workup revealed marked biochemical liver necrosis: ALT 1,820 U/L, AST 1,940 U/L, Total Bilirubin 14.8 mg/dL, and uncorrectable coagulopathy with INR 2.85 (fulfilling PALF criteria: INR >= 1.5 with encephalopathy). Arterial ammonia elevated at 126 µmol/L (threshold for cerebral edema risk > 100). Viral serologies pending; autoimmune and metabolic screens sent. King''s College non-APAP criteria assessed: child fulfills 3 adverse prognostic indicators (age < 10 years, INR > 3.5 impending, non-APAP etiology), warranting urgent liver transplant center contact and pre-listing workup. Multi-modal PICU neuroprotection bundle initiated: 30-degree head elevation in midline, continuous 3% hypertonic saline infusion targeting serum sodium 145-150 mEq/L (current Na 146 mEq/L), continuous IV N-Acetylcysteine (NAC) 100 mg/kg/day antioxidant infusion, and oral lactulose (10 mL q8h) titrated to 3 soft stools per day. Continuous arterial line and pupillary reflex monitoring established.',
       ?, ?, ?
     )
   `).run(aaravId, docId, now, now);
