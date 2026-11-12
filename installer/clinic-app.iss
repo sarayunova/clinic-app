@@ -28,6 +28,7 @@ RestartApplications=no
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
+Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Additional icons:"
 Name: "autostart"; Description: "Start the clinic app automatically when Windows starts (recommended)"; GroupDescription: "Startup:"
 
 [Code]
@@ -56,6 +57,7 @@ Source: "..\docs\CLINIC-OPERATIONS-MANUAL.md"; DestDir: "{app}\docs"; Flags: ign
 
 [Icons]
 Name: "{group}\Open Clinic App"; Filename: "http://127.0.0.1:3080"
+Name: "{autodesktop}\Clinic App"; Filename: "http://127.0.0.1:3080"; Tasks: desktopicon
 Name: "{group}\Clinic App folder (logs, backups)"; Filename: "{app}"
 Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
 

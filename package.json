@@ -12,7 +12,9 @@
     "restore": "tsx server/cli/restore.ts",
     "cert": "tsx server/cli/cert.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p web",
-    "build:exe": "node scripts/build-exe.mjs"
+    "build:exe": "node scripts/build-exe.mjs",
+    "build:installer": "node scripts/build-installer.mjs",
+    "dist": "node scripts/build-installer.mjs --full"
   },
   "keywords": [],
   "author": "",
