@@ -234,6 +234,12 @@ import { ObstetricCvstPage } from './pages/ObstetricCvstPage';
 import { ObstetricCvstPrint } from './pages/ObstetricCvstPrint';
 import { PediatricRefractoryAsthmaPage } from './pages/PediatricRefractoryAsthmaPage';
 import { PediatricRefractoryAsthmaPrint } from './pages/PediatricRefractoryAsthmaPrint';
+import { NeonatalSeizuresPage } from './pages/NeonatalSeizuresPage';
+import { NeonatalSeizuresPrint } from './pages/NeonatalSeizuresPrint';
+import { ObstetricDicPage } from './pages/ObstetricDicPage';
+import { ObstetricDicPrint } from './pages/ObstetricDicPrint';
+import { PediatricAcuteLiverFailurePage } from './pages/PediatricAcuteLiverFailurePage';
+import { PediatricAcuteLiverFailurePrint } from './pages/PediatricAcuteLiverFailurePrint';
 import { DeliveryWardPage } from './pages/DeliveryWardPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditPage } from './pages/AuditPage';
@@ -774,6 +780,28 @@ const primaryLinks = [
           <Route path="/pediatric-refractory-asthma/:id/print" element={can('patient:read_clinical') ? <PediatricRefractoryAsthmaPrint /> : <Navigate to="/pediatric-refractory-asthma" replace />} />
           <Route path="/pediatric-refractory-asthma/print/:id" element={can('patient:read_clinical') ? <PediatricRefractoryAsthmaPrint /> : <Navigate to="/pediatric-refractory-asthma" replace />} />
           <Route path="/patients/:patientId/pediatric-refractory-asthma/:episodeId/print" element={can('patient:read_clinical') ? <PediatricRefractoryAsthmaPrint /> : <Navigate to="/pediatric-refractory-asthma" replace />} />
+
+          {/* Series 41: Neonatal Seizures, Obstetric DIC, Pediatric Acute Liver Failure */}
+          <Route path="/neonatal-seizures" element={can('patient:read_clinical') ? <NeonatalSeizuresPage /> : <Navigate to="/" replace />} />
+          <Route path="/neonatal-seizures/:id/print" element={can('patient:read_clinical') ? <NeonatalSeizuresPrint /> : <Navigate to="/neonatal-seizures" replace />} />
+          <Route path="/neonatal-seizures/print/:id" element={can('patient:read_clinical') ? <NeonatalSeizuresPrint /> : <Navigate to="/neonatal-seizures" replace />} />
+          <Route path="/protocols/neonatal-seizures/print/:id" element={can('patient:read_clinical') ? <NeonatalSeizuresPrint /> : <Navigate to="/neonatal-seizures" replace />} />
+          <Route path="/patients/:patientId/neonatal-seizures/:episodeId/print" element={can('patient:read_clinical') ? <NeonatalSeizuresPrint /> : <Navigate to="/neonatal-seizures" replace />} />
+
+          <Route path="/obstetric-dic" element={can('patient:read_clinical') ? <ObstetricDicPage /> : <Navigate to="/" replace />} />
+          <Route path="/obstetric-dic/:id/print" element={can('patient:read_clinical') ? <ObstetricDicPrint /> : <Navigate to="/obstetric-dic" replace />} />
+          <Route path="/obstetric-dic/print/:id" element={can('patient:read_clinical') ? <ObstetricDicPrint /> : <Navigate to="/obstetric-dic" replace />} />
+          <Route path="/protocols/obstetric-dic/print/:id" element={can('patient:read_clinical') ? <ObstetricDicPrint /> : <Navigate to="/obstetric-dic" replace />} />
+          <Route path="/patients/:patientId/obstetric-dic/:episodeId/print" element={can('patient:read_clinical') ? <ObstetricDicPrint /> : <Navigate to="/obstetric-dic" replace />} />
+
+          <Route path="/palf" element={can('patient:read_clinical') ? <PediatricAcuteLiverFailurePage /> : <Navigate to="/" replace />} />
+          <Route path="/pediatric-acute-liver-failure" element={can('patient:read_clinical') ? <PediatricAcuteLiverFailurePage /> : <Navigate to="/" replace />} />
+          <Route path="/palf/:id/print" element={can('patient:read_clinical') ? <PediatricAcuteLiverFailurePrint /> : <Navigate to="/palf" replace />} />
+          <Route path="/palf/print/:id" element={can('patient:read_clinical') ? <PediatricAcuteLiverFailurePrint /> : <Navigate to="/palf" replace />} />
+          <Route path="/pediatric-acute-liver-failure/:id/print" element={can('patient:read_clinical') ? <PediatricAcuteLiverFailurePrint /> : <Navigate to="/palf" replace />} />
+          <Route path="/pediatric-acute-liver-failure/print/:id" element={can('patient:read_clinical') ? <PediatricAcuteLiverFailurePrint /> : <Navigate to="/palf" replace />} />
+          <Route path="/protocols/palf/print/:id" element={can('patient:read_clinical') ? <PediatricAcuteLiverFailurePrint /> : <Navigate to="/palf" replace />} />
+          <Route path="/patients/:patientId/palf/:episodeId/print" element={can('patient:read_clinical') ? <PediatricAcuteLiverFailurePrint /> : <Navigate to="/palf" replace />} />
           <Route path="/delivery-ward" element={can('ipd:read_basic') || can('station:read') ? <DeliveryWardPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id" element={can('visit:read') ? <VisitPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id/print" element={can('visit:read') ? <PrescriptionPrint /> : <Navigate to="/" replace />} />
