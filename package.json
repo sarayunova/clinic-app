@@ -11,6 +11,7 @@
     "backup": "tsx server/cli/backup.ts",
     "restore": "tsx server/cli/restore.ts",
     "cert": "tsx server/cli/cert.ts",
+    "migrate-data-dir": "tsx server/cli/migrateDataDir.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p web",
     "build:exe": "node scripts/build-exe.mjs",
     "build:installer": "node scripts/build-installer.mjs",
