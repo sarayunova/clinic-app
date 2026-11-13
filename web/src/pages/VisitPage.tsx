@@ -109,6 +109,7 @@ function fmtVitals(v: VitalsEntry): string {
 
 export function VisitPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { can } = useAuth();
   const [visit, setVisit] = useState<Visit | null>(null);
   const [loadError, setLoadError] = useState<unknown>(null);
@@ -270,8 +271,6 @@ export function VisitPage() {
       return api<Visit>('POST', `/api/visits/${v.id}/finalise`, { version: v.version });
     }, 'Consultation finalised. The notes are now locked; later corrections need a reason and are recorded.');
   }
-
-  const navigate = useNavigate();
 
   async function handleSaveAndPrint(finaliseFirst: boolean) {
     setBusy(true);
