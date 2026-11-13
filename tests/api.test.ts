@@ -15,7 +15,14 @@ type Json = any; // eslint-disable-line @typescript-eslint/no-explicit-any
 async function call(method: 'GET' | 'POST' | 'PATCH', url: string, cookie?: string, payload?: unknown) {
   const res = await app.inject({ method, url, payload: payload as object, headers: cookie ? { cookie } : {} });
   const setCookie = res.headers['set-cookie'];
-  return { status: res.statusCode, body: (res.body ? JSON.parse(res.body) : null) as Json, setCookie: Array.isArray(setCookie) ? setCookie[0] : setCookie };
+  const ct = String(res.headers['content-type'] ?? '');
+  return {
+    status: res.statusCode,
+    headers: res.headers,
+    rawBody: res.rawPayload,
+    body: (ct.includes('json') && res.body ? JSON.parse(res.body) : null) as Json,
+    setCookie: Array.isArray(setCookie) ? setCookie[0] : setCookie,
+  };
 }
 
 async function login(username: string, password = PW): Promise<string> {
@@ -177,6 +184,76 @@ describe('patients', () => {
     expect((await bad({ phone: 'abc' })).status).toBe(400);
     expect((await bad({ unexpectedField: 1 })).status).toBe(400);
     expect((await call('POST', '/api/patients', doctor, { fullName: '' })).status).toBe(400);
+  });
+
+  it('supports uploading a copy of Aadhaar card during registration and viewing it', async () => {
+    const { desk, doctor } = await seedUsers();
+    const samplePdf = Buffer.concat([Buffer.from('%PDF-1.4\n'), Buffer.from('1 0 obj<<>>endobj\n'), Buffer.from('%%EOF')]);
+    const regRes = await call('POST', '/api/patients', desk, {
+      fullName: 'Kavita Patel',
+      phone: '9876543210',
+      aadhaarLastFour: '9876',
+      aadhaarDocument: {
+        fileName: 'kavita_aadhaar.pdf',
+        data: samplePdf.toString('base64'),
+      },
+    });
+
+    expect(regRes.status).toBe(201);
+    const p = regRes.body.patient;
+    expect(p.fullName).toBe('Kavita Patel');
+    expect(p.aadhaarLastFour).toBe('9876');
+    expect(p.aadhaarAttachmentId).toBeTypeOf('number');
+
+    // Desk attender can view / retrieve the uploaded Aadhaar document
+    const docView = await call('GET', `/api/patients/${p.id}/aadhaar-document`, desk);
+    expect(docView.status).toBe(200);
+    expect(docView.headers['content-type']).toBe('application/pdf');
+    expect(Buffer.compare(Buffer.from(docView.rawBody), samplePdf)).toBe(0);
+
+    // Shows up in directory search with aadhaarAttachmentId
+    const searchRes = await call('GET', '/api/patients?q=9876', desk);
+    expect(searchRes.status).toBe(200);
+    expect(searchRes.body[0].aadhaarAttachmentId).toBe(p.aadhaarAttachmentId);
+
+    // Existing patient can also have their Aadhaar copy updated
+    const sampleJpg = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.from('jpgdata')]);
+    const updateRes = await call('POST', `/api/patients/${p.id}/aadhaar-document`, desk, {
+      fileName: 'new_aadhaar.jpg',
+      data: sampleJpg.toString('base64'),
+    });
+    expect(updateRes.status).toBe(201);
+    expect(updateRes.body.aadhaarAttachmentId).toBeTypeOf('number');
+    expect(updateRes.body.aadhaarAttachmentId).not.toBe(p.aadhaarAttachmentId);
+
+    const docView2 = await call('GET', `/api/patients/${p.id}/aadhaar-document`, doctor);
+    expect(docView2.status).toBe(200);
+    expect(docView2.headers['content-type']).toBe('image/jpeg');
+  });
+
+  it('rejects invalid Aadhaar uploads during registration', async () => {
+    const { desk } = await seedUsers();
+    // Invalid mime / text file disguised as pdf
+    const fakeFile = Buffer.from('This is not a real PDF or image');
+    const badMime = await call('POST', '/api/patients', desk, {
+      fullName: 'Sunita Sharma',
+      aadhaarDocument: {
+        fileName: 'aadhaar.pdf',
+        data: fakeFile.toString('base64'),
+      },
+    });
+    expect(badMime.status).toBe(400);
+    expect(badMime.body.error.message).toMatch(/Only PDF, JPEG and PNG/);
+
+    // Invalid base64
+    const badB64 = await call('POST', '/api/patients', desk, {
+      fullName: 'Sunita Sharma',
+      aadhaarDocument: {
+        fileName: 'aadhaar.pdf',
+        data: '!!!not-base-64!!!',
+      },
+    });
+    expect(badB64.status).toBe(400);
   });
 
   it('records field-level before/after in the audit log, including views', async () => {

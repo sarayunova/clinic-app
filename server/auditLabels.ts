@@ -13,6 +13,8 @@ export const ACTION_LABELS: Record<string, string> = {
   'patient.create': 'Registered a patient',
   'patient.update': 'Changed patient details',
   'patient.view': 'Opened a patient record',
+  'patient.view_aadhaar': 'Viewed copy of Aadhaar card',
+  'patient.download_aadhaar': 'Downloaded copy of Aadhaar card',
   'admission.transfer': 'Moved a patient to another bed',
   'station.view': 'Opened the nurse station board',
   'attachment.upload': 'Uploaded a document',

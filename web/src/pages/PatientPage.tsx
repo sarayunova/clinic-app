@@ -237,6 +237,15 @@ function toValue(def: FieldDef, s: string): string | number | null {
   return t === '' ? null : t;
 }
 
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onerror = () => reject(new Error('The file could not be read'));
+    r.onload = () => resolve(String(r.result).split(',')[1] ?? '');
+    r.readAsDataURL(file);
+  });
+}
+
 export function PatientPage() {
   const { id } = useParams();
   const isNew = id === undefined;
@@ -259,6 +268,67 @@ export function PatientPage() {
   const [riskSummary, setRiskSummary] = useState<PatientRiskSummary | null>(null);
   const [dupes, setDupes] = useState<{ id: number; patientNumber: string; fullName: string; phone: string | null }[] | null>(null);
   const [showCommModal, setShowCommModal] = useState(false);
+  const [stagedAadhaar, setStagedAadhaar] = useState<{
+    file: File;
+    previewUrl: string | null;
+    isPdf: boolean;
+  } | null>(null);
+  const [isAadhaarDragging, setIsAadhaarDragging] = useState(false);
+  const [uploadingAadhaar, setUploadingAadhaar] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (stagedAadhaar?.previewUrl) URL.revokeObjectURL(stagedAadhaar.previewUrl);
+    };
+  }, [stagedAadhaar]);
+
+  const handleAadhaarFile = (file: File) => {
+    if (file.size > 10 * 1024 * 1024) {
+      setError(new Error(`"${file.name}" is ${(file.size / 1024 / 1024).toFixed(1)} MB. Maximum allowed size is 10 MB.`));
+      return;
+    }
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const isImg = file.type.startsWith('image/');
+    if (!isPdf && !isImg) {
+      setError(new Error('Please select an image (JPG, PNG) or PDF document for Aadhaar copy.'));
+      return;
+    }
+    if (stagedAadhaar?.previewUrl) URL.revokeObjectURL(stagedAadhaar.previewUrl);
+    const previewUrl = isImg ? URL.createObjectURL(file) : null;
+    setStagedAadhaar({ file, previewUrl, isPdf });
+    setError(null);
+  };
+
+  async function handleExistingAadhaarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !patient) return;
+    if (file.size > 10 * 1024 * 1024) {
+      setError(new Error(`"${file.name}" is ${(file.size / 1024 / 1024).toFixed(1)} MB. Maximum allowed size is 10 MB.`));
+      return;
+    }
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const isImg = file.type.startsWith('image/');
+    if (!isPdf && !isImg) {
+      setError(new Error('Please select an image (JPG, PNG) or PDF document for Aadhaar copy.'));
+      return;
+    }
+    setUploadingAadhaar(true);
+    setError(null);
+    try {
+      const b64 = await fileToBase64(file);
+      const updated = await api<Patient>('POST', `/api/patients/${patient.id}/aadhaar-document`, {
+        fileName: file.name,
+        data: b64,
+      });
+      setPatient(updated);
+      setSaved(true);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setUploadingAadhaar(false);
+      e.target.value = '';
+    }
+  }
 
   const load = useCallback(async () => {
     if (isNew) return;
@@ -388,7 +458,15 @@ export function PatientPage() {
           return;
         }
       }
-      const r = await api<{ patient: Patient }>('POST', '/api/patients', payload());
+      let aadhaarDocument: { fileName: string; data: string } | undefined = undefined;
+      if (stagedAadhaar) {
+        const b64 = await fileToBase64(stagedAadhaar.file);
+        aadhaarDocument = { fileName: stagedAadhaar.file.name, data: b64 };
+      }
+      const r = await api<{ patient: Patient }>('POST', '/api/patients', {
+        ...payload(),
+        ...(aadhaarDocument ? { aadhaarDocument } : {}),
+      });
       nav(`/patients/${r.patient.id}`, { replace: true });
     } catch (e) {
       setError(e);
@@ -431,7 +509,28 @@ export function PatientPage() {
           <div>
             <h1>{patient!.fullName}</h1>
             <div className="muted">
-              {patient!.patientNumber} · {formatAge(patient!.ageYears, patient!.ageIsEstimated)}{patient!.aadhaarLastFour ? ' · 🆔 Aadhaar: •••• •••• ' + patient!.aadhaarLastFour : ''}
+              {patient!.patientNumber} · {formatAge(patient!.ageYears, patient!.ageIsEstimated)}{patient!.aadhaarLastFour ? ' · 🆔 Aadhaar: •••• •••• ' + patient!.aadhaarLastFour : ''}{patient!.aadhaarAttachmentId && (
+                <a
+                  href={`/api/patients/${patient!.id}/aadhaar-document`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn small"
+                  style={{
+                    marginLeft: '0.5rem',
+                    padding: '0.15rem 0.5rem',
+                    fontSize: '0.75rem',
+                    background: '#0284c7',
+                    color: '#fff',
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                  }}
+                  title="View verified copy of Aadhaar card"
+                >
+                  🪪 View Aadhaar Copy
+                </a>
+              )}
               {typeof patient!.phone === 'string' && patient!.phone ? (
                 <>
                   {' · '}
@@ -2148,6 +2247,171 @@ export function PatientPage() {
                     </div>
                   );
                 })}
+
+                {s.title === 'Identity and contact' && isNew && (
+                  <div className="span2" style={{ marginTop: '0.5rem' }}>
+                    <div
+                      style={{
+                        border: isAadhaarDragging ? '2px dashed var(--primary, #0284c7)' : '1.5px dashed var(--border, #cbd5e1)',
+                        backgroundColor: isAadhaarDragging ? 'rgba(2, 132, 199, 0.05)' : 'var(--bg-subtle, #f8fafc)',
+                        borderRadius: '8px',
+                        padding: '0.85rem 1rem',
+                        transition: 'all 0.15s ease',
+                      }}
+                      onDragOver={(e) => { e.preventDefault(); setIsAadhaarDragging(true); }}
+                      onDragLeave={() => setIsAadhaarDragging(false)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setIsAadhaarDragging(false);
+                        if (e.dataTransfer.files?.[0]) handleAadhaarFile(e.dataTransfer.files[0]);
+                      }}
+                    >
+                      <div className="row wrap" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: stagedAadhaar ? '0.6rem' : 0 }}>
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: '0.92rem' }}>🪪 Upload Aadhaar Card Copy / ID Proof (Optional)</div>
+                          <div className="muted small">Upload PDF copy or clear photo (JPG, PNG) up to 10 MB</div>
+                        </div>
+                        {!stagedAadhaar && (
+                          <div className="row" style={{ gap: '0.4rem', marginTop: '0.3rem' }}>
+                            <label className="btn small primary" style={{ cursor: 'pointer', margin: 0 }}>
+                              📁 Browse File
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,application/pdf"
+                                style={{ display: 'none' }}
+                                onChange={(e) => {
+                                  if (e.target.files?.[0]) handleAadhaarFile(e.target.files[0]);
+                                }}
+                              />
+                            </label>
+                            <label className="btn small" style={{ cursor: 'pointer', margin: 0 }} title="Take photo using camera or scanner">
+                              📷 Capture
+                              <input
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                style={{ display: 'none' }}
+                                onChange={(e) => {
+                                  if (e.target.files?.[0]) handleAadhaarFile(e.target.files[0]);
+                                }}
+                              />
+                            </label>
+                          </div>
+                        )}
+                      </div>
+
+                      {stagedAadhaar && (
+                        <div className="row wrap" style={{ alignItems: 'center', gap: '0.75rem', padding: '0.5rem', background: '#fff', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                          {stagedAadhaar.previewUrl ? (
+                            <img
+                              src={stagedAadhaar.previewUrl}
+                              alt="Aadhaar Preview"
+                              style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #e2e8f0' }}
+                            />
+                          ) : (
+                            <div style={{ width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fee2e2', color: '#ef4444', fontWeight: 'bold', fontSize: '0.8rem', borderRadius: '4px' }}>
+                              PDF
+                            </div>
+                          )}
+                          <div style={{ flex: 1, minWidth: '160px' }}>
+                            <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{stagedAadhaar.file.name}</div>
+                            <div className="muted small">
+                              {(stagedAadhaar.file.size / 1024).toFixed(1)} KB · <span style={{ color: '#059669', fontWeight: 500 }}>Ready to attach on registration</span>
+                            </div>
+                          </div>
+                          <div className="row" style={{ gap: '0.3rem' }}>
+                            <label className="btn small" style={{ cursor: 'pointer', margin: 0, padding: '0.2rem 0.5rem' }}>
+                              🔄 Change
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,application/pdf"
+                                style={{ display: 'none' }}
+                                onChange={(e) => {
+                                  if (e.target.files?.[0]) handleAadhaarFile(e.target.files[0]);
+                                }}
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              className="btn small danger"
+                              style={{ padding: '0.2rem 0.5rem' }}
+                              onClick={() => {
+                                if (stagedAadhaar.previewUrl) URL.revokeObjectURL(stagedAadhaar.previewUrl);
+                                setStagedAadhaar(null);
+                              }}
+                            >
+                              ✕ Remove
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {s.title === 'Identity and contact' && !isNew && (
+                  <div className="span2" style={{ marginTop: '0.5rem' }}>
+                    {patient?.aadhaarAttachmentId ? (
+                      <div className="row wrap" style={{ alignItems: 'center', justifyContent: 'space-between', padding: '0.6rem 0.8rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px' }}>
+                        <div className="row" style={{ alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '1.2rem' }}>🪪</span>
+                          <div>
+                            <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#166534' }}>Aadhaar Card Copy Attached</span>
+                            <div className="muted small">Official copy on record for identification and UID verification.</div>
+                          </div>
+                        </div>
+                        <div className="row" style={{ gap: '0.4rem' }}>
+                          <a
+                            href={`/api/patients/${patient.id}/aadhaar-document`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn small"
+                            style={{ background: '#0284c7', color: '#fff', textDecoration: 'none' }}
+                          >
+                            👁️ View Copy
+                          </a>
+                          <a
+                            href={`/api/patients/${patient.id}/aadhaar-document?download=1`}
+                            className="btn small"
+                          >
+                            ⬇️ Download
+                          </a>
+                          {(can('patient:write_demographics') || can('attachment:write')) && (
+                            <label className="btn small" style={{ cursor: 'pointer', margin: 0 }}>
+                              {uploadingAadhaar ? 'Uploading…' : '🔄 Replace'}
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,application/pdf"
+                                style={{ display: 'none' }}
+                                disabled={uploadingAadhaar}
+                                onChange={handleExistingAadhaarUpload}
+                              />
+                            </label>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      (can('patient:write_demographics') || can('attachment:write')) && (
+                        <div className="row wrap" style={{ alignItems: 'center', justifyContent: 'space-between', padding: '0.6rem 0.8rem', background: 'var(--bg-subtle, #f8fafc)', border: '1px dashed var(--border, #cbd5e1)', borderRadius: '6px' }}>
+                          <div>
+                            <span style={{ fontWeight: 600, fontSize: '0.88rem' }}>🪪 No Aadhaar Card Copy Uploaded</span>
+                            <div className="muted small">Attach an Aadhaar copy to complete official identification records.</div>
+                          </div>
+                          <label className="btn small primary" style={{ cursor: 'pointer', margin: 0 }}>
+                            {uploadingAadhaar ? 'Uploading…' : '📎 Upload Aadhaar Copy'}
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,application/pdf"
+                              style={{ display: 'none' }}
+                              disabled={uploadingAadhaar}
+                              onChange={handleExistingAadhaarUpload}
+                            />
+                          </label>
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
               </div>
             </fieldset>
           );
