@@ -10,8 +10,21 @@
 param(
   # Where the app (this folder) is installed. Use a plain folder such as C:\ClinicApp, not OneDrive / Desktop.
   [string] $AppDir = '',
-  # Where patient data lives. Default: the same place the app uses when started by hand.
-  [string] $DataDir = $(if ($env:CLINIC_DATA_DIR) { $env:CLINIC_DATA_DIR } else { Join-Path $env:LOCALAPPDATA 'ClinicApp' }),
+  # Where patient data lives. Default: CLINIC_DATA_DIR if set; else the machine-wide ProgramData
+  # location if it already has a database (already migrated); else an existing per-user database
+  # if one is found (so an upgrade never points at a fresh empty database); else the machine-wide
+  # location for a genuinely fresh install. This mirrors server/config.ts's own detection so a
+  # manual run and the scheduled task agree on where patient data lives.
+  [string] $DataDir = $(
+    if ($env:CLINIC_DATA_DIR) { $env:CLINIC_DATA_DIR }
+    else {
+      $machineDir = Join-Path $env:ProgramData 'ClinicApp'
+      $legacyDir = Join-Path $env:LOCALAPPDATA 'ClinicApp'
+      if (Test-Path -LiteralPath (Join-Path $machineDir 'clinic.sqlite')) { $machineDir }
+      elseif (Test-Path -LiteralPath (Join-Path $legacyDir 'clinic.sqlite')) { $legacyDir }
+      else { $machineDir }
+    }
+  ),
   [int]    $Port = 3080,
   # 127.0.0.1 = this computer only. Use 0.0.0.0 for tablets/phones, but only after HTTPS is set up (docs\HTTPS-SETUP.md).
   [string] $ListenHost = '127.0.0.1',
@@ -60,6 +73,9 @@ if ($useExe) {
 # Things that commonly break an unattended start.
 if ($AppDir -match 'OneDrive|\\Desktop\\|\\Documents\\') { Warn "$AppDir looks like a cloud-synced or personal folder. At startup those files may not be available yet. Install the app under a plain folder such as C:\ClinicApp." }
 if ($DataDir -match 'OneDrive') { Warn "$DataDir is inside OneDrive. Patient records must not be stored in a cloud-synced folder." }
+if (-not $PSBoundParameters.ContainsKey('DataDir') -and $DataDir -eq (Join-Path $env:LOCALAPPDATA 'ClinicApp')) {
+  Warn "Using the existing per-user database at $DataDir. It has not been moved to the machine-wide location (Join-Path `$env:ProgramData 'ClinicApp'). A different Windows account running this app later would not see this data until it is migrated."
+}
 if ($BackupPassphraseFile) {
   if (-not (Test-Path -LiteralPath $BackupPassphraseFile)) { Fail "Backup passphrase file not found: $BackupPassphraseFile" }
   $BackupPassphraseFile = (Resolve-Path -LiteralPath $BackupPassphraseFile).Path

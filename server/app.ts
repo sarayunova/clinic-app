@@ -23,6 +23,7 @@ import { registerStationRoutes } from './routes/station.js';
 import { registerPricingRoutes } from './routes/pricing.js';
 import { registerChecklistRoutes } from './routes/checklist.js';
 import { registerBackupRoutes } from './routes/backups.js';
+import { registerSystemRoutes } from './routes/system.js';
 import { registerSecurityRoutes } from './routes/security.js';
 import { registerTemplateRoutes } from './routes/templates.js';
 import { registerTvRoutes } from './routes/tv.js';
@@ -284,6 +285,7 @@ export async function buildApp(ctx: Omit<Ctx, 'throttle'> & { throttle?: LoginTh
   registerPricingRoutes(app, full);
   registerChecklistRoutes(app, full);
   registerBackupRoutes(app, full);
+  registerSystemRoutes(app, full);
   registerSecurityRoutes(app, full);
   registerAuditRoutes(app, full);
   registerTemplateRoutes(app, full);

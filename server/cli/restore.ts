@@ -1,5 +1,5 @@
 import { BackupError, checkPassphrase } from '../backup.js';
-import { loadConfig } from '../config.js';
+import { ConfigError, loadConfig } from '../config.js';
 import { restoreBackup } from '../restore.js';
 
 // Wrapped in a function (rather than top-level await) so this file can be bundled as CommonJS
@@ -12,7 +12,13 @@ async function main() {
     console.error('Usage: npm run restore -- <backup-file.cbk> [--replace]\n  Without --replace the backup is only decrypted and checked, as a new file next to the database.\n  With --replace the current database is moved aside and the backup becomes the live database (stop the server first).');
     process.exit(2);
   }
-  const cfg = loadConfig();
+  let cfg;
+  try {
+    cfg = loadConfig();
+  } catch (e) {
+    console.error(e instanceof ConfigError ? e.message : e);
+    process.exit(1);
+  }
   try {
     const r = await restoreBackup({ file, passphrase: checkPassphrase(cfg.backupPassphrase), cfg, replace });
     console.log(`Backup is sound: ${r.verify.patients} patients, ${r.verify.users} users, ${r.verify.migrations} migrations. Integrity: ${r.verify.integrity}.`);
