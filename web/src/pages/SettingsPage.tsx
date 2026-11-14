@@ -176,6 +176,7 @@ export function SettingsPage() {
 
       <div className="row wrap" style={{ gap: '0.6rem', marginBottom: '1.25rem' }}>
         <Link className="btn small" to="/setup">First-run setup wizard</Link>
+        <Link className="btn small" to="/settings/connect">Connect a staff device</Link>
         <Link className="btn small" to="/settings/checklist">Setup checklist: ready for real patients</Link>
         <Link className="btn small" to="/settings/prescription-templates">Prescription templates / regimens</Link>
       </div>

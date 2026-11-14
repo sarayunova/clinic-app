@@ -247,6 +247,8 @@ import { StationPage } from './pages/StationPage';
 import { PriceListPage } from './pages/PriceListPage';
 import { ChecklistPage } from './pages/ChecklistPage';
 import { SetupWizardPage } from './pages/SetupWizardPage';
+import { ConnectDevicesPage } from './pages/ConnectDevicesPage';
+import { WelcomePage } from './pages/WelcomePage';
 import { PrescriptionTemplatesPage } from './pages/PrescriptionTemplatesPage';
 import { CollectionReportPage } from './pages/CollectionReport';
 import { TvQueuePage } from './pages/TvQueuePage';
@@ -257,6 +259,8 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 export function App() {
   const location = useLocation();
   if (location.pathname === '/tv') return <TvQueuePage />;
+  // New-device onboarding (from the "Connect a device" QR code): shown before sign-in on purpose, holds no patient data.
+  if (location.pathname === '/welcome') return <WelcomePage />;
 
   const { state } = useAuth();
   if (state.status === 'loading') return <p className="center muted">Loading…</p>;
@@ -841,6 +845,7 @@ const primaryLinks = [
           <Route path="/invoices/:id/print" element={can('billing:read') ? <InvoicePrint /> : <Navigate to="/" replace />} />
           <Route path="/invoices/:id/receipts/:pid" element={can('billing:read') ? <ReceiptPrint /> : <Navigate to="/" replace />} />
           <Route path="/setup" element={canRunSetup ? <SetupWizardPage /> : <Navigate to="/" replace />} />
+          <Route path="/settings/connect" element={can('settings:manage') ? <ConnectDevicesPage /> : <Navigate to="/" replace />} />
           <Route path="/settings/checklist" element={can('settings:manage') ? <ChecklistPage /> : <Navigate to="/" replace />} />
           <Route path="/settings/prescription-templates" element={can('visit:write') ? <PrescriptionTemplatesPage /> : <Navigate to="/" replace />} />
           <Route path="/settings" element={can('settings:manage') ? <SettingsPage /> : <Navigate to="/" replace />} />
