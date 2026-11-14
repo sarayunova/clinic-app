@@ -39,6 +39,9 @@ Name: "autostart"; Description: "Start the clinic app automatically when Windows
 var
   ModePage: TInputOptionWizardPage;
   ClientAddressPage: TInputQueryWizardPage;
+  SecretsPage: TOutputMsgMemoWizardPage;
+  g_BackupPassphrase, g_CaPassphrase: String;
+  g_SecretsGenerated: Boolean;
 
 { True for a full server install; False for a client-only (shortcut) install. Defaults to True
   (server) before the wizard page exists yet, e.g. during early Pascal evaluation. }
@@ -71,6 +74,108 @@ begin
     Result := 'https://' + Addr;
 end;
 
+function SecretsDir: String;
+begin
+  Result := ExpandConstant('{commonappdata}\ClinicApp\secrets');
+end;
+
+function BackupPassphraseFile: String;
+begin
+  Result := SecretsDir + '\backup-passphrase.txt';
+end;
+
+function CaPassphraseFile: String;
+begin
+  Result := SecretsDir + '\ca-passphrase.txt';
+end;
+
+// Used as {code:BackupPassphraseFileConst} in [Run] to pass the path to install-autostart.ps1.
+function BackupPassphraseFileConst(Param: String): String;
+begin
+  Result := BackupPassphraseFile;
+end;
+
+// Generates a passphrase and writes it straight to DestFile from inside the PowerShell process via
+// a cryptographic RNG, so the plaintext is never passed as a process argument anywhere (including
+// in this Exec call itself, which only ever receives the destination path).
+function GenerateSecretFile(DestFile: String): Boolean;
+var
+  ResultCode: Integer;
+begin
+  // RNGCryptoServiceProvider, not the newer static RandomNumberGenerator.Fill, because this runs
+  // under Windows PowerShell 5.1's .NET Framework, where .Fill does not exist - confirmed by
+  // actually running this exact command standalone, not just reading it: .Fill failed with a
+  // non-terminating "method not found" error and silently left $bytes all zero, producing the same
+  // "random" passphrase every time. GetBytes on RNGCryptoServiceProvider is the correct API here.
+  Result := Exec('powershell.exe', '-NoProfile -ExecutionPolicy Bypass -Command "' +
+    '$rng = [System.Security.Cryptography.RNGCryptoServiceProvider]::new(); ' +
+    '$bytes = [byte[]]::new(32); ' +
+    '$rng.GetBytes($bytes); ' +
+    '$pw = [Convert]::ToBase64String($bytes) -replace ''[+/=]'',''''; ' +
+    '[System.IO.File]::WriteAllText(''' + DestFile + ''', $pw)"',
+    '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) and FileExists(DestFile);
+end;
+
+procedure RestrictSecretsAcl;
+var
+  ResultCode: Integer;
+begin
+  Exec('icacls.exe', '"' + SecretsDir + '" /inheritance:r /grant:r "SYSTEM:(OI)(CI)F" /grant:r "Administrators:(OI)(CI)F"',
+    '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
+function ReadSecretFile(FileName: String): String;
+var
+  Raw: AnsiString;
+begin
+  Result := '';
+  if LoadStringFromFile(FileName, Raw) then
+    Result := String(Raw);
+end;
+
+// Only generates what does not already exist, so an upgrade/repair never rotates a passphrase
+// still needed to decrypt backups taken under the old one - per the plan's "never remove, overwrite
+// or reset ... keys" requirement. g_SecretsGenerated is only true when the BACKUP passphrase was
+// newly created this run, which is what gates showing the one-time "write this down" page.
+procedure EnsureSecrets;
+begin
+  g_SecretsGenerated := False;
+  if not DirExists(SecretsDir) then
+    ForceDirectories(SecretsDir);
+
+  if not FileExists(BackupPassphraseFile) then
+  begin
+    if GenerateSecretFile(BackupPassphraseFile) then
+      g_SecretsGenerated := True
+    else
+      MsgBox('Could not set up backup encryption automatically. Automatic backups will stay off until CLINIC_BACKUP_PASSPHRASE_FILE is configured manually - see docs/BACKUP-AND-RESTORE.md.', mbError, MB_OK);
+  end;
+
+  if not FileExists(CaPassphraseFile) then
+    GenerateSecretFile(CaPassphraseFile);
+
+  RestrictSecretsAcl;
+
+  if g_SecretsGenerated then
+  begin
+    g_BackupPassphrase := ReadSecretFile(BackupPassphraseFile);
+    g_CaPassphrase := ReadSecretFile(CaPassphraseFile);
+  end;
+end;
+
+function BuildSecretsMessage: String;
+begin
+  Result := 'Backup encryption is now configured for this clinic server.' + #13#10 + #13#10 +
+    'Recovery passphrase - write this down now and store it somewhere other than this computer ' +
+    '(a password manager, a safe, or a sealed note). Without it, encrypted backups from this ' +
+    'computer cannot be opened by anyone, including us:' + #13#10 + #13#10 +
+    g_BackupPassphrase + #13#10 + #13#10 +
+    'Certificate authority passphrase - only needed later if you set up LAN/HTTPS access for staff devices:' + #13#10 + #13#10 +
+    g_CaPassphrase + #13#10 + #13#10 +
+    'This is the only time these are shown on screen. A copy is also stored at ' + SecretsDir +
+    ' on this computer, restricted to administrators.';
+end;
+
 procedure InitializeWizard;
 begin
   ModePage := CreateInputOptionPage(wpWelcome,
@@ -87,11 +192,29 @@ begin
     'Enter the clinic server''s address exactly as given by whoever set it up, for example ' +
     '192.168.1.20 or clinicpc:3080. You can change this later from the shortcut''s properties.');
   ClientAddressPage.Add('Server address:', False);
+
+  SecretsPage := CreateOutputMsgMemoPage(wpInstalling,
+    'Backup encryption', 'Write down your recovery passphrase now',
+    'This is shown only once.', '');
 end;
 
 function ShouldSkipPage(PageID: Integer): Boolean;
 begin
-  Result := (ClientAddressPage <> nil) and (PageID = ClientAddressPage.ID) and IsServerMode;
+  Result := False;
+  if (ClientAddressPage <> nil) and (PageID = ClientAddressPage.ID) and IsServerMode then
+    Result := True;
+  if (SecretsPage <> nil) and (PageID = SecretsPage.ID) and (IsClientMode or not g_SecretsGenerated) then
+    Result := True;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if (CurStep = ssPostInstall) and IsServerMode then
+  begin
+    EnsureSecrets;
+    if g_SecretsGenerated then
+      SecretsPage.RichEditViewer.Lines.Text := BuildSecretsMessage;
+  end;
 end;
 
 { 500 MB is a conservative floor for the app itself plus headroom for an early database and logs;
@@ -239,7 +362,7 @@ Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
 
 [Run]
 Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; \
-  Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\scripts\install-autostart.ps1"" -AppDir ""{app}"" -StartNow"; \
+  Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\scripts\install-autostart.ps1"" -AppDir ""{app}"" -BackupPassphraseFile ""{code:BackupPassphraseFileConst}"" -StartNow"; \
   WorkingDir: "{app}"; Tasks: autostart; Flags: runhidden waituntilterminated; StatusMsg: "Registering automatic startup..."; Check: IsServerMode
 Filename: "http://127.0.0.1:3080"; Flags: postinstall shellexec skipifsilent; Description: "Open the clinic app in your browser now"; Tasks: autostart; Check: IsServerMode
 Filename: "{code:GetClientUrl}"; Flags: postinstall shellexec skipifsilent; Description: "Open the clinic server in your browser now"; Check: IsClientMode
@@ -250,9 +373,11 @@ Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; \
   Flags: runhidden waituntilterminated; RunOnceId: "RemoveAutostart"; Check: IsServerMode
 
 [UninstallDelete]
-; The exe, web build, and migrations are reinstalled on upgrade; nothing patient-related lives
-; under {app} (CLINIC_DATA_DIR defaults to %LOCALAPPDATA%\ClinicApp, well outside this folder),
-; so a full removal of {app} on uninstall never touches patient data.
+; The exe, web build, and migrations are reinstalled on upgrade; patient data lives under the
+; machine-wide {commonappdata}\ClinicApp (see docs/DEPLOYMENT-ARCHITECTURE.md), well outside this
+; folder, so a full removal of {app} on uninstall never touches patient data. The backup/CA
+; passphrases live under {commonappdata}\ClinicApp\secrets for the same reason - uninstalling must
+; never destroy the only copy of the key still needed to decrypt existing backups.
 Type: filesandordirs; Name: "{app}\dist"; Check: IsServerMode
 Type: filesandordirs; Name: "{app}\migrations"; Check: IsServerMode
 Type: filesandordirs; Name: "{app}\scripts"; Check: IsServerMode
