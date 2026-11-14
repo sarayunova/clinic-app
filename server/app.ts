@@ -161,6 +161,7 @@ import { registerNeonatalSeizuresRoutes } from './routes/neonatalSeizures.js';
 import { registerObstetricDicRoutes } from './routes/obstetricDic.js';
 import { registerPediatricAcuteLiverFailureRoutes } from './routes/pediatricAcuteLiverFailure.js';
 import type { LoadedTls } from './tls.js';
+import { APP_VERSION } from './version.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -424,6 +425,8 @@ export async function buildApp(ctx: Omit<Ctx, 'throttle'> & { throttle?: LoginTh
   registerObstetricDicRoutes(app, full);
   registerPediatricAcuteLiverFailureRoutes(app, full);
 
-  app.get('/api/health', async () => ({ ok: true }));
+  // Public (no login) so the installer can confirm the upgraded server is the one answering. The version is
+  // the only detail given; it is visible only to devices that can reach the server at all.
+  app.get('/api/health', async () => ({ ok: true, version: APP_VERSION }));
   return app;
 }

@@ -1,7 +1,8 @@
-// Automates full compilation of the Windows installer (ClinicAppSetup-0.1.0.exe)
+// Automates full compilation of the Windows installer (ClinicAppSetup-<package.json version>.exe)
 // Run with: npm run build:installer
 // Optional flag: --full to re-run web build and SEA binary packaging from scratch.
 import { execFileSync, execSync } from 'node:child_process';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -51,18 +52,36 @@ if (isFull || !fs.existsSync(clinicExe)) {
   execSync('npm run build:exe', { stdio: 'inherit', cwd: root });
 }
 
-const issPath = path.join(root, 'installer', 'clinic-app.iss');
-console.log(`Compiling Inno Setup installer using: ${iscc}`);
-execFileSync(iscc, [issPath], { stdio: 'inherit', cwd: root });
+// One version, from package.json, for the installer, its file name and the clinic.exe inside it.
+const { version } = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
-const outExe = path.join(root, 'installer', 'output', 'ClinicAppSetup-0.1.0.exe');
-if (fs.existsSync(outExe)) {
-  const stats = fs.statSync(outExe);
-  const sizeMb = (stats.size / (1024 * 1024)).toFixed(2);
-  console.log(`\n✅ Installer successfully compiled:`);
-  console.log(`   Path: ${outExe}`);
-  console.log(`   Size: ${sizeMb} MB`);
-} else {
+// A clinic.exe built from an older package.json version would make the post-install health check
+// report "an older server is still answering" on every install, so refuse to package a mismatch.
+const exeVersion = execFileSync(clinicExe, ['version'], { encoding: 'utf8' }).trim();
+if (exeVersion !== version) {
+  console.error(`dist-exe/clinic.exe is version ${exeVersion}, but package.json is ${version}. Rebuild it: npm run build:installer -- --full`);
+  process.exit(1);
+}
+
+const issPath = path.join(root, 'installer', 'clinic-app.iss');
+console.log(`Compiling Inno Setup installer ${version} using: ${iscc}`);
+execFileSync(iscc, [`/DMyAppVersion=${version}`, issPath], { stdio: 'inherit', cwd: root });
+
+const outExe = path.join(root, 'installer', 'output', `ClinicAppSetup-${version}.exe`);
+if (!fs.existsSync(outExe)) {
   console.error('Installer output file not found at expected location.');
   process.exit(1);
 }
+
+// Checksum for whoever installs it to compare (the file is often carried on a USB drive or sent over a
+// messaging app). Format matches `sha256sum -c`; on Windows: Get-FileHash <file> -Algorithm SHA256.
+const hash = crypto.createHash('sha256').update(fs.readFileSync(outExe)).digest('hex');
+const sumFile = `${outExe}.sha256`;
+fs.writeFileSync(sumFile, `${hash} *${path.basename(outExe)}\n`);
+
+const sizeMb = (fs.statSync(outExe).size / (1024 * 1024)).toFixed(2);
+console.log(`\n✅ Installer successfully compiled:`);
+console.log(`   Path:    ${outExe}`);
+console.log(`   Size:    ${sizeMb} MB`);
+console.log(`   SHA-256: ${hash}`);
+console.log(`   (also written to ${sumFile})`);

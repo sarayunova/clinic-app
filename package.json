@@ -13,6 +13,8 @@
     "cert": "tsx server/cli/cert.ts",
     "migrate-data-dir": "tsx server/cli/migrateDataDir.ts",
     "request-stop": "tsx server/cli/requestStop.ts",
+    "snapshot": "tsx server/cli/snapshot.ts",
+    "health": "tsx server/cli/health.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p web",
     "build:exe": "node scripts/build-exe.mjs",
     "build:installer": "node scripts/build-installer.mjs",

@@ -1,11 +1,17 @@
 ; Clinic App installer. Build with: npm run build && npm run build:exe, then compile this file
 ; with Inno Setup's ISCC.exe. See installer/README.md for the full build sequence.
 #define MyAppName "Clinic App"
-#define MyAppVersion "0.1.0"
+; scripts/build-installer.mjs passes /DMyAppVersion=<package.json version>; this default is only for
+; compiling the .iss by hand.
+#ifndef MyAppVersion
+  #define MyAppVersion "0.1.0"
+#endif
 #define MyAppPublisher "LiVi Software"
+#define MyAppIdGuid "{B6E2B6B0-6B9E-4C9F-9E6B-9B1B6B0A5C41}"
 
 [Setup]
-AppId={{B6E2B6B0-6B9E-4C9F-9E6B-9B1B6B0A5C41}
+; "{{" is Inno's escape for a literal "{".
+AppId={{#MyAppIdGuid}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
@@ -42,6 +48,10 @@ var
   SecretsPage: TOutputMsgMemoWizardPage;
   g_BackupPassphrase, g_CaPassphrase: String;
   g_SecretsGenerated: Boolean;
+  // Upgrade/repair detection: what is already installed here, if anything.
+  g_PrevVersion: String;   // '' when not installed before
+  g_PrevMode: String;      // 'server', 'client' or '' (unknown / not installed)
+  g_HealthChecked: Boolean;
 
 { True for a full server install; False for a client-only (shortcut) install. Defaults to True
   (server) before the wizard page exists yet, e.g. during early Pascal evaluation. }
@@ -176,6 +186,135 @@ begin
     ' on this computer, restricted to administrators.';
 end;
 
+// Runs Exe with Params, capturing everything it prints. Returns its exit code (-1 if it could not run).
+function RunAndCapture(Exe, Params: String; var Output: String): Integer;
+var
+  LogFile: String;
+  Raw: AnsiString;
+  ResultCode: Integer;
+begin
+  LogFile := ExpandConstant('{tmp}\cmd-output.txt');
+  DeleteFile(LogFile);
+  // cmd strips the outermost pair of quotes from a /C string that starts with one, so the whole
+  // command is wrapped in an extra pair to keep the quotes around the paths.
+  if not Exec(ExpandConstant('{cmd}'), '/C ""' + Exe + '" ' + Params + ' > "' + LogFile + '" 2>&1"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+    ResultCode := -1;
+  Output := '';
+  if LoadStringFromFile(LogFile, Raw) then
+    Output := Trim(String(Raw));
+  DeleteFile(LogFile);
+  Result := ResultCode;
+end;
+
+// Numeric comparison of dotted versions ("0.10.0" > "0.9.3"); anything after '-' is ignored.
+// Returns <0, 0 or >0.
+function CompareVersions(A, B: String): Integer;
+var
+  I, PA, PB, NA, NB: Integer;
+begin
+  Result := 0;
+  if Pos('-', A) > 0 then A := Copy(A, 1, Pos('-', A) - 1);
+  if Pos('-', B) > 0 then B := Copy(B, 1, Pos('-', B) - 1);
+  for I := 1 to 4 do
+  begin
+    PA := Pos('.', A);
+    PB := Pos('.', B);
+    if PA > 0 then begin NA := StrToIntDef(Copy(A, 1, PA - 1), 0); A := Copy(A, PA + 1, Length(A)); end
+    else begin NA := StrToIntDef(A, 0); A := ''; end;
+    if PB > 0 then begin NB := StrToIntDef(Copy(B, 1, PB - 1), 0); B := Copy(B, PB + 1, Length(B)); end
+    else begin NB := StrToIntDef(B, 0); B := ''; end;
+    if NA <> NB then
+    begin
+      Result := NA - NB;
+      Exit;
+    end;
+  end;
+end;
+
+const
+  UninstallKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{#MyAppIdGuid}_is1';
+
+// Which version is installed here already ('' if none). Read straight from the uninstall registry key,
+// so it works in InitializeSetup, before the wizard exists.
+procedure DetectPreviousVersion;
+begin
+  g_PrevVersion := '';
+  if not RegQueryStringValue(HKLM, UninstallKey, 'DisplayVersion', g_PrevVersion) then
+    g_PrevVersion := '';
+end;
+
+// Server or client. Comes from what this installer recorded last time (RegisterPreviousData below);
+// installs from before that was recorded are inferred from whether the server program is present in
+// the previous install folder. Called from InitializeWizard (GetPreviousData needs the wizard).
+procedure DetectPreviousMode;
+var
+  PrevDir: String;
+begin
+  g_PrevMode := '';
+  if g_PrevVersion = '' then
+    Exit;
+  g_PrevMode := GetPreviousData('Mode', '');
+  if g_PrevMode = '' then
+  begin
+    if RegQueryStringValue(HKLM, UninstallKey, 'Inno Setup: App Path', PrevDir) and FileExists(AddBackslash(PrevDir) + 'clinic.exe') then
+      g_PrevMode := 'server'
+    else
+      g_PrevMode := 'client';
+  end;
+end;
+
+// Installing an older version over a newer one is refused by default: the newer version may already
+// have upgraded the database to a layout the older one does not understand.
+function InitializeSetup: Boolean;
+begin
+  Result := True;
+  DetectPreviousVersion;
+  if (g_PrevVersion <> '') and (CompareVersions(g_PrevVersion, '{#MyAppVersion}') > 0) then
+    Result := SuppressibleMsgBox('A newer version of {#MyAppName} (' + g_PrevVersion + ') is already installed on this computer. ' +
+      'Installing the older version {#MyAppVersion} over it is not supported: the newer version may have already ' +
+      'upgraded the database, and the older one may fail to start.' + #13#10 + #13#10 +
+      'Install the older version anyway?', mbError, MB_YESNO or MB_DEFBUTTON2, IDNO) = IDYES;
+end;
+
+procedure RegisterPreviousData(PreviousDataKey: Integer);
+begin
+  if IsServerMode then
+    SetPreviousData(PreviousDataKey, 'Mode', 'server')
+  else
+  begin
+    SetPreviousData(PreviousDataKey, 'Mode', 'client');
+    SetPreviousData(PreviousDataKey, 'ClientAddress', Trim(ClientAddressPage.Values[0]));
+  end;
+end;
+
+// Takes a verified copy of the database with the NEW program (extracted to a temp folder; nothing
+// installed yet), which finds the database exactly as the upgraded server will and opens it read-only.
+// It deliberately does not use the old program's `backup` command: older versions open the database
+// read-write and would create an empty one if they looked in the wrong place.
+// Returns '' to continue, or a message that stops the install before anything is changed.
+// Encrypted with the backup passphrase when this computer has one (the file path is passed, never the
+// passphrase); a plain copy, kept in the protected data folder, for older installs that have none.
+function TakePreUpgradeSnapshot: String;
+var
+  Code: Integer;
+  Output, Params: String;
+begin
+  Result := '';
+  ExtractTemporaryFile('clinic.exe');
+  Params := 'snapshot';
+  if FileExists(BackupPassphraseFile) then
+    Params := Params + ' --passphrase-file "' + BackupPassphraseFile + '"';
+  Code := RunAndCapture(ExpandConstant('{tmp}\clinic.exe'), Params, Output);
+  Log('Pre-upgrade safety copy (exit ' + IntToStr(Code) + '): ' + Output);
+  if (Code = 0) or (Code = 2) then
+    Exit; // 0: copied and verified; 2: no database yet, nothing to protect
+  // (No line may start with #13#10: Inno's preprocessor would read it as a directive.)
+  if SuppressibleMsgBox('Before changing anything, setup takes a verified safety copy of the clinic database. That did not work:' + #13#10 + #13#10 +
+    Output + #13#10 + #13#10 + 'Continue WITHOUT a fresh safety copy? Choose No to stop now; nothing has been changed.',
+    mbError, MB_YESNO or MB_DEFBUTTON2, IDNO) <> IDYES then
+    Result := 'Setup stopped before changing anything, because a safety copy of the clinic database could not be taken: ' + Output;
+end;
+
 procedure InitializeWizard;
 begin
   ModePage := CreateInputOptionPage(wpWelcome,
@@ -192,6 +331,25 @@ begin
     'Enter the clinic server''s address exactly as given by whoever set it up, for example ' +
     '192.168.1.20 or clinicpc:3080. You can change this later from the shortcut''s properties.');
   ClientAddressPage.Add('Server address:', False);
+
+  // Upgrade/repair: default to what this computer already is, so upgrading a staff device never
+  // silently turns it into a second server (and vice versa).
+  DetectPreviousMode;
+  if g_PrevVersion <> '' then
+  begin
+    if g_PrevMode = 'client' then
+    begin
+      ModePage.SelectedValueIndex := 1;
+      ClientAddressPage.Values[0] := GetPreviousData('ClientAddress', '');
+    end;
+    if CompareVersions(g_PrevVersion, '{#MyAppVersion}') = 0 then
+      ModePage.SubCaptionLabel.Caption := '{#MyAppName} {#MyAppVersion} is already installed here as a ' + g_PrevMode +
+        '. Continuing repairs it (reinstalls the program files). Patient data, backups and passphrases are not touched.'
+    else
+      ModePage.SubCaptionLabel.Caption := '{#MyAppName} ' + g_PrevVersion + ' is installed here as a ' + g_PrevMode +
+        '. Continuing upgrades it to {#MyAppVersion}. A verified safety copy of the database is taken first; ' +
+        'patient data, backups and passphrases are kept.';
+  end;
 
   SecretsPage := CreateOutputMsgMemoPage(wpInstalling,
     'Backup encryption', 'Write down your recovery passphrase now',
@@ -284,7 +442,15 @@ end;
 function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
-  if (ClientAddressPage <> nil) and (CurPageID = ClientAddressPage.ID) then
+  if (ModePage <> nil) and (CurPageID = ModePage.ID) and (g_PrevMode = 'server') and IsClientMode then
+    Result := SuppressibleMsgBox('This computer is currently the clinic server. Switching it to a staff device stops the ' +
+      'server here, so other devices will no longer reach it. Patient data is kept in place but will not be served.' + #13#10 + #13#10 +
+      'Switch this computer to a staff device?', mbConfirmation, MB_YESNO or MB_DEFBUTTON2, IDNO) = IDYES
+  else if (ModePage <> nil) and (CurPageID = ModePage.ID) and (g_PrevMode = 'client') and IsServerMode then
+    Result := SuppressibleMsgBox('This computer is currently set up as a staff device connecting to another clinic server. ' +
+      'Installing the server here creates a NEW, SEPARATE database: it will not contain the patients on the existing server.' + #13#10 + #13#10 +
+      'Install a separate clinic server on this computer?', mbConfirmation, MB_YESNO or MB_DEFBUTTON2, IDNO) = IDYES
+  else if (ClientAddressPage <> nil) and (CurPageID = ClientAddressPage.ID) then
   begin
     if Trim(ClientAddressPage.Values[0]) = '' then
     begin
@@ -335,7 +501,37 @@ begin
     Exec('taskkill.exe', '/F /IM clinic.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
     Sleep(1500);
   end;
+
+  // With the server stopped and before any file is replaced: a verified copy of the database.
   Result := '';
+  if IsServerMode then
+    Result := TakePreUpgradeSnapshot;
+end;
+
+// Confirms the server actually came up after installing - and that it is the NEW version answering,
+// not an old process that survived the upgrade - and says so on the last page. Only meaningful when
+// automatic start was chosen; otherwise nothing has started the server yet.
+procedure CurPageChanged(CurPageID: Integer);
+var
+  Code: Integer;
+  Output, Msg: String;
+begin
+  if (CurPageID <> wpFinished) or g_HealthChecked or not IsServerMode or not WizardIsTaskSelected('autostart') then
+    Exit;
+  g_HealthChecked := True;
+  WizardForm.FinishedLabel.Caption := 'Checking that the clinic server has started (this can take up to a minute and a half)...';
+  WizardForm.Refresh;
+  Code := RunAndCapture(ExpandConstant('{app}\clinic.exe'), 'health --timeout 90', Output);
+  Log('Post-install health check (exit ' + IntToStr(Code) + '): ' + Output);
+  if Code = 0 then
+    Msg := 'The clinic server is running. ' + Output
+  else if Code = 3 then
+    Msg := 'WARNING: an older clinic server is still answering instead of the new one. Restart this computer, then open the app. ' + Output
+  else
+    Msg := 'WARNING: the clinic server did not start. ' + Output + ' Patient data has not been changed. ' +
+      'Try restarting this computer; if it still does not start, the supervisor.log and server-*.log files in the logs folder ' +
+      'under ' + ExpandConstant('{commonappdata}') + '\ClinicApp explain why.';
+  WizardForm.FinishedLabel.Caption := Msg;
 end;
 
 [Files]

@@ -74,6 +74,26 @@ This sequence is deferred to Phase 1 implementation; Phase 0 only establishes th
 - `README.md`'s "not ready for real patient information" banner is current and should **not** be changed by any Phase 0-4 deployment work — only an independent clinical/privacy/security sign-off can change it (plan §1.8, §12).
 - Two existing scripts are not inventoried in the implementation plan's §2 and should be tracked going forward: `scripts/setup-clinic-pc.ps1` (an undocumented convenience wrapper) and `scripts/seed-demo.ts` (reads `CLINIC_DATA_DIR`/`.devdata` — Phase 1 should confirm it can never be pointed at a real machine-wide data directory by accident).
 
+## 6a. Pre-upgrade safety copy (Phase 2 slice 6): decision
+
+The implementation plan (§9, step 3) asks for a *verified pre-upgrade encrypted backup*. Decided (2026-11-14): **encrypted
+whenever a backup passphrase exists, a plain copy only when none does.** The installer runs `clinic.exe snapshot
+--passphrase-file %ProgramData%\ClinicApp\secrets\backup-passphrase.txt` (the path, never the passphrase), writing to
+`%ProgramData%\ClinicApp\pre-upgrade\`:
+
+- **With a passphrase** (every installer-made server): a `.cbk` in the regular backup format, decrypted and checked against
+  the live database's record counts before it counts, restorable with the ordinary `clinic.exe restore`. The plain
+  intermediate copy is always deleted.
+- **Without one** (installs from before the installer generated passphrases): a plain, verified `.sqlite` copy. It stays in
+  the data folder beside the live database under the same restricted ACL, and the command says it is not encrypted and why.
+  A gate that refused to upgrade such machines would just teach people to click "continue anyway".
+
+Why the installer uses the new program's `snapshot` and not the old program's `backup`: older `backup` opens the database
+read-write and creates an empty one if it looks in the wrong place, which is exactly the "silently empty database" hazard
+(#1). `snapshot` opens it read-only and never creates one.
+
+This is a rollback point, not an off-site backup; encrypted backups to other disks remain the regular backup job's role.
+
 ## 7. What Phase 1 inherits from this document
 
 - Build the machine-wide data path and the existing-data migration sequence in §5.

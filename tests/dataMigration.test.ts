@@ -59,7 +59,7 @@ describe('migrateDataDir', () => {
   it('leaves no leftover temp file after a successful migration', async () => {
     seedSource();
     await migrateDataDir({ sourceDbFile, destDir, destDbFile });
-    expect(fs.existsSync(`${destDbFile}.migrating`)).toBe(false);
+    expect(fs.existsSync(`${destDbFile}.partial`)).toBe(false);
   });
 
   it('refuses when there is no source database', async () => {
