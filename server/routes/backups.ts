@@ -5,6 +5,7 @@ import { requirePerm, type Ctx } from '../app.js';
 import { audit } from '../audit.js';
 import { BACKUP_NAME, BackupError, backupStatus, runBackup } from '../backup.js';
 import { badRequest, notFound } from '../errors.js';
+import { restoreBackup } from '../restore.js';
 
 export function registerBackupRoutes(app: FastifyInstance, { db, cfg }: Ctx): void {
   app.get('/api/backups', async (req) => {
@@ -17,6 +18,41 @@ export function registerBackupRoutes(app: FastifyInstance, { db, cfg }: Ctx): vo
     try {
       const r = await runBackup(db, cfg, user.id);
       return reply.status(201).send({ file: r.file, sizeBytes: r.sizeBytes, status: backupStatus(db, cfg) });
+    } catch (e) {
+      if (e instanceof BackupError) throw badRequest(e.message);
+      throw e;
+    }
+  });
+
+  /**
+   * Takes a backup and then actually restores it (to a throwaway copy, never touching the live
+   * database) through the same code path a real disaster recovery would use - not just the
+   * decrypt-and-check runBackup already does on its own output internally. Exercises the real
+   * restore pathway end to end, for the setup wizard's "prove backups actually work" step.
+   */
+  app.post('/api/backups/self-test', async (req, reply) => {
+    const user = requirePerm(req, 'backup:manage');
+    try {
+      const backup = await runBackup(db, cfg, user.id);
+      const restored = await restoreBackup({
+        file: path.join(cfg.backupDir, backup.file),
+        passphrase: cfg.backupPassphrase!,
+        cfg,
+        replace: false,
+      });
+      fs.rmSync(restored.restoredFile, { force: true });
+      audit(db, {
+        actorId: user.id,
+        action: 'backup.self_test',
+        entity: 'backup',
+        entityId: backup.file,
+        detail: { patients: restored.verify.patients, users: restored.verify.users },
+      });
+      return reply.status(201).send({
+        ok: true,
+        backup: { file: backup.file, sizeBytes: backup.sizeBytes, verify: backup.verify },
+        restoreVerify: restored.verify,
+      });
     } catch (e) {
       if (e instanceof BackupError) throw badRequest(e.message);
       throw e;

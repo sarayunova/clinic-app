@@ -8,6 +8,7 @@ import { localDate, nowIso } from '../time.js';
 
 /** One-time jobs that cannot be checked by the app itself. The doctor ticks them off when done. */
 export const CHECKLIST = [
+  { key: 'first_run_wizard', title: 'First-run setup wizard completed', detail: 'Clinic details, a second doctor account, backup encryption and a verified backup were all set up through the guided setup wizard.' },
   { key: 'backup_passphrase', title: 'Backup passphrase set and written down', detail: 'Without the passphrase a backup cannot be opened. Keep a copy somewhere other than this computer.' },
   { key: 'offsite_copy', title: 'Backups are copied off this computer', detail: 'A USB drive or second machine, kept somewhere else, so a fire, theft or dead disk does not take the backups too.' },
   { key: 'practice_restore', title: 'A practice restore has been done', detail: 'Restore a backup to a spare folder and check the records open. See docs/BACKUP-AND-RESTORE.md.' },
