@@ -1,6 +1,6 @@
 # ADR 0001: Service strategy — Windows Service vs. Scheduled Task
 
-**Status:** Proposed (Phase 0 decision record; implementation and validation happen in Phase 1). Not yet implemented — no code changed by this ADR.
+**Status:** Validated by spike on 2026-11-14 (see §"Spike results" below). Core mechanics confirmed on the real target machine; boot-before-logon start is the one claim still unverified (needs a real reboot, deliberately not done against this machine's live deployment). Not yet wired into the installer — that is Phase 2 scope.
 
 ## Context
 
@@ -27,6 +27,23 @@ This already satisfies "starts before interactive logon" (S4U + `AtStartup` does
 - **Migration path:** `scripts/install-autostart.ps1` and `scripts/uninstall-autostart.ps1` are replaced by installer-driven service registration/removal in Phase 2; Phase 1 can prototype the WinSW config and service-account creation independently of the installer rewrite, and should keep the Scheduled Task path working until the service path is validated on a real machine (per the plan's "no guesswork about service context" acceptance bar).
 
 This is a recommendation to validate with a Phase 1 spike (install WinSW-wrapped `clinic.exe` on a real Windows 10/11 machine, confirm boot-before-logon start, crash-restart, clean stop for backup, and SCM-restricted start/stop) before it is treated as final. If that spike surfaces a blocker, fall back to Option B below and document why.
+
+## Spike results (2026-11-14)
+
+Ran against this project's actual target machine (Windows 11, the same box running the real `ClinicApp` Scheduled Task deployment), fully isolated from production: separate port (3081, not 3080), separate data directory (`C:\ClinicAppServiceSpike\data`, not the real one), a throwaway non-admin local account (`ClinicAppSvcSpike`), wrapping the same real `C:\ClinicApp\clinic.exe` binary read-only. Removed completely afterward (service uninstalled, account deleted, folder removed). The real `ClinicApp` task/process was confirmed running, with an unchanged PID and start time, before, during, and after every step.
+
+**Confirmed working:**
+- WinSW v2.12.0 installs and runs `clinic.exe` as a real Windows Service on this machine (`sc qc` / `Get-Service` / `Services.msc` all see it normally).
+- Running under a dedicated, non-administrator local account is achievable and was verified via `Get-CimInstance Win32_Service` showing `StartName: .\ClinicAppSvcSpike` and a working health check against the wrapped app.
+- Crash-restart: killing the wrapped `clinic.exe` child process causes WinSW to relaunch it automatically; the app was back and answering its health endpoint within the ~10s check window.
+- Clean stop: `ClinicAppServiceSpike.exe stop` stops the service through the SCM cleanly, suitable for a backup/restore/upgrade flow to depend on.
+- No interference whatsoever with the real Scheduled Task deployment at any point.
+
+**One real blocker found, and how it was resolved:** WinSW's documented `<serviceaccount><allowservicelogonright>true</allowservicelogonright></serviceaccount>` did **not** actually grant the "Log on as a service" right in v2.12.0 — the first install attempt silently fell back to running as `LocalSystem` (a separate bug: the wrong XML element name, `<username>` instead of the schema's actual `<user>`/`<domain>`, was silently ignored rather than rejected). After correcting the element names, the service still failed to start under the dedicated account with Event ID 7041 ("has not been granted the requested logon type"). The right had to be granted explicitly via `secedit /export /areas USER_RIGHTS`, editing the `SeServiceLogonRight` line to add the account's SID, and `secedit /configure` to reimport it — standard, script-only Windows tooling, no extra download needed. **Consequence for Phase 2:** the installer must grant "Log on as a service" itself via this same `secedit` mechanism (or the equivalent `LsaAddAccountRights` Win32 call) rather than relying on WinSW's flag to do it.
+
+**Not validated by this spike, deliberately:** starting before an interactive Windows logon. Proving that needs an actual reboot of the target machine, which was not done here because this machine is currently running the real clinic deployment and a reboot would interrupt it — that check needs a separate, explicitly-scheduled maintenance window (or a non-production test machine) before this ADR's "starts at boot with no interactive sign-in" requirement can be marked fully verified rather than inferred from `StartType: Automatic`.
+
+**Conclusion:** the core decision holds. WinSW + a dedicated local account is viable on the actual target OS, with one concrete gotcha (manual "log on as a service" grant) now documented for whoever implements the Phase 2 installer integration.
 
 ## Alternatives considered
 
