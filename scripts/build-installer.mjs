@@ -53,7 +53,9 @@ if (isFull || !fs.existsSync(clinicExe)) {
 }
 
 // One version, from package.json, for the installer, its file name and the clinic.exe inside it.
-const { version } = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+// CLINIC_BUILD_VERSION is for test builds only (e.g. a 0.1.1-sandbox build to rehearse an upgrade); it is
+// passed on to build-exe.mjs through the environment, and the version check below still applies.
+const version = process.env.CLINIC_BUILD_VERSION || JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version;
 
 // A clinic.exe built from an older package.json version would make the post-install health check
 // report "an older server is still answering" on every install, so refuse to package a mismatch.

@@ -9,7 +9,8 @@ import { build } from 'esbuild';
 
 const root = path.resolve(import.meta.dirname, '..');
 const outDir = path.join(root, 'dist-exe');
-const { version } = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+// CLINIC_BUILD_VERSION is for test builds only (e.g. a 0.1.1-sandbox build to rehearse an upgrade).
+const version = process.env.CLINIC_BUILD_VERSION || JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version;
 fs.rmSync(outDir, { recursive: true, force: true });
 fs.mkdirSync(outDir, { recursive: true });
 
