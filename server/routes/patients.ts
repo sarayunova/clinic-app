@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requirePerm, requireUser, type Ctx } from '../app.js';
@@ -8,6 +9,7 @@ import { can, type Permission, type Role } from '../permissions.js';
 import { isRealDate, localDate, nowIso } from '../time.js';
 import { camelize, escapeLike, toSnake } from '../util.js';
 import { formatDetailedPediatricAge } from '../pediatricCatalog.js';
+import { sniff, MAX_FILE_BYTES } from './attachments.js';
 
 // ---------- Field definitions ----------
 
@@ -86,7 +88,7 @@ const GROUP: Record<FieldKey, Permission> = {
 };
 
 const BASIC_KEYS = new Set([
-  'id', 'patientNumber', 'fullName', 'dateOfBirth', 'estimatedAgeYears', 'phone', 'aadhaarLastFour', 'address',
+  'id', 'patientNumber', 'fullName', 'dateOfBirth', 'estimatedAgeYears', 'phone', 'aadhaarLastFour', 'aadhaarAttachmentId', 'address',
   'emergencyContactName', 'emergencyContactPhone', 'allergyStatus', 'allergyDetails',
   'version', 'createdAt', 'updatedAt', 'ageYears', 'ageIsEstimated',
 ]);
@@ -100,8 +102,20 @@ const DEFAULTS: Record<FieldKey, unknown> = {
   ongoingMedicines: null, clinicalNotes: null,
 };
 
+const aadhaarDocSchema = z
+  .object({
+    fileName: z.string().trim().min(1).max(255),
+    data: z.string().min(1, 'Choose a file'),
+  })
+  .strict();
+
 const base = z.object(FIELDS).partial();
-const createSchema = base.extend({ fullName: FIELDS.fullName }).strict();
+const createSchema = base
+  .extend({
+    fullName: FIELDS.fullName,
+    aadhaarDocument: aadhaarDocSchema.optional(),
+  })
+  .strict();
 const patchSchema = base.extend({ version: z.number().int().min(1) }).strict();
 const dupSchema = z.object({ fullName: z.string().max(120).optional(), dateOfBirth: date.nullable().optional(), phone: phone.optional(), aadhaarLastFour: aadhaarLastFour.optional(), excludeId: z.number().int().optional() }).strict();
 const searchSchema = z
@@ -334,7 +348,7 @@ export function registerPatientRoutes(app: FastifyInstance, { db, cfg }: Ctx): v
 
     const rows = db
       .prepare(
-        `SELECT p.id, p.patient_number, p.full_name, p.date_of_birth, p.estimated_age_years, p.phone, p.aadhaar_last_four,
+        `SELECT p.id, p.patient_number, p.full_name, p.date_of_birth, p.estimated_age_years, p.phone, p.aadhaar_last_four, p.aadhaar_attachment_id,
                 p.emergency_contact_name, p.emergency_contact_phone, p.address,
                 p.allergy_status, p.last_menstrual_period, p.gravida, p.para, p.abortions, p.living,
                 p.obstetric_history, p.surgical_history,
@@ -374,6 +388,7 @@ export function registerPatientRoutes(app: FastifyInstance, { db, cfg }: Ctx): v
         estimated_age_years: number | null;
         phone: string | null;
         aadhaar_last_four: string | null;
+        aadhaar_attachment_id: number | null;
         emergency_contact_name: string | null;
         emergency_contact_phone: string | null;
         address: string | null;
@@ -435,6 +450,7 @@ export function registerPatientRoutes(app: FastifyInstance, { db, cfg }: Ctx): v
         dateOfBirth: r.date_of_birth,
         phone: r.phone,
         aadhaarLastFour: r.aadhaar_last_four,
+        aadhaarAttachmentId: r.aadhaar_attachment_id ?? null,
         emergencyContactName: r.emergency_contact_name,
         emergencyContactPhone: r.emergency_contact_phone,
         address: r.address,
@@ -461,13 +477,33 @@ export function registerPatientRoutes(app: FastifyInstance, { db, cfg }: Ctx): v
     return { possibleDuplicates: findDuplicates(b, b.excludeId) };
   });
 
-  app.post('/api/patients', async (req, reply) => {
+  app.post('/api/patients', { bodyLimit: Math.ceil((MAX_FILE_BYTES * 4) / 3) + 64 * 1024 }, async (req, reply) => {
     const user = requireUser(req);
-    const body = parse(createSchema, req.body) as Partial<Record<FieldKey, unknown>>;
-    assertCanWrite(user.role, Object.keys(body));
-    const rec = { ...DEFAULTS, ...body } as Record<FieldKey, unknown>;
+    const body = parse(createSchema, req.body) as Partial<Record<FieldKey, unknown>> & {
+      aadhaarDocument?: { fileName: string; data: string };
+    };
+    const { aadhaarDocument, ...fields } = body;
+    assertCanWrite(user.role, Object.keys(fields));
+    const rec = { ...DEFAULTS, ...fields } as Record<FieldKey, unknown>;
     validateRecord(rec);
     const keys = Object.keys(FIELDS) as FieldKey[];
+
+    let aadhaarAttachment: { bytes: Buffer; mime: 'application/pdf' | 'image/jpeg' | 'image/png'; name: string; sha256: string } | null = null;
+    if (aadhaarDocument) {
+      if (!/^[A-Za-z0-9+/]+={0,2}$/.test(aadhaarDocument.data) || aadhaarDocument.data.length % 4 !== 0) {
+        throw badRequest('The Aadhaar file could not be read', [{ field: 'aadhaarDocument', message: 'Not a valid base64 file' }]);
+      }
+      const bytes = Buffer.from(aadhaarDocument.data, 'base64');
+      if (bytes.length === 0) throw badRequest('The Aadhaar file is empty', [{ field: 'aadhaarDocument', message: 'The file is empty' }]);
+      if (bytes.length > MAX_FILE_BYTES) {
+        throw badRequest(`The Aadhaar file is too large. Maximum size is ${MAX_FILE_BYTES / 1024 / 1024} MB.`, [{ field: 'aadhaarDocument', message: 'File too large' }]);
+      }
+      const mime = sniff(bytes);
+      if (!mime) throw badRequest('Only PDF, JPEG and PNG files are accepted for Aadhaar copy', [{ field: 'aadhaarDocument', message: 'Unsupported file type' }]);
+      const sha256 = crypto.createHash('sha256').update(bytes).digest('hex');
+      const cleanName = (aadhaarDocument.fileName.split(/[\\/]/).pop() ?? '').replace(/[\u0000-\u001f]/g, '').slice(0, 200) || 'aadhaar';
+      aadhaarAttachment = { bytes, mime, name: cleanName, sha256 };
+    }
 
     const row = tx(db, () => {
       db.prepare("UPDATE counters SET value = value + 1 WHERE name = 'patient'").run();
@@ -482,6 +518,28 @@ export function registerPatientRoutes(app: FastifyInstance, { db, cfg }: Ctx): v
         .run(patientNumber, ...keys.map((k) => rec[k] as string | number | null), user.id, now, now);
       const id = Number(r.lastInsertRowid);
       audit(db, { actorId: user.id, action: 'patient.create', entity: 'patient', entityId: id, detail: { patientNumber } });
+
+      if (aadhaarAttachment) {
+        const last4 = rec.aadhaarLastFour as string | null;
+        const title = last4 ? `Aadhaar Card (•••• ${last4})` : `Aadhaar Card - ${patientNumber}`;
+        const attRes = db
+          .prepare(
+            `INSERT INTO attachments(patient_id, visit_id, admission_id, doc_type, title, document_date, original_name, mime, size_bytes, sha256, uploaded_by, created_at)
+             VALUES (?, NULL, NULL, 'other', ?, ?, ?, ?, ?, ?, ?, ?)`
+          )
+          .run(id, title, today(), aadhaarAttachment.name, aadhaarAttachment.mime, aadhaarAttachment.bytes.length, aadhaarAttachment.sha256, user.id, now);
+        const attachmentId = Number(attRes.lastInsertRowid);
+        db.prepare('INSERT INTO attachment_blobs(attachment_id, data) VALUES (?, ?)').run(attachmentId, aadhaarAttachment.bytes);
+        db.prepare('UPDATE patients SET aadhaar_attachment_id = ? WHERE id = ?').run(attachmentId, id);
+        audit(db, {
+          actorId: user.id,
+          action: 'attachment.upload',
+          entity: 'attachment',
+          entityId: attachmentId,
+          detail: { title, docType: 'other', sizeBytes: aadhaarAttachment.bytes.length, sha256: aadhaarAttachment.sha256 },
+        });
+      }
+
       return db.prepare('SELECT * FROM patients WHERE id = ?').get(id)!;
     });
     const possibleDuplicates = findDuplicates(rec as { fullName: string; dateOfBirth: string | null; phone: string | null; aadhaarLastFour?: string | null }, (row as { id: number }).id);
@@ -495,6 +553,89 @@ export function registerPatientRoutes(app: FastifyInstance, { db, cfg }: Ctx): v
     if (!row) throw notFound('Patient');
     audit(db, { actorId: user.id, action: 'patient.view', entity: 'patient', entityId: id });
     return present(row, user.role);
+  });
+
+  const EXT: Record<string, string> = { 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png' };
+
+  app.get('/api/patients/:id/aadhaar-document', async (req, reply) => {
+    const user = requirePerm(req, 'patient:read_basic');
+    const id = idOf((req.params as { id: string }).id);
+    const p = db.prepare('SELECT id, aadhaar_attachment_id, full_name, patient_number FROM patients WHERE id = ?').get(id) as
+      | { id: number; aadhaar_attachment_id: number | null; full_name: string; patient_number: string }
+      | undefined;
+    if (!p) throw notFound('Patient');
+    if (!p.aadhaar_attachment_id) throw notFound('Aadhaar document has not been uploaded for this patient');
+
+    const att = db
+      .prepare('SELECT a.mime, a.original_name, a.title, a.voided_at, b.data FROM attachments a JOIN attachment_blobs b ON b.attachment_id = a.id WHERE a.id = ?')
+      .get(p.aadhaar_attachment_id) as { mime: string; original_name: string; title: string; voided_at: string | null; data: Uint8Array } | undefined;
+    if (!att || att.voided_at) throw notFound('Aadhaar document');
+
+    const q = parse(z.object({ download: z.enum(['1']).optional() }), req.query);
+    audit(db, {
+      actorId: user.id,
+      action: q.download ? 'patient.download_aadhaar' : 'patient.view_aadhaar',
+      entity: 'patient',
+      entityId: id,
+      detail: { attachmentId: p.aadhaar_attachment_id, title: att.title },
+    });
+
+    const ext = EXT[att.mime] ?? 'bin';
+    const base = `Aadhaar_${p.patient_number}`;
+    return reply
+      .header('Content-Type', att.mime)
+      .header('Content-Disposition', `${q.download ? 'attachment' : 'inline'}; filename="${base}.${ext}"`)
+      .header('Cache-Control', 'private, no-store')
+      .send(Buffer.from(att.data));
+  });
+
+  app.post('/api/patients/:id/aadhaar-document', { bodyLimit: Math.ceil((MAX_FILE_BYTES * 4) / 3) + 64 * 1024 }, async (req, reply) => {
+    const user = requireUser(req);
+    if (!can(user.role, 'patient:write_demographics') && !can(user.role, 'attachment:write')) {
+      throw forbidden('You do not have permission to upload patient identification documents');
+    }
+    const id = idOf((req.params as { id: string }).id);
+    const body = parse(aadhaarDocSchema, req.body);
+    if (!/^[A-Za-z0-9+/]+={0,2}$/.test(body.data) || body.data.length % 4 !== 0) {
+      throw badRequest('The Aadhaar file could not be read', [{ field: 'data', message: 'Not a valid base64 file' }]);
+    }
+    const bytes = Buffer.from(body.data, 'base64');
+    if (bytes.length === 0) throw badRequest('The Aadhaar file is empty', [{ field: 'data', message: 'The file is empty' }]);
+    if (bytes.length > MAX_FILE_BYTES) {
+      throw badRequest(`The Aadhaar file is too large. Maximum size is ${MAX_FILE_BYTES / 1024 / 1024} MB.`, [{ field: 'data', message: 'File too large' }]);
+    }
+    const mime = sniff(bytes);
+    if (!mime) throw badRequest('Only PDF, JPEG and PNG files are accepted for Aadhaar copy', [{ field: 'data', message: 'Unsupported file type' }]);
+    const sha256 = crypto.createHash('sha256').update(bytes).digest('hex');
+    const cleanName = (body.fileName.split(/[\\/]/).pop() ?? '').replace(/[\u0000-\u001f]/g, '').slice(0, 200) || 'aadhaar';
+    const now = nowIso();
+
+    const patient = tx(db, () => {
+      const p = db.prepare('SELECT * FROM patients WHERE id = ?').get(id) as Record<string, unknown> | undefined;
+      if (!p) throw notFound('Patient');
+      const last4 = p.aadhaar_last_four as string | null;
+      const patientNumber = p.patient_number as string;
+      const title = last4 ? `Aadhaar Card (•••• ${last4})` : `Aadhaar Card - ${patientNumber}`;
+      const attRes = db
+        .prepare(
+          `INSERT INTO attachments(patient_id, visit_id, admission_id, doc_type, title, document_date, original_name, mime, size_bytes, sha256, uploaded_by, created_at)
+           VALUES (?, NULL, NULL, 'other', ?, ?, ?, ?, ?, ?, ?, ?)`
+        )
+        .run(id, title, today(), cleanName, mime, bytes.length, sha256, user.id, now);
+      const attachmentId = Number(attRes.lastInsertRowid);
+      db.prepare('INSERT INTO attachment_blobs(attachment_id, data) VALUES (?, ?)').run(attachmentId, bytes);
+      db.prepare('UPDATE patients SET aadhaar_attachment_id = ?, updated_at = ? WHERE id = ?').run(attachmentId, now, id);
+      audit(db, {
+        actorId: user.id,
+        action: 'attachment.upload',
+        entity: 'attachment',
+        entityId: attachmentId,
+        detail: { title, docType: 'other', sizeBytes: bytes.length, sha256 },
+      });
+      return db.prepare('SELECT * FROM patients WHERE id = ?').get(id)!;
+    });
+
+    return reply.status(201).send(present(patient, user.role));
   });
 
   app.patch('/api/patients/:id', async (req) => {

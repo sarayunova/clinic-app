@@ -6,6 +6,9 @@ import { openDb } from './db.js';
 
 export const pidFile = (cfg: Config) => path.join(cfg.dataDir, 'server.pid');
 
+/** A sentinel file the running server polls for (see server/index.ts) to shut down gracefully. */
+export const shutdownRequestFile = (cfg: Config) => path.join(cfg.dataDir, 'shutdown.request');
+
 export function serverIsRunning(cfg: Config): boolean {
   try {
     const pid = Number(fs.readFileSync(pidFile(cfg), 'utf8'));
@@ -15,6 +18,25 @@ export function serverIsRunning(cfg: Config): boolean {
   } catch {
     return false;
   }
+}
+
+/**
+ * Asks a running server to stop (via the sentinel file) and waits for it to actually exit, instead
+ * of a Windows-level force-kill: this lets an in-flight request finish and the database close
+ * cleanly rather than being terminated mid-write. Returns true once the server is confirmed
+ * stopped, or false if it is still running after `timeoutMs`. A no-op (returns true immediately)
+ * if nothing is running in the first place.
+ */
+export async function requestGracefulStop(cfg: Config, timeoutMs = 30_000, pollMs = 300): Promise<boolean> {
+  if (!serverIsRunning(cfg)) return true;
+  fs.mkdirSync(cfg.dataDir, { recursive: true });
+  fs.writeFileSync(shutdownRequestFile(cfg), new Date().toISOString());
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, pollMs));
+    if (!serverIsRunning(cfg)) return true;
+  }
+  return false;
 }
 
 export interface RestoreResult {

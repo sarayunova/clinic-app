@@ -23,6 +23,7 @@ import { registerStationRoutes } from './routes/station.js';
 import { registerPricingRoutes } from './routes/pricing.js';
 import { registerChecklistRoutes } from './routes/checklist.js';
 import { registerBackupRoutes } from './routes/backups.js';
+import { registerSystemRoutes } from './routes/system.js';
 import { registerSecurityRoutes } from './routes/security.js';
 import { registerTemplateRoutes } from './routes/templates.js';
 import { registerTvRoutes } from './routes/tv.js';
@@ -156,7 +157,11 @@ import { registerNeonatalHyperammonemiaRoutes } from './routes/neonatalHyperammo
 import { registerFetalHydropsRoutes } from './routes/fetalHydrops.js';
 import { registerObstetricCvstRoutes } from './routes/obstetricCvst.js';
 import { registerPediatricRefractoryAsthmaRoutes } from './routes/pediatricRefractoryAsthma.js';
+import { registerNeonatalSeizuresRoutes } from './routes/neonatalSeizures.js';
+import { registerObstetricDicRoutes } from './routes/obstetricDic.js';
+import { registerPediatricAcuteLiverFailureRoutes } from './routes/pediatricAcuteLiverFailure.js';
 import type { LoadedTls } from './tls.js';
+import { APP_VERSION } from './version.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -281,6 +286,7 @@ export async function buildApp(ctx: Omit<Ctx, 'throttle'> & { throttle?: LoginTh
   registerPricingRoutes(app, full);
   registerChecklistRoutes(app, full);
   registerBackupRoutes(app, full);
+  registerSystemRoutes(app, full);
   registerSecurityRoutes(app, full);
   registerAuditRoutes(app, full);
   registerTemplateRoutes(app, full);
@@ -415,7 +421,12 @@ export async function buildApp(ctx: Omit<Ctx, 'throttle'> & { throttle?: LoginTh
   registerFetalHydropsRoutes(app, full);
   registerObstetricCvstRoutes(app, full);
   registerPediatricRefractoryAsthmaRoutes(app, full);
+  registerNeonatalSeizuresRoutes(app, full);
+  registerObstetricDicRoutes(app, full);
+  registerPediatricAcuteLiverFailureRoutes(app, full);
 
-  app.get('/api/health', async () => ({ ok: true }));
+  // Public (no login) so the installer can confirm the upgraded server is the one answering. The version is
+  // the only detail given; it is visible only to devices that can reach the server at all.
+  app.get('/api/health', async () => ({ ok: true, version: APP_VERSION }));
   return app;
 }

@@ -75,6 +75,7 @@ export interface Appointment {
   patientName: string;
   patientPhone: string | null;
   aadhaarLastFour?: string | null;
+  aadhaarAttachmentId?: number | null;
   allergyStatus: 'unknown' | 'none' | 'known';
   allergyDetails: string | null;
   /** Present only for roles allowed to read consultations. */
@@ -106,6 +107,7 @@ export interface PatientSummary {
   fullName: string;
   phone: string | null;
   aadhaarLastFour?: string | null;
+  aadhaarAttachmentId?: number | null;
   ageYears: number | null;
   ageIsEstimated: boolean;
   allergyStatus: 'unknown' | 'none' | 'known';
@@ -131,6 +133,7 @@ export type Patient = Record<string, unknown> & {
   fullName: string;
   version: number;
   aadhaarLastFour?: string | null;
+  aadhaarAttachmentId?: number | null;
   allergyStatus: 'unknown' | 'none' | 'known';
   allergyDetails: string | null;
   ageYears: number | null;
@@ -13018,6 +13021,258 @@ export const deletePediatricRefractoryAsthmaFlowsheet = (episodeId: number, logI
 
 export const evaluatePediatricRefractoryAsthmaApi = (payload: any): Promise<{ evaluation: any }> =>
   api('POST', '/api/pediatric-refractory-asthma/evaluate', payload);
+
+// Series 41A: Neonatal Seizures & Status Epilepticus Pathway
+export interface NeonatalSeizuresRecord {
+  id: number;
+  patient_id: number;
+  episode_number: string;
+  diagnosis_datetime: string;
+  gestational_age_weeks: number;
+  postnatal_age_days: number;
+  current_weight_kg: number;
+  seizure_semiology: 'clonic' | 'tonic' | 'myoclonic' | 'autonomic' | 'subtle' | 'electrographic_only';
+  seizure_duration_category: 'isolated_brief' | 'recurrent_cluster' | 'status_epilepticus';
+  suspected_etiology: 'hie' | 'cns_infection' | 'stroke_thrombosis' | 'ich' | 'inborn_metabolism' | 'hypoglycemia' | 'hypocalcemia' | 'benign_familial' | 'unknown';
+  blood_glucose_mg_dl: number | null;
+  ionized_calcium_mmol_l: number | null;
+  serum_magnesium_mg_dl: number | null;
+  sodium_meq_l: number | null;
+  first_line_phenobarbital_given: number;
+  cumulative_phenobarbital_mg_kg: number;
+  second_line_anticonvulsant: string | null;
+  second_line_given: number;
+  pyridoxine_trial_done: number;
+  pyridoxine_responsive: number;
+  respiratory_support_status: 'room_air' | 'nasal_prongs' | 'cpap' | 'mechanical_ventilation';
+  status: 'active' | 'stabilized' | 'resolved' | 'transferred';
+  clinical_summary: string | null;
+  created_by: number;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  created_by_name?: string;
+}
+
+export interface NeonatalSeizuresFlowsheetRecord {
+  id: number;
+  episode_id: number;
+  recorded_at: string;
+  seizure_count_past_hour: number;
+  current_seizure_state: 'seizure_free' | 'infrequent_twitches' | 'active_clinical_seizures' | 'continuous_status';
+  heart_rate_bpm: number | null;
+  respiratory_rate_bpm: number | null;
+  spo2_percent: number | null;
+  blood_pressure_sys: number | null;
+  blood_pressure_dia: number | null;
+  sedation_score: 'normal_alert' | 'mild_somnolence' | 'deep_stupor' | 'unresponsive';
+  medication_administered: string | null;
+  eeg_background: 'normal' | 'mildly_abnormal' | 'discontinuous' | 'burst_suppression' | 'isoelectric' | 'not_available';
+  nurse_notes: string | null;
+  recorded_by: number;
+  created_at: string;
+  recorded_by_name?: string;
+}
+
+export const getNeonatalSeizuresEpisodes = (params?: { patientId?: number }): Promise<{ episodes: NeonatalSeizuresRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/neonatal-seizures/episodes${query}`);
+};
+
+export const getNeonatalSeizuresEpisode = (id: number): Promise<{ episode: NeonatalSeizuresRecord; evaluation: any; flowsheet: NeonatalSeizuresFlowsheetRecord[] }> =>
+  api('GET', `/api/neonatal-seizures/episodes/${id}`);
+
+export const createNeonatalSeizuresEpisode = (payload: any): Promise<{ episode: NeonatalSeizuresRecord; id: number; episodeNumber: string; ok: boolean }> =>
+  api('POST', '/api/neonatal-seizures/episodes', payload);
+
+export const updateNeonatalSeizuresEpisode = (id: number, payload: any): Promise<{ episode: NeonatalSeizuresRecord; ok: boolean }> =>
+  api('PUT', `/api/neonatal-seizures/episodes/${id}`, payload);
+
+export const patchNeonatalSeizuresStatus = (id: number, status: string): Promise<{ episode: NeonatalSeizuresRecord; ok: boolean }> =>
+  api('PATCH', `/api/neonatal-seizures/episodes/${id}/status`, { status });
+
+export const deleteNeonatalSeizuresEpisode = (id: number): Promise<{ success: boolean; ok: boolean }> =>
+  api('DELETE', `/api/neonatal-seizures/episodes/${id}`);
+
+export const addNeonatalSeizuresFlowsheet = (episodeId: number, payload: any): Promise<{ flowsheetLog: NeonatalSeizuresFlowsheetRecord; id: number; ok: boolean }> =>
+  api('POST', `/api/neonatal-seizures/episodes/${episodeId}/flowsheet`, payload);
+
+export const deleteNeonatalSeizuresFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean; ok: boolean }> =>
+  api('DELETE', `/api/neonatal-seizures/episodes/${episodeId}/flowsheet/${logId}`);
+
+export const evaluateNeonatalSeizuresApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/neonatal-seizures/evaluate', payload);
+
+
+// Series 41B: Obstetric DIC & Fibrinogen-Guided Resuscitation
+export interface ObstetricDicRecord {
+  id: number;
+  patient_id: number;
+  episode_number: string;
+  diagnosis_datetime: string;
+  gestational_age_weeks: number | null;
+  clinical_trigger: 'placental_abruption' | 'severe_pph' | 'amniotic_fluid_embolism' | 'severe_preeclampsia_hellp' | 'septic_abortion_chorioamnionitis' | 'retained_dead_fetus' | 'acute_fatty_liver';
+  platelet_count_k_ul: number;
+  fibrinogen_mg_dl: number;
+  prothrombin_time_sec: number | null;
+  control_pt_sec: number | null;
+  inr: number;
+  aptt_sec: number | null;
+  d_dimer_ug_ml: number | null;
+  estimated_blood_loss_ml: number;
+  overt_bleeding_sites: 'none' | 'surgical_site_oozing' | 'iv_cannula_sites' | 'hematuria_gi' | 'catastrophic_generalized';
+  is_mtp_activated: number;
+  prbc_units_given: number;
+  ffp_units_given: number;
+  platelet_pools_given: number;
+  cryoprecipitate_units_given: number;
+  fibrinogen_concentrate_g_given: number;
+  tranexamic_acid_given: number;
+  ionized_calcium_mmol_l: number | null;
+  core_temperature_c: number | null;
+  status: 'active' | 'stabilized' | 'resolved' | 'transferred';
+  clinical_summary: string | null;
+  created_by: number;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  created_by_name?: string;
+}
+
+export interface ObstetricDicFlowsheetRecord {
+  id: number;
+  episode_id: number;
+  recorded_at: string;
+  systolic_bp: number | null;
+  diastolic_bp: number | null;
+  heart_rate_bpm: number | null;
+  spo2_percent: number | null;
+  hourly_blood_loss_ml: number;
+  serial_fibrinogen_mg_dl: number | null;
+  serial_platelets_k_ul: number | null;
+  serial_inr: number | null;
+  urine_output_ml_hr: number | null;
+  blood_components_infused: string | null;
+  clinical_hemostasis_state: 'uncontrolled_diffuse_ooze' | 'partial_clot_formation' | 'firm_hemostatic_clots' | 'bleeding_controlled';
+  nurse_notes: string | null;
+  recorded_by: number;
+  created_at: string;
+  recorded_by_name?: string;
+}
+
+export const getObstetricDicEpisodes = (params?: { patientId?: number }): Promise<{ episodes: ObstetricDicRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/obstetric-dic/episodes${query}`);
+};
+
+export const getObstetricDicEpisode = (id: number): Promise<{ episode: ObstetricDicRecord; evaluation: any; flowsheet: ObstetricDicFlowsheetRecord[] }> =>
+  api('GET', `/api/obstetric-dic/episodes/${id}`);
+
+export const createObstetricDicEpisode = (payload: any): Promise<{ episode: ObstetricDicRecord; id: number; episodeNumber: string; ok: boolean }> =>
+  api('POST', '/api/obstetric-dic/episodes', payload);
+
+export const updateObstetricDicEpisode = (id: number, payload: any): Promise<{ episode: ObstetricDicRecord; ok: boolean }> =>
+  api('PUT', `/api/obstetric-dic/episodes/${id}`, payload);
+
+export const patchObstetricDicStatus = (id: number, status: string): Promise<{ episode: ObstetricDicRecord; ok: boolean }> =>
+  api('PATCH', `/api/obstetric-dic/episodes/${id}/status`, { status });
+
+export const deleteObstetricDicEpisode = (id: number): Promise<{ success: boolean; ok: boolean }> =>
+  api('DELETE', `/api/obstetric-dic/episodes/${id}`);
+
+export const addObstetricDicFlowsheet = (episodeId: number, payload: any): Promise<{ flowsheetLog: ObstetricDicFlowsheetRecord; id: number; ok: boolean }> =>
+  api('POST', `/api/obstetric-dic/episodes/${episodeId}/flowsheet`, payload);
+
+export const deleteObstetricDicFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean; ok: boolean }> =>
+  api('DELETE', `/api/obstetric-dic/episodes/${episodeId}/flowsheet/${logId}`);
+
+export const evaluateObstetricDicApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/obstetric-dic/evaluate', payload);
+
+
+// Series 41C: Pediatric Acute Liver Failure (PALF) & Hepatic Encephalopathy
+export interface PediatricAcuteLiverFailureRecord {
+  id: number;
+  patient_id: number;
+  episode_number: string;
+  diagnosis_datetime: string;
+  age_months: number;
+  weight_kg: number;
+  suspected_etiology: 'acetaminophen_toxicity' | 'viral_hepatitis' | 'autoimmune_hepatitis' | 'metabolic_wilson_galactosemia' | 'ischemic_shock' | 'drug_induced_dili' | 'gestational_neonatal_hemochromatosis' | 'indeterminate';
+  encephalopathy_stage: number;
+  inr: number;
+  total_bilirubin_mg_dl: number;
+  direct_bilirubin_mg_dl: number | null;
+  alt_u_l: number;
+  ast_u_l: number;
+  serum_ammonia_umol_l: number | null;
+  blood_glucose_mg_dl: number;
+  serum_sodium_meq_l: number | null;
+  serum_creatinine_mg_dl: number | null;
+  has_cerebral_edema: number;
+  hypertonic_saline_3pct_active: number;
+  mannitol_administered: number;
+  nac_infusion_active: number;
+  lactulose_active: number;
+  transplant_center_contacted: number;
+  status: 'active' | 'stabilized' | 'resolved' | 'transferred';
+  clinical_summary: string | null;
+  created_by: number;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  created_by_name?: string;
+}
+
+export interface PediatricAcuteLiverFailureFlowsheetRecord {
+  id: number;
+  episode_id: number;
+  recorded_at: string;
+  encephalopathy_stage: number;
+  pupil_reactivity: 'brisk_equal' | 'sluggish' | 'asymmetric' | 'fixed_dilated';
+  mean_arterial_pressure_mmhg: number | null;
+  heart_rate_bpm: number | null;
+  gcs_score: number | null;
+  blood_glucose_mg_dl: number | null;
+  serum_sodium_meq_l: number | null;
+  serum_ammonia_umol_l: number | null;
+  daily_stool_count: number;
+  icp_monitoring_notes: string | null;
+  nurse_notes: string | null;
+  recorded_by: number;
+  created_at: string;
+  recorded_by_name?: string;
+}
+
+export const getPediatricAcuteLiverFailureEpisodes = (params?: { patientId?: number }): Promise<{ episodes: PediatricAcuteLiverFailureRecord[] }> => {
+  const query = params?.patientId ? `?patientId=${params.patientId}` : '';
+  return api('GET', `/api/pediatric-acute-liver-failure/episodes${query}`);
+};
+
+export const getPediatricAcuteLiverFailureEpisode = (id: number): Promise<{ episode: PediatricAcuteLiverFailureRecord; evaluation: any; flowsheet: PediatricAcuteLiverFailureFlowsheetRecord[] }> =>
+  api('GET', `/api/pediatric-acute-liver-failure/episodes/${id}`);
+
+export const createPediatricAcuteLiverFailureEpisode = (payload: any): Promise<{ episode: PediatricAcuteLiverFailureRecord; id: number; episodeNumber: string; ok: boolean }> =>
+  api('POST', '/api/pediatric-acute-liver-failure/episodes', payload);
+
+export const updatePediatricAcuteLiverFailureEpisode = (id: number, payload: any): Promise<{ episode: PediatricAcuteLiverFailureRecord; ok: boolean }> =>
+  api('PUT', `/api/pediatric-acute-liver-failure/episodes/${id}`, payload);
+
+export const patchPediatricAcuteLiverFailureStatus = (id: number, status: string): Promise<{ episode: PediatricAcuteLiverFailureRecord; ok: boolean }> =>
+  api('PATCH', `/api/pediatric-acute-liver-failure/episodes/${id}/status`, { status });
+
+export const deletePediatricAcuteLiverFailureEpisode = (id: number): Promise<{ success: boolean; ok: boolean }> =>
+  api('DELETE', `/api/pediatric-acute-liver-failure/episodes/${id}`);
+
+export const addPediatricAcuteLiverFailureFlowsheet = (episodeId: number, payload: any): Promise<{ flowsheetLog: PediatricAcuteLiverFailureFlowsheetRecord; id: number; ok: boolean }> =>
+  api('POST', `/api/pediatric-acute-liver-failure/episodes/${episodeId}/flowsheet`, payload);
+
+export const deletePediatricAcuteLiverFailureFlowsheet = (episodeId: number, logId: number): Promise<{ success: boolean; ok: boolean }> =>
+  api('DELETE', `/api/pediatric-acute-liver-failure/episodes/${episodeId}/flowsheet/${logId}`);
+
+export const evaluatePediatricAcuteLiverFailureApi = (payload: any): Promise<{ evaluation: any }> =>
+  api('POST', '/api/pediatric-acute-liver-failure/evaluate', payload);
+
 
 
 

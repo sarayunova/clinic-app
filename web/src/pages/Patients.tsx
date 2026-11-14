@@ -291,6 +291,11 @@ export function PatientsPage() {
                         }}
                       >
                         🆔 Aadhaar: •••• {p.aadhaarLastFour}
+                        {p.aadhaarAttachmentId && (
+                          <span style={{ marginLeft: '4px' }} title="Verified copy of Aadhaar card on file">
+                            📄
+                          </span>
+                        )}
                       </span>
                     )}
                   </div>

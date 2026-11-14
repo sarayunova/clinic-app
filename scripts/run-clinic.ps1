@@ -60,6 +60,10 @@ Get-ChildItem -LiteralPath $logDir -File -ErrorAction SilentlyContinue |
   Remove-Item -Force -ErrorAction SilentlyContinue
 
 Write-Log "Supervisor started (data: $DataDir, port: $Port, host: $ListenHost)"
+Write-Log "Cleaning up any stale clinic processes or pid files..."
+Stop-Process -Name clinic -Force -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 1
+Remove-Item -LiteralPath (Join-Path $DataDir 'server.pid') -Force -ErrorAction SilentlyContinue
 $delay = 5
 while ($true) {
   $day = Get-Date -Format 'yyyyMMdd'

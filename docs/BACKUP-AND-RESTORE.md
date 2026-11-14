@@ -16,6 +16,13 @@ This page is for whoever looks after the clinic computer.
 
 ## One-time setup
 
+**If this computer was set up using the Windows installer (`ClinicAppSetup-*.exe`), this is already done.**
+The installer generates a strong random passphrase automatically, stores it restricted to
+administrators under `%ProgramData%\ClinicApp\secrets`, and shows it once on screen so it can be
+written down and kept somewhere other than this computer - see that screen's instructions. The
+steps below are only for a from-source checkout, or to replace the installer-generated passphrase
+with one of your own choosing.
+
 1. Choose a passphrase of at least 12 characters (a few random words is good).
 2. Save it in a text file that only the clinic's Windows account can read, for example
    `C:\ClinicSecrets\backup-passphrase.txt` (one line, nothing else).

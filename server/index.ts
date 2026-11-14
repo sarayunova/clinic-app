@@ -2,18 +2,31 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isSea } from 'node:sea';
-import { loadConfig } from './config.js';
+import { ConfigError, defaultMachineDataDir, loadConfig } from './config.js';
 import { openDb } from './db.js';
 import { buildApp } from './app.js';
 import { startBackupScheduler } from './backup.js';
-import { pidFile, serverIsRunning } from './restore.js';
+import { pidFile, serverIsRunning, shutdownRequestFile } from './restore.js';
 import { TlsError, checkListenSafety, loadTls, startHttpRedirect } from './tls.js';
+import { restrictToServiceAndAdmins } from './windowsAcl.js';
 
 // Wrapped in a function (rather than top-level await) so this file can be bundled as CommonJS
 // for the packaged single-executable build (see server/sea-entry.ts, scripts/build-exe.mjs) —
 // esbuild's CJS output cannot contain top-level await. Behavior for `npm start`/tsx is unchanged.
 async function main() {
-  const cfg = loadConfig();
+  let cfg;
+  try {
+    cfg = loadConfig();
+  } catch (e) {
+    console.error(e instanceof ConfigError ? e.message : e);
+    process.exit(1);
+  }
+  if (cfg.dataDirSource === 'legacy-fallback') {
+    console.warn(`Using existing data at ${cfg.dataDir} (not yet moved to the standard location ${defaultMachineDataDir()}). Set CLINIC_DATA_DIR explicitly once this is migrated.`);
+  } else if (cfg.dataDirSource === 'machine-default-fresh' && !fs.existsSync(cfg.dataDir)) {
+    fs.mkdirSync(cfg.dataDir, { recursive: true });
+    restrictToServiceAndAdmins(cfg.dataDir);
+  }
   let tls;
   try {
     tls = loadTls(cfg);
@@ -59,13 +72,21 @@ async function main() {
   const stopBackups = startBackupScheduler(db, cfg);
 
   const shutdown = async () => {
+    clearInterval(stopRequestPoll);
     stopBackups();
     redirect?.close();
     fs.rmSync(pidFile(cfg), { force: true });
+    fs.rmSync(shutdownRequestFile(cfg), { force: true });
     await app.close();
     db.close();
     process.exit(0);
   };
+  // Windows cannot reliably deliver SIGTERM to an external process the way POSIX can, so the
+  // installer asks for a graceful stop via this sentinel file instead (server/restore.ts).
+  const stopRequestPoll = setInterval(() => {
+    if (fs.existsSync(shutdownRequestFile(cfg))) void shutdown();
+  }, 500);
+  stopRequestPoll.unref();
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
 }

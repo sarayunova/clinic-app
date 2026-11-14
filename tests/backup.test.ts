@@ -193,6 +193,39 @@ describe('backup API', () => {
     expect(JSON.stringify(after)).not.toContain(PASS);
   });
 
+  it('self-test takes a backup, actually restores it through the real restore path, and leaves no leftover file', async () => {
+    expect((await call('POST', '/api/backups/self-test', desk)).status).toBe(403);
+    expect((await call('POST', '/api/backups/self-test')).status).toBe(401);
+
+    extra!.prepare("INSERT INTO patients(patient_number, full_name, created_by, created_at, updated_at) VALUES ('PSelfTest','Self Test Patient',1,'2026-01-01','2026-01-01')").run();
+    const res = await call('POST', '/api/backups/self-test', doctor);
+    expect(res.status).toBe(201);
+    expect(res.body.ok).toBe(true);
+    expect(res.body.backup.verify.integrity).toBe('ok');
+    expect(res.body.restoreVerify.integrity).toBe('ok');
+    expect(res.body.restoreVerify.patients).toBe(res.body.backup.verify.patients);
+    expect(res.body.restoreVerify.users).toBe(res.body.backup.verify.users);
+
+    // The restored validation copy must not be left sitting in the data directory afterward.
+    const leftovers = fs.readdirSync(path.join(dir, 'data')).filter((f) => f.startsWith('restored-'));
+    expect(leftovers).toEqual([]);
+    // The live database itself must be untouched (self-test never replaces it) - still has exactly
+    // the one patient inserted above, not reset or duplicated.
+    const liveCount = (extra!.prepare('SELECT COUNT(*) AS n FROM patients').get() as { n: number }).n;
+    expect(liveCount).toBe(1);
+  });
+
+  it('self-test fails cleanly (400) when backups are not configured, without touching the live database', async () => {
+    const off = loadConfig({ ...cfg, backupPassphrase: null });
+    const a2 = await buildApp({ db: openDb(':memory:'), cfg: off, secureCookies: false });
+    const setup = await a2.inject({ method: 'POST', url: '/api/setup', payload: { username: 'dr.rao', fullName: 'Dr Rao', password: PW } });
+    const cookie = (setup.headers['set-cookie'] as string).split(';')[0]!;
+    const res = await a2.inject({ method: 'POST', url: '/api/backups/self-test', headers: { cookie } });
+    expect(res.statusCode).toBe(400);
+    // Says what is actually wrong (nothing set up), not a passphrase-length complaint about a passphrase that does not exist.
+    expect(res.body).toMatch(/not set up/);
+  });
+
   it('warns that backups are off when no passphrase is configured', async () => {
     const off = loadConfig({ ...cfg, backupPassphrase: null });
     const a2 = await buildApp({ db: openDb(':memory:'), cfg: off, secureCookies: false });

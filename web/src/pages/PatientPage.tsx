@@ -137,6 +137,9 @@ import { NeonatalHyperammonemiaTab } from '../components/NeonatalHyperammonemiaT
 import { FetalHydropsTab } from '../components/FetalHydropsTab';
 import { ObstetricCvstTab } from '../components/ObstetricCvstTab';
 import { PediatricRefractoryAsthmaTab } from '../components/PediatricRefractoryAsthmaTab';
+import { NeonatalSeizuresTab } from '../components/NeonatalSeizuresTab';
+import { ObstetricDicTab } from '../components/ObstetricDicTab';
+import { PediatricAcuteLiverFailureTab } from '../components/PediatricAcuteLiverFailureTab';
 
 type Kind = 'text' | 'textarea' | 'date' | 'tel' | 'int' | 'select';
 interface FieldDef {
@@ -234,6 +237,15 @@ function toValue(def: FieldDef, s: string): string | number | null {
   return t === '' ? null : t;
 }
 
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onerror = () => reject(new Error('The file could not be read'));
+    r.onload = () => resolve(String(r.result).split(',')[1] ?? '');
+    r.readAsDataURL(file);
+  });
+}
+
 export function PatientPage() {
   const { id } = useParams();
   const isNew = id === undefined;
@@ -248,7 +260,7 @@ export function PatientPage() {
   const [busy, setBusy] = useState(false);
   const [booking, setBooking] = useState(false);
   const [viewMode, setViewMode] = useState<
-    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'abdm' | 'pediatric' | 'pediatric_growth' | 'pediatric_renal' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'pac' | 'blood_bank' | 'risk' | 'postnatal' | 'maternity_admission' | 'ams' | 'mgso4' | 'pews_pals' | 'nicu_tpn' | 'maternal_comorbidities' | 'pediatric_allergy' | 'neonatal_hie' | 'maternal_sepsis' | 'pediatric_dka' | 'neonatal_rds' | 'maternal_vte' | 'pediatric_seizures' | 'neonatal_sepsis' | 'obstetric_hypertension' | 'pediatric_septic_shock' | 'neonatal_hypoglycemia' | 'obstetric_pph' | 'pediatric_pards' | 'neonatal_bind' | 'obstetric_icp' | 'pediatric_status_epilepticus' | 'neonatal_nec' | 'obstetric_pas' | 'pediatric_tbi' | 'neonatal_pphn' | 'obstetric_afe' | 'pediatric_asthma_status' | 'neonatal_bpd' | 'obstetric_aflp' | 'pediatric_polytrauma' | 'neonatal_hspda' | 'obstetric_dka' | 'pediatric_anaphylaxis' | 'neonatal_ivh' | 'obstetric_pprom' | 'pediatric_svt' | 'neonatal_hypocalcemia' | 'obstetric_postterm' | 'pediatric_croup' | 'neonatal_polycythemia' | 'obstetric_shoulder_dystocia' | 'pediatric_foreign_body' | 'neonatal_hypomagnesemia' | 'obstetric_ppcm' | 'pediatric_septic_arthritis' | 'neonatal_chylothorax' | 'obstetric_cord_prolapse' | 'pediatric_intussusception' | 'neonatal_mas' | 'obstetric_uterine_inversion' | 'pediatric_appendicitis' | 'neonatal_ttn' | 'obstetric_pdph' | 'pediatric_meningitis' | 'neonatal_aop' | 'obstetric_retained_placenta' | 'pediatric_pyloric_stenosis' | 'neonatal_sgh' | 'obstetric_tolac' | 'pediatric_kawasaki' | 'neonatal_volvulus' | 'obstetric_ecv' | 'pediatric_dka_ce' | 'neonatal_meconium_ileus' | 'obstetric_placental_abruption' | 'pediatric_hus' | 'neonatal_ea_tef' | 'obstetric_vasa_previa' | 'pediatric_empyema' | 'neonatal_abdominal_defects' | 'obstetric_spt' | 'pediatric_osteomyelitis' | 'neonatal_intestinal_atresia' | 'obstetric_hellp' | 'pediatric_scfe' | 'neonatal_cdh' | 'obstetric_hyperemesis' | 'pediatric_acute_scrotum' | 'neonatal_sip' | 'obstetric_pmcd' | 'pediatric_gbs' | 'pediatric_toxicology' | 'obstetric_massive_pe' | 'neonatal_hyperammonemia' | 'fetal_hydrops' | 'obstetric_cvst' | 'pediatric_refractory_asthma' | 'list'
+    'flowsheet' | 'checklist' | 'antenatal_labs' | 'med_safety' | 'pph_qbl' | 'meows' | 'neonatal_resus' | 'jaundice' | 'folliculometry' | 'eras_reeda' | 'gdm' | 'ctg' | 'cervical_screening' | 'contraception' | 'pndt' | 'genetic_screening' | 'doppler' | 'preeclampsia' | 'multiple_gestation' | 'induction' | 'perinatal_loss' | 'art_cycles' | 'endometriosis' | 'urogynecology' | 'gyn_oncology' | 'sncu' | 'immunization_recall' | 'emergency_qr' | 'abdm' | 'pediatric' | 'pediatric_growth' | 'pediatric_renal' | 'ultrasound' | 'lab' | 'partograph' | 'operative' | 'pac' | 'blood_bank' | 'risk' | 'postnatal' | 'maternity_admission' | 'ams' | 'mgso4' | 'pews_pals' | 'nicu_tpn' | 'maternal_comorbidities' | 'pediatric_allergy' | 'neonatal_hie' | 'maternal_sepsis' | 'pediatric_dka' | 'neonatal_rds' | 'maternal_vte' | 'pediatric_seizures' | 'neonatal_sepsis' | 'obstetric_hypertension' | 'pediatric_septic_shock' | 'neonatal_hypoglycemia' | 'obstetric_pph' | 'pediatric_pards' | 'neonatal_bind' | 'obstetric_icp' | 'pediatric_status_epilepticus' | 'neonatal_nec' | 'obstetric_pas' | 'pediatric_tbi' | 'neonatal_pphn' | 'obstetric_afe' | 'pediatric_asthma_status' | 'neonatal_bpd' | 'obstetric_aflp' | 'pediatric_polytrauma' | 'neonatal_hspda' | 'obstetric_dka' | 'pediatric_anaphylaxis' | 'neonatal_ivh' | 'obstetric_pprom' | 'pediatric_svt' | 'neonatal_hypocalcemia' | 'obstetric_postterm' | 'pediatric_croup' | 'neonatal_polycythemia' | 'obstetric_shoulder_dystocia' | 'pediatric_foreign_body' | 'neonatal_hypomagnesemia' | 'obstetric_ppcm' | 'pediatric_septic_arthritis' | 'neonatal_chylothorax' | 'obstetric_cord_prolapse' | 'pediatric_intussusception' | 'neonatal_mas' | 'obstetric_uterine_inversion' | 'pediatric_appendicitis' | 'neonatal_ttn' | 'obstetric_pdph' | 'pediatric_meningitis' | 'neonatal_aop' | 'obstetric_retained_placenta' | 'pediatric_pyloric_stenosis' | 'neonatal_sgh' | 'obstetric_tolac' | 'pediatric_kawasaki' | 'neonatal_volvulus' | 'obstetric_ecv' | 'pediatric_dka_ce' | 'neonatal_meconium_ileus' | 'obstetric_placental_abruption' | 'pediatric_hus' | 'neonatal_ea_tef' | 'obstetric_vasa_previa' | 'pediatric_empyema' | 'neonatal_abdominal_defects' | 'obstetric_spt' | 'pediatric_osteomyelitis' | 'neonatal_intestinal_atresia' | 'obstetric_hellp' | 'pediatric_scfe' | 'neonatal_cdh' | 'obstetric_hyperemesis' | 'pediatric_acute_scrotum' | 'neonatal_sip' | 'obstetric_pmcd' | 'pediatric_gbs' | 'pediatric_toxicology' | 'obstetric_massive_pe' | 'neonatal_hyperammonemia' | 'fetal_hydrops' | 'obstetric_cvst' | 'pediatric_refractory_asthma' | 'neonatal_seizures' | 'obstetric_dic' | 'pediatric_acute_liver_failure' | 'list'
   >('flowsheet');
   const [visits, setVisits] = useState<VisitSummary[] | null>(null);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
@@ -256,6 +268,67 @@ export function PatientPage() {
   const [riskSummary, setRiskSummary] = useState<PatientRiskSummary | null>(null);
   const [dupes, setDupes] = useState<{ id: number; patientNumber: string; fullName: string; phone: string | null }[] | null>(null);
   const [showCommModal, setShowCommModal] = useState(false);
+  const [stagedAadhaar, setStagedAadhaar] = useState<{
+    file: File;
+    previewUrl: string | null;
+    isPdf: boolean;
+  } | null>(null);
+  const [isAadhaarDragging, setIsAadhaarDragging] = useState(false);
+  const [uploadingAadhaar, setUploadingAadhaar] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (stagedAadhaar?.previewUrl) URL.revokeObjectURL(stagedAadhaar.previewUrl);
+    };
+  }, [stagedAadhaar]);
+
+  const handleAadhaarFile = (file: File) => {
+    if (file.size > 10 * 1024 * 1024) {
+      setError(new Error(`"${file.name}" is ${(file.size / 1024 / 1024).toFixed(1)} MB. Maximum allowed size is 10 MB.`));
+      return;
+    }
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const isImg = file.type.startsWith('image/');
+    if (!isPdf && !isImg) {
+      setError(new Error('Please select an image (JPG, PNG) or PDF document for Aadhaar copy.'));
+      return;
+    }
+    if (stagedAadhaar?.previewUrl) URL.revokeObjectURL(stagedAadhaar.previewUrl);
+    const previewUrl = isImg ? URL.createObjectURL(file) : null;
+    setStagedAadhaar({ file, previewUrl, isPdf });
+    setError(null);
+  };
+
+  async function handleExistingAadhaarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !patient) return;
+    if (file.size > 10 * 1024 * 1024) {
+      setError(new Error(`"${file.name}" is ${(file.size / 1024 / 1024).toFixed(1)} MB. Maximum allowed size is 10 MB.`));
+      return;
+    }
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const isImg = file.type.startsWith('image/');
+    if (!isPdf && !isImg) {
+      setError(new Error('Please select an image (JPG, PNG) or PDF document for Aadhaar copy.'));
+      return;
+    }
+    setUploadingAadhaar(true);
+    setError(null);
+    try {
+      const b64 = await fileToBase64(file);
+      const updated = await api<Patient>('POST', `/api/patients/${patient.id}/aadhaar-document`, {
+        fileName: file.name,
+        data: b64,
+      });
+      setPatient(updated);
+      setSaved(true);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setUploadingAadhaar(false);
+      e.target.value = '';
+    }
+  }
 
   const load = useCallback(async () => {
     if (isNew) return;
@@ -313,7 +386,7 @@ export function PatientPage() {
   useEffect(() => {
     if (!patient) return;
     const tabParam = new URLSearchParams(window.location.search).get('tab');
-    if (tabParam && ['ams', 'mgso4', 'pews_pals', 'pediatric_renal', 'nicu_tpn', 'maternal_comorbidities', 'pediatric_allergy', 'neonatal_meconium_ileus', 'obstetric_placental_abruption', 'pediatric_hus', 'neonatal_ea_tef', 'obstetric_vasa_previa', 'pediatric_empyema', 'neonatal_abdominal_defects', 'obstetric_spt', 'pediatric_osteomyelitis', 'neonatal_intestinal_atresia', 'obstetric_hellp', 'pediatric_scfe', 'neonatal_cdh', 'obstetric_hyperemesis', 'pediatric_acute_scrotum', 'neonatal_sip', 'obstetric_pmcd', 'pediatric_gbs', 'pediatric_toxicology', 'obstetric_massive_pe', 'neonatal_hyperammonemia', 'fetal_hydrops', 'obstetric_cvst', 'pediatric_refractory_asthma'].includes(tabParam)) {
+    if (tabParam && ['ams', 'mgso4', 'pews_pals', 'pediatric_renal', 'nicu_tpn', 'maternal_comorbidities', 'pediatric_allergy', 'neonatal_meconium_ileus', 'obstetric_placental_abruption', 'pediatric_hus', 'neonatal_ea_tef', 'obstetric_vasa_previa', 'pediatric_empyema', 'neonatal_abdominal_defects', 'obstetric_spt', 'pediatric_osteomyelitis', 'neonatal_intestinal_atresia', 'obstetric_hellp', 'pediatric_scfe', 'neonatal_cdh', 'obstetric_hyperemesis', 'pediatric_acute_scrotum', 'neonatal_sip', 'obstetric_pmcd', 'pediatric_gbs', 'pediatric_toxicology', 'obstetric_massive_pe', 'neonatal_hyperammonemia', 'fetal_hydrops', 'obstetric_cvst', 'pediatric_refractory_asthma', 'neonatal_seizures', 'obstetric_dic', 'pediatric_acute_liver_failure'].includes(tabParam)) {
       setViewMode(tabParam as any);
       return;
     }
@@ -327,6 +400,18 @@ export function PatientPage() {
     }
     if (tabParam === 'pediatric-refractory-asthma') {
       setViewMode('pediatric_refractory_asthma');
+      return;
+    }
+    if (tabParam === 'neonatal-seizures' || tabParam === 'neonatal_seizures') {
+      setViewMode('neonatal_seizures');
+      return;
+    }
+    if (tabParam === 'obstetric-dic' || tabParam === 'obstetric_dic') {
+      setViewMode('obstetric_dic');
+      return;
+    }
+    if (tabParam === 'pediatric-acute-liver-failure' || tabParam === 'palf') {
+      setViewMode('pediatric_acute_liver_failure');
       return;
     }
     const isMat = Boolean(patient.lastMenstrualPeriod || patient.gravida != null);
@@ -373,7 +458,15 @@ export function PatientPage() {
           return;
         }
       }
-      const r = await api<{ patient: Patient }>('POST', '/api/patients', payload());
+      let aadhaarDocument: { fileName: string; data: string } | undefined = undefined;
+      if (stagedAadhaar) {
+        const b64 = await fileToBase64(stagedAadhaar.file);
+        aadhaarDocument = { fileName: stagedAadhaar.file.name, data: b64 };
+      }
+      const r = await api<{ patient: Patient }>('POST', '/api/patients', {
+        ...payload(),
+        ...(aadhaarDocument ? { aadhaarDocument } : {}),
+      });
       nav(`/patients/${r.patient.id}`, { replace: true });
     } catch (e) {
       setError(e);
@@ -416,7 +509,28 @@ export function PatientPage() {
           <div>
             <h1>{patient!.fullName}</h1>
             <div className="muted">
-              {patient!.patientNumber} · {formatAge(patient!.ageYears, patient!.ageIsEstimated)}{patient!.aadhaarLastFour ? ' · 🆔 Aadhaar: •••• •••• ' + patient!.aadhaarLastFour : ''}
+              {patient!.patientNumber} · {formatAge(patient!.ageYears, patient!.ageIsEstimated)}{patient!.aadhaarLastFour ? ' · 🆔 Aadhaar: •••• •••• ' + patient!.aadhaarLastFour : ''}{patient!.aadhaarAttachmentId && (
+                <a
+                  href={`/api/patients/${patient!.id}/aadhaar-document`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn small"
+                  style={{
+                    marginLeft: '0.5rem',
+                    padding: '0.15rem 0.5rem',
+                    fontSize: '0.75rem',
+                    background: '#0284c7',
+                    color: '#fff',
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                  }}
+                  title="View verified copy of Aadhaar card"
+                >
+                  🪪 View Aadhaar Copy
+                </a>
+              )}
               {typeof patient!.phone === 'string' && patient!.phone ? (
                 <>
                   {' · '}
@@ -1499,6 +1613,27 @@ export function PatientPage() {
                 </button>
                 <button
                   type="button"
+                  className={`btn small ${viewMode === 'neonatal_seizures' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('neonatal_seizures')}
+                >
+                  ⚡ Neonatal Seizures
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'obstetric_dic' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('obstetric_dic')}
+                >
+                  🩸 Obstetric DIC
+                </button>
+                <button
+                  type="button"
+                  className={`btn small ${viewMode === 'pediatric_acute_liver_failure' ? 'primary' : ''}`}
+                  onClick={() => setViewMode('pediatric_acute_liver_failure')}
+                >
+                  🫀 Pediatric Liver Failure (PALF)
+                </button>
+                <button
+                  type="button"
                   className={`btn small ${viewMode === 'list' ? 'primary' : ''}`}
                   onClick={() => setViewMode('list')}
                 >
@@ -2022,6 +2157,18 @@ export function PatientPage() {
             <PediatricRefractoryAsthmaTab
               patientId={patient!.id}
             />
+          ) : viewMode === 'neonatal_seizures' ? (
+            <NeonatalSeizuresTab
+              patientId={patient!.id}
+            />
+          ) : viewMode === 'obstetric_dic' ? (
+            <ObstetricDicTab
+              patientId={patient!.id}
+            />
+          ) : viewMode === 'pediatric_acute_liver_failure' ? (
+            <PediatricAcuteLiverFailureTab
+              patientId={patient!.id}
+            />
           ) : (
             <>
               {visits.length === 0 && <p className="muted">No consultations recorded yet.</p>}
@@ -2100,6 +2247,171 @@ export function PatientPage() {
                     </div>
                   );
                 })}
+
+                {s.title === 'Identity and contact' && isNew && (
+                  <div className="span2" style={{ marginTop: '0.5rem' }}>
+                    <div
+                      style={{
+                        border: isAadhaarDragging ? '2px dashed var(--primary, #0284c7)' : '1.5px dashed var(--border, #cbd5e1)',
+                        backgroundColor: isAadhaarDragging ? 'rgba(2, 132, 199, 0.05)' : 'var(--bg-subtle, #f8fafc)',
+                        borderRadius: '8px',
+                        padding: '0.85rem 1rem',
+                        transition: 'all 0.15s ease',
+                      }}
+                      onDragOver={(e) => { e.preventDefault(); setIsAadhaarDragging(true); }}
+                      onDragLeave={() => setIsAadhaarDragging(false)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setIsAadhaarDragging(false);
+                        if (e.dataTransfer.files?.[0]) handleAadhaarFile(e.dataTransfer.files[0]);
+                      }}
+                    >
+                      <div className="row wrap" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: stagedAadhaar ? '0.6rem' : 0 }}>
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: '0.92rem' }}>🪪 Upload Aadhaar Card Copy / ID Proof (Optional)</div>
+                          <div className="muted small">Upload PDF copy or clear photo (JPG, PNG) up to 10 MB</div>
+                        </div>
+                        {!stagedAadhaar && (
+                          <div className="row" style={{ gap: '0.4rem', marginTop: '0.3rem' }}>
+                            <label className="btn small primary" style={{ cursor: 'pointer', margin: 0 }}>
+                              📁 Browse File
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,application/pdf"
+                                style={{ display: 'none' }}
+                                onChange={(e) => {
+                                  if (e.target.files?.[0]) handleAadhaarFile(e.target.files[0]);
+                                }}
+                              />
+                            </label>
+                            <label className="btn small" style={{ cursor: 'pointer', margin: 0 }} title="Take photo using camera or scanner">
+                              📷 Capture
+                              <input
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                style={{ display: 'none' }}
+                                onChange={(e) => {
+                                  if (e.target.files?.[0]) handleAadhaarFile(e.target.files[0]);
+                                }}
+                              />
+                            </label>
+                          </div>
+                        )}
+                      </div>
+
+                      {stagedAadhaar && (
+                        <div className="row wrap" style={{ alignItems: 'center', gap: '0.75rem', padding: '0.5rem', background: '#fff', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                          {stagedAadhaar.previewUrl ? (
+                            <img
+                              src={stagedAadhaar.previewUrl}
+                              alt="Aadhaar Preview"
+                              style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #e2e8f0' }}
+                            />
+                          ) : (
+                            <div style={{ width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fee2e2', color: '#ef4444', fontWeight: 'bold', fontSize: '0.8rem', borderRadius: '4px' }}>
+                              PDF
+                            </div>
+                          )}
+                          <div style={{ flex: 1, minWidth: '160px' }}>
+                            <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{stagedAadhaar.file.name}</div>
+                            <div className="muted small">
+                              {(stagedAadhaar.file.size / 1024).toFixed(1)} KB · <span style={{ color: '#059669', fontWeight: 500 }}>Ready to attach on registration</span>
+                            </div>
+                          </div>
+                          <div className="row" style={{ gap: '0.3rem' }}>
+                            <label className="btn small" style={{ cursor: 'pointer', margin: 0, padding: '0.2rem 0.5rem' }}>
+                              🔄 Change
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,application/pdf"
+                                style={{ display: 'none' }}
+                                onChange={(e) => {
+                                  if (e.target.files?.[0]) handleAadhaarFile(e.target.files[0]);
+                                }}
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              className="btn small danger"
+                              style={{ padding: '0.2rem 0.5rem' }}
+                              onClick={() => {
+                                if (stagedAadhaar.previewUrl) URL.revokeObjectURL(stagedAadhaar.previewUrl);
+                                setStagedAadhaar(null);
+                              }}
+                            >
+                              ✕ Remove
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {s.title === 'Identity and contact' && !isNew && (
+                  <div className="span2" style={{ marginTop: '0.5rem' }}>
+                    {patient?.aadhaarAttachmentId ? (
+                      <div className="row wrap" style={{ alignItems: 'center', justifyContent: 'space-between', padding: '0.6rem 0.8rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px' }}>
+                        <div className="row" style={{ alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '1.2rem' }}>🪪</span>
+                          <div>
+                            <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#166534' }}>Aadhaar Card Copy Attached</span>
+                            <div className="muted small">Official copy on record for identification and UID verification.</div>
+                          </div>
+                        </div>
+                        <div className="row" style={{ gap: '0.4rem' }}>
+                          <a
+                            href={`/api/patients/${patient.id}/aadhaar-document`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn small"
+                            style={{ background: '#0284c7', color: '#fff', textDecoration: 'none' }}
+                          >
+                            👁️ View Copy
+                          </a>
+                          <a
+                            href={`/api/patients/${patient.id}/aadhaar-document?download=1`}
+                            className="btn small"
+                          >
+                            ⬇️ Download
+                          </a>
+                          {(can('patient:write_demographics') || can('attachment:write')) && (
+                            <label className="btn small" style={{ cursor: 'pointer', margin: 0 }}>
+                              {uploadingAadhaar ? 'Uploading…' : '🔄 Replace'}
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,application/pdf"
+                                style={{ display: 'none' }}
+                                disabled={uploadingAadhaar}
+                                onChange={handleExistingAadhaarUpload}
+                              />
+                            </label>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      (can('patient:write_demographics') || can('attachment:write')) && (
+                        <div className="row wrap" style={{ alignItems: 'center', justifyContent: 'space-between', padding: '0.6rem 0.8rem', background: 'var(--bg-subtle, #f8fafc)', border: '1px dashed var(--border, #cbd5e1)', borderRadius: '6px' }}>
+                          <div>
+                            <span style={{ fontWeight: 600, fontSize: '0.88rem' }}>🪪 No Aadhaar Card Copy Uploaded</span>
+                            <div className="muted small">Attach an Aadhaar copy to complete official identification records.</div>
+                          </div>
+                          <label className="btn small primary" style={{ cursor: 'pointer', margin: 0 }}>
+                            {uploadingAadhaar ? 'Uploading…' : '📎 Upload Aadhaar Copy'}
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,application/pdf"
+                              style={{ display: 'none' }}
+                              disabled={uploadingAadhaar}
+                              onChange={handleExistingAadhaarUpload}
+                            />
+                          </label>
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
               </div>
             </fieldset>
           );

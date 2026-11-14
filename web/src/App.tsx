@@ -234,21 +234,33 @@ import { ObstetricCvstPage } from './pages/ObstetricCvstPage';
 import { ObstetricCvstPrint } from './pages/ObstetricCvstPrint';
 import { PediatricRefractoryAsthmaPage } from './pages/PediatricRefractoryAsthmaPage';
 import { PediatricRefractoryAsthmaPrint } from './pages/PediatricRefractoryAsthmaPrint';
+import { NeonatalSeizuresPage } from './pages/NeonatalSeizuresPage';
+import { NeonatalSeizuresPrint } from './pages/NeonatalSeizuresPrint';
+import { ObstetricDicPage } from './pages/ObstetricDicPage';
+import { ObstetricDicPrint } from './pages/ObstetricDicPrint';
+import { PediatricAcuteLiverFailurePage } from './pages/PediatricAcuteLiverFailurePage';
+import { PediatricAcuteLiverFailurePrint } from './pages/PediatricAcuteLiverFailurePrint';
 import { DeliveryWardPage } from './pages/DeliveryWardPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditPage } from './pages/AuditPage';
 import { StationPage } from './pages/StationPage';
 import { PriceListPage } from './pages/PriceListPage';
 import { ChecklistPage } from './pages/ChecklistPage';
+import { SetupWizardPage } from './pages/SetupWizardPage';
+import { ConnectDevicesPage } from './pages/ConnectDevicesPage';
+import { WelcomePage } from './pages/WelcomePage';
 import { PrescriptionTemplatesPage } from './pages/PrescriptionTemplatesPage';
 import { CollectionReportPage } from './pages/CollectionReport';
 import { TvQueuePage } from './pages/TvQueuePage';
 import { ScreenLock } from './components/ScreenLock';
 import { ProtocolsHubPage, CLINICAL_PROTOCOLS } from './pages/ProtocolsHubPage';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 export function App() {
   const location = useLocation();
   if (location.pathname === '/tv') return <TvQueuePage />;
+  // New-device onboarding (from the "Connect a device" QR code): shown before sign-in on purpose, holds no patient data.
+  if (location.pathname === '/welcome') return <WelcomePage />;
 
   const { state } = useAuth();
   if (state.status === 'loading') return <p className="center muted">Loading…</p>;
@@ -288,6 +300,27 @@ function SystemWarning() {
   );
 }
 
+/** Points the doctor at the first-run setup wizard until it has been finished. */
+function SetupPrompt() {
+  const onSetup = useLocation().pathname === '/setup';
+  const [pending, setPending] = useState(false);
+  // Re-checked on load and whenever the doctor leaves the wizard, not on every navigation.
+  useEffect(() => {
+    if (onSetup) return;
+    api<{ key: string; done: boolean }[]>('GET', '/api/checklist').then(
+      (items) => setPending(!items.find((i) => i.key === 'first_run_wizard')?.done),
+      () => setPending(false), // checklist unavailable: say nothing rather than nag
+    );
+  }, [onSetup]);
+  if (!pending || onSetup) return null;
+  return (
+    <div className="banner no-print" role="status">
+      <strong>Setup not finished.</strong> A few steps keep the clinic's records safe before real patients are entered.{' '}
+      <NavLink to="/setup">Open first-run setup</NavLink>
+    </div>
+  );
+}
+
 function Shell() {
   const me = useMe();
   const { logout, can, locked, lock } = useAuth();
@@ -302,6 +335,8 @@ function Shell() {
     if (me.role === 'nurse' && here === '/') nav('/station', { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // The wizard touches clinic settings, staff accounts and backups, so only someone allowed all three may run it.
+  const canRunSetup = can('settings:manage') && can('user:manage') && can('backup:manage');
 const primaryLinks = [
     { to: '/', label: 'Today', icon: '📅', end: true },
     { to: '/patients', label: 'Patients', icon: '👥', end: false },
@@ -458,7 +493,9 @@ const primaryLinks = [
       </nav>
       <main className="main">
         {can('backup:manage') && <SystemWarning />}
-        <Routes>
+        {canRunSetup && <SetupPrompt />}
+        <ErrorBoundary>
+          <Routes>
           <Route path="/protocols" element={can('patient:read_clinical') ? <ProtocolsHubPage /> : <Navigate to="/" replace />} />
           <Route path="/" element={<Dashboard />} />
           <Route path="/patients" element={<PatientsPage />} />
@@ -772,6 +809,28 @@ const primaryLinks = [
           <Route path="/pediatric-refractory-asthma/:id/print" element={can('patient:read_clinical') ? <PediatricRefractoryAsthmaPrint /> : <Navigate to="/pediatric-refractory-asthma" replace />} />
           <Route path="/pediatric-refractory-asthma/print/:id" element={can('patient:read_clinical') ? <PediatricRefractoryAsthmaPrint /> : <Navigate to="/pediatric-refractory-asthma" replace />} />
           <Route path="/patients/:patientId/pediatric-refractory-asthma/:episodeId/print" element={can('patient:read_clinical') ? <PediatricRefractoryAsthmaPrint /> : <Navigate to="/pediatric-refractory-asthma" replace />} />
+
+          {/* Series 41: Neonatal Seizures, Obstetric DIC, Pediatric Acute Liver Failure */}
+          <Route path="/neonatal-seizures" element={can('patient:read_clinical') ? <NeonatalSeizuresPage /> : <Navigate to="/" replace />} />
+          <Route path="/neonatal-seizures/:id/print" element={can('patient:read_clinical') ? <NeonatalSeizuresPrint /> : <Navigate to="/neonatal-seizures" replace />} />
+          <Route path="/neonatal-seizures/print/:id" element={can('patient:read_clinical') ? <NeonatalSeizuresPrint /> : <Navigate to="/neonatal-seizures" replace />} />
+          <Route path="/protocols/neonatal-seizures/print/:id" element={can('patient:read_clinical') ? <NeonatalSeizuresPrint /> : <Navigate to="/neonatal-seizures" replace />} />
+          <Route path="/patients/:patientId/neonatal-seizures/:episodeId/print" element={can('patient:read_clinical') ? <NeonatalSeizuresPrint /> : <Navigate to="/neonatal-seizures" replace />} />
+
+          <Route path="/obstetric-dic" element={can('patient:read_clinical') ? <ObstetricDicPage /> : <Navigate to="/" replace />} />
+          <Route path="/obstetric-dic/:id/print" element={can('patient:read_clinical') ? <ObstetricDicPrint /> : <Navigate to="/obstetric-dic" replace />} />
+          <Route path="/obstetric-dic/print/:id" element={can('patient:read_clinical') ? <ObstetricDicPrint /> : <Navigate to="/obstetric-dic" replace />} />
+          <Route path="/protocols/obstetric-dic/print/:id" element={can('patient:read_clinical') ? <ObstetricDicPrint /> : <Navigate to="/obstetric-dic" replace />} />
+          <Route path="/patients/:patientId/obstetric-dic/:episodeId/print" element={can('patient:read_clinical') ? <ObstetricDicPrint /> : <Navigate to="/obstetric-dic" replace />} />
+
+          <Route path="/palf" element={can('patient:read_clinical') ? <PediatricAcuteLiverFailurePage /> : <Navigate to="/" replace />} />
+          <Route path="/pediatric-acute-liver-failure" element={can('patient:read_clinical') ? <PediatricAcuteLiverFailurePage /> : <Navigate to="/" replace />} />
+          <Route path="/palf/:id/print" element={can('patient:read_clinical') ? <PediatricAcuteLiverFailurePrint /> : <Navigate to="/palf" replace />} />
+          <Route path="/palf/print/:id" element={can('patient:read_clinical') ? <PediatricAcuteLiverFailurePrint /> : <Navigate to="/palf" replace />} />
+          <Route path="/pediatric-acute-liver-failure/:id/print" element={can('patient:read_clinical') ? <PediatricAcuteLiverFailurePrint /> : <Navigate to="/palf" replace />} />
+          <Route path="/pediatric-acute-liver-failure/print/:id" element={can('patient:read_clinical') ? <PediatricAcuteLiverFailurePrint /> : <Navigate to="/palf" replace />} />
+          <Route path="/protocols/palf/print/:id" element={can('patient:read_clinical') ? <PediatricAcuteLiverFailurePrint /> : <Navigate to="/palf" replace />} />
+          <Route path="/patients/:patientId/palf/:episodeId/print" element={can('patient:read_clinical') ? <PediatricAcuteLiverFailurePrint /> : <Navigate to="/palf" replace />} />
           <Route path="/delivery-ward" element={can('ipd:read_basic') || can('station:read') ? <DeliveryWardPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id" element={can('visit:read') ? <VisitPage /> : <Navigate to="/" replace />} />
           <Route path="/visits/:id/print" element={can('visit:read') ? <PrescriptionPrint /> : <Navigate to="/" replace />} />
@@ -785,6 +844,8 @@ const primaryLinks = [
           <Route path="/invoices/:id" element={can('billing:read') ? <InvoicePage /> : <Navigate to="/" replace />} />
           <Route path="/invoices/:id/print" element={can('billing:read') ? <InvoicePrint /> : <Navigate to="/" replace />} />
           <Route path="/invoices/:id/receipts/:pid" element={can('billing:read') ? <ReceiptPrint /> : <Navigate to="/" replace />} />
+          <Route path="/setup" element={canRunSetup ? <SetupWizardPage /> : <Navigate to="/" replace />} />
+          <Route path="/settings/connect" element={can('settings:manage') ? <ConnectDevicesPage /> : <Navigate to="/" replace />} />
           <Route path="/settings/checklist" element={can('settings:manage') ? <ChecklistPage /> : <Navigate to="/" replace />} />
           <Route path="/settings/prescription-templates" element={can('visit:write') ? <PrescriptionTemplatesPage /> : <Navigate to="/" replace />} />
           <Route path="/settings" element={can('settings:manage') ? <SettingsPage /> : <Navigate to="/" replace />} />
@@ -796,6 +857,7 @@ const primaryLinks = [
           <Route path="/help" element={<HelpPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </ErrorBoundary>
       </main>
     </div>
     </>

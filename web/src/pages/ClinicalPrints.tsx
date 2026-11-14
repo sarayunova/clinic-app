@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { api, type Admission, type Visit } from '../api';
+import { useAuth } from '../auth';
 import { Sheet, useClinic } from '../components/Sheet';
 import { SignatureBlock } from '../components/SignatureBlock';
 import { ErrorBanner, formatAge } from '../components/ui';
@@ -32,35 +33,112 @@ function Block({ title, children }: { title: string; children: ReactNode }) {
 
 export function PrescriptionPrint() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const { can } = useAuth();
   const { clinic, error: clinicError } = useClinic();
   const [visit, setVisit] = useState<Visit | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [withDiagnosis, setWithDiagnosis] = useState(false);
+  const [finalising, setFinalising] = useState(false);
+  const [finaliseError, setFinaliseError] = useState<string | null>(null);
+
   useEffect(() => {
     api<Visit>('GET', `/api/visits/${id}`).then(setVisit, setError);
   }, [id]);
 
+  useEffect(() => {
+    if (visit && clinic && searchParams.get('autoPrint') === '1') {
+      const timer = setTimeout(() => {
+        window.print();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [visit, clinic, searchParams]);
+
+  const handleFinaliseNow = async () => {
+    if (!visit) return;
+    try {
+      setFinalising(true);
+      setFinaliseError(null);
+      await api<Visit>('POST', `/api/visits/${visit.id}/finalise`, { version: visit.version });
+      const updated = await api<Visit>('GET', `/api/visits/${id}`);
+      setVisit(updated);
+    } catch (e) {
+      setFinaliseError((e as Error).message || 'Failed to finalise consultation');
+    } finally {
+      setFinalising(false);
+    }
+  };
+
   if (error || clinicError) return <div className="page narrow"><ErrorBanner error={error ?? clinicError} /></div>;
   if (!visit || !clinic) return <p className="muted">Loading…</p>;
-  if (visit.status !== 'final') {
-    return <div className="page narrow"><div className="banner warn">Only a finalised consultation can be printed. Finalise it first.</div></div>;
-  }
-  const amended = visit.revisions.filter((r) => r.kind === 'amendment').length;
-  const items = visit.prescriptionItems;
+
+  const isDraft = visit.status !== 'final';
+  const amended = (visit.revisions ?? []).filter((r) => r.kind === 'amendment').length;
+  const items = visit.prescriptionItems ?? [];
 
   return (
     <Sheet
       clinic={clinic}
-      title="PRESCRIPTION"
+      title={isDraft ? 'PRESCRIPTION (DRAFT PREVIEW)' : 'PRESCRIPTION'}
       back={`/visits/${visit.id}`}
       onPrint={logPrint('prescription', visit.id)}
       controls={
-        <label className="row">
-          <input type="checkbox" style={{ width: 'auto', minHeight: 'auto' }} checked={withDiagnosis} onChange={(e) => setWithDiagnosis(e.target.checked)} />
-          <span>Print the assessment / diagnosis on this prescription</span>
-        </label>
+        <div className="stack" style={{ gap: '0.5rem' }}>
+          {isDraft && (
+            <div
+              className="banner warn no-print"
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '0.6rem',
+                margin: 0,
+              }}
+            >
+              <div>
+                <strong>Draft Prescription Mode</strong>
+                <div className="small muted">
+                  This consultation is currently unfinalised. You can print/save a draft preview now, or click to lock and apply the doctor&apos;s official digital signature &amp; seal.
+                </div>
+                {finaliseError && <div style={{ color: '#b91c1c', fontSize: '0.82rem', marginTop: '0.2rem' }}>{finaliseError}</div>}
+              </div>
+              {can('visit:finalise') && (
+                <button
+                  type="button"
+                  className="btn small primary"
+                  disabled={finalising}
+                  onClick={handleFinaliseNow}
+                >
+                  {finalising ? 'Finalising…' : '🔒 Finalise & Sign Official Rx'}
+                </button>
+              )}
+            </div>
+          )}
+          <label className="row">
+            <input type="checkbox" style={{ width: 'auto', minHeight: 'auto' }} checked={withDiagnosis} onChange={(e) => setWithDiagnosis(e.target.checked)} />
+            <span>Print the assessment / diagnosis on this prescription</span>
+          </label>
+        </div>
       }
     >
+      {isDraft && (
+        <div
+          className="print-only draft-notice"
+          style={{
+            textAlign: 'center',
+            color: '#dc2626',
+            fontWeight: 'bold',
+            fontSize: '0.9rem',
+            border: '1px dashed #dc2626',
+            padding: '0.35rem',
+            margin: '0.5rem 0',
+          }}
+        >
+          — DRAFT PRESCRIPTION · PENDING DOCTOR SIGN-OFF —
+        </div>
+      )}
       <dl className="sheet-meta">
         <div><dt>Patient</dt><dd>{visit.patientName}</dd></div>
         <div><dt>Date</dt><dd>{visit.visitDate}</dd></div>
@@ -106,7 +184,13 @@ export function PrescriptionPrint() {
       )}
       {visit.advice && <Block title="Advice">{visit.advice}</Block>}
       {visit.followUpDate && <p><strong>Follow-up: </strong>{visit.followUpDate}</p>}
-      <SignatureBlock clinic={clinic} signatoryName={visit.finalisedByName ?? clinic.doctorName} />
+      {isDraft ? (
+        <div style={{ marginTop: '2rem', textAlign: 'right', borderTop: '1px dashed #cbd5e1', paddingTop: '0.5rem' }}>
+          <div className="muted small">[Draft preview — official doctor signature &amp; registration seal applied upon finalisation]</div>
+        </div>
+      ) : (
+        <SignatureBlock clinic={clinic} signatoryName={visit.finalisedByName ?? clinic.doctorName} />
+      )}
       {amended > 0 && <p className="small">This is the current version; the consultation was amended {amended} time{amended > 1 ? 's' : ''} after it was finalised.</p>}
     </Sheet>
   );
