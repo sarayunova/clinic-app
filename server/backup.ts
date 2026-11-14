@@ -8,6 +8,7 @@ import type { Config } from './config.js';
 import { audit } from './audit.js';
 import type { DB } from './db.js';
 import { nowIso } from './time.js';
+import { restrictToServiceAndAdmins } from './windowsAcl.js';
 
 /**
  * Encrypted backups.
@@ -157,7 +158,9 @@ export async function runBackup(db: DB, cfg: Config, actorId: number | null = nu
   const tmpPlain = path.join(dir, `.snapshot-${process.pid}-${Date.now()}.sqlite`);
   let finalPath = '';
   try {
+    const dirExisted = fs.existsSync(dir);
     fs.mkdirSync(dir, { recursive: true });
+    if (!dirExisted) restrictToServiceAndAdmins(dir);
     await sqliteBackup(db, tmpPlain);
     const name = `clinic-${stampOf(new Date())}.cbk`;
     finalPath = path.join(dir, name);
