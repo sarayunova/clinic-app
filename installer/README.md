@@ -51,15 +51,21 @@ installer/output/ClinicAppSetup-0.1.0.exe
 
 ## What the Installer Deploys
 
-By default, the installer targets `C:\ClinicApp` and installs:
-- `clinic.exe` - Single executable running server and CLI tools.
-- `dist/web/` - Production web frontend assets.
-- `migrations/` - SQLite database migrations.
-- `scripts/` - Autostart and supervisor PowerShell scripts (`run-clinic.ps1`, `install-autostart.ps1`, `uninstall-autostart.ps1`).
-- `docs/` - Operational guides (`AUTO-START.md`, `BACKUP-AND-RESTORE.md`, `HTTPS-SETUP.md`).
+The installer's first page asks how this computer is being used:
+
+- **Install the clinic server on this computer** - the full install, for the main clinic PC:
+  - `clinic.exe` - Single executable running server and CLI tools.
+  - `dist/web/` - Production web frontend assets.
+  - `migrations/` - SQLite database migrations.
+  - `scripts/` - Autostart and supervisor PowerShell scripts (`run-clinic.ps1`, `install-autostart.ps1`, `uninstall-autostart.ps1`).
+  - `docs/` - Operational guides (`AUTO-START.md`, `BACKUP-AND-RESTORE.md`, `HTTPS-SETUP.md`, `CLINIC-OPERATIONS-MANUAL.md`).
+  - Runs prerequisite checks (free disk space on both the install and `ProgramData` drives, Windows 10/Server 2016+, and whether the server's port is already in use by something else) before copying anything.
+- **Connect this device to an existing clinic server** - client mode: installs no binary, no migrations and no database. It only asks for the server's address and creates a shortcut to it (plus `docs/HTTPS-SETUP.md` and `docs/CLINIC-OPERATIONS-MANUAL.md`, which apply to any staff device). See the implementation plan's Phase 2 slice 5 for the richer client-onboarding flow (QR code, certificate-trust walkthrough) still to come.
+
+Targets `C:\ClinicApp` by default (either mode).
 
 ### Data Directory Isolation
-Patient data and SQLite databases default to `%LOCALAPPDATA%\ClinicApp` (or the path set via `CLINIC_DATA_DIR`).
+Patient data and the SQLite database default to the machine-wide `%ProgramData%\ClinicApp`, independent of which Windows account runs the server - see `docs/DEPLOYMENT-ARCHITECTURE.md` for the full detection/fallback logic (an existing per-user database from an older install is detected and kept in place, never silently replaced by an empty one; `CLINIC_DATA_DIR` always overrides both).
 Upgrading or uninstalling the application from `C:\ClinicApp` **never touches or deletes patient data**.
 
 ---
@@ -80,6 +86,12 @@ clinic.exe restore path\to\backup.cbk [--replace]
 
 # Generate or update clinic TLS certificates
 clinic.exe cert [--name <computer-name>] [--ip <ip-address>]
+
+# Copy an existing per-user database to the machine-wide location (dry-run by default)
+clinic.exe migrate-data-dir [--yes]
+
+# Ask a running server to stop gracefully (used by the installer on upgrade)
+clinic.exe request-stop [--timeout <seconds>]
 
 # Show help
 clinic.exe --help

@@ -70,7 +70,7 @@ This sequence is deferred to Phase 1 implementation; Phase 0 only establishes th
 ## 6. Documentation drift found during this audit
 
 - `docs/BACKUP-AND-RESTORE.md` **contradicts itself**: its "Not covered yet" section (lines ~72-75) claims attachments "do not exist in the app yet" and that "the app does not start by itself when Windows starts" — both false against current code (attachments ship via migration `007` + `routes/attachments.ts`; autostart ships via `install-autostart.ps1`). Three lines later in the same file (~78-83), a different section correctly describes attachments being included in backups. This file needs a consistency pass before it's handed to an operator.
-- `installer/README.md` (around lines 62-63) repeats the `%LOCALAPPDATA%` default as if it were settled, rather than flagging it as the known hazard this plan addresses.
+- ~~`installer/README.md` repeats the `%LOCALAPPDATA%` default...~~ **Fixed**, and updated to describe the Phase 2 server/client mode split and the current CLI command list (`migrate-data-dir`, `request-stop`).
 - `README.md`'s "not ready for real patient information" banner is current and should **not** be changed by any Phase 0-4 deployment work — only an independent clinical/privacy/security sign-off can change it (plan §1.8, §12).
 - Two existing scripts are not inventoried in the implementation plan's §2 and should be tracked going forward: `scripts/setup-clinic-pc.ps1` (an undocumented convenience wrapper) and `scripts/seed-demo.ts` (reads `CLINIC_DATA_DIR`/`.devdata` — Phase 1 should confirm it can never be pointed at a real machine-wide data directory by accident).
 
