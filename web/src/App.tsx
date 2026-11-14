@@ -246,6 +246,7 @@ import { AuditPage } from './pages/AuditPage';
 import { StationPage } from './pages/StationPage';
 import { PriceListPage } from './pages/PriceListPage';
 import { ChecklistPage } from './pages/ChecklistPage';
+import { SetupWizardPage } from './pages/SetupWizardPage';
 import { PrescriptionTemplatesPage } from './pages/PrescriptionTemplatesPage';
 import { CollectionReportPage } from './pages/CollectionReport';
 import { TvQueuePage } from './pages/TvQueuePage';
@@ -295,6 +296,27 @@ function SystemWarning() {
   );
 }
 
+/** Points the doctor at the first-run setup wizard until it has been finished. */
+function SetupPrompt() {
+  const onSetup = useLocation().pathname === '/setup';
+  const [pending, setPending] = useState(false);
+  // Re-checked on load and whenever the doctor leaves the wizard, not on every navigation.
+  useEffect(() => {
+    if (onSetup) return;
+    api<{ key: string; done: boolean }[]>('GET', '/api/checklist').then(
+      (items) => setPending(!items.find((i) => i.key === 'first_run_wizard')?.done),
+      () => setPending(false), // checklist unavailable: say nothing rather than nag
+    );
+  }, [onSetup]);
+  if (!pending || onSetup) return null;
+  return (
+    <div className="banner no-print" role="status">
+      <strong>Setup not finished.</strong> A few steps keep the clinic's records safe before real patients are entered.{' '}
+      <NavLink to="/setup">Open first-run setup</NavLink>
+    </div>
+  );
+}
+
 function Shell() {
   const me = useMe();
   const { logout, can, locked, lock } = useAuth();
@@ -309,6 +331,8 @@ function Shell() {
     if (me.role === 'nurse' && here === '/') nav('/station', { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // The wizard touches clinic settings, staff accounts and backups, so only someone allowed all three may run it.
+  const canRunSetup = can('settings:manage') && can('user:manage') && can('backup:manage');
 const primaryLinks = [
     { to: '/', label: 'Today', icon: '📅', end: true },
     { to: '/patients', label: 'Patients', icon: '👥', end: false },
@@ -465,6 +489,7 @@ const primaryLinks = [
       </nav>
       <main className="main">
         {can('backup:manage') && <SystemWarning />}
+        {canRunSetup && <SetupPrompt />}
         <ErrorBoundary>
           <Routes>
           <Route path="/protocols" element={can('patient:read_clinical') ? <ProtocolsHubPage /> : <Navigate to="/" replace />} />
@@ -815,6 +840,7 @@ const primaryLinks = [
           <Route path="/invoices/:id" element={can('billing:read') ? <InvoicePage /> : <Navigate to="/" replace />} />
           <Route path="/invoices/:id/print" element={can('billing:read') ? <InvoicePrint /> : <Navigate to="/" replace />} />
           <Route path="/invoices/:id/receipts/:pid" element={can('billing:read') ? <ReceiptPrint /> : <Navigate to="/" replace />} />
+          <Route path="/setup" element={canRunSetup ? <SetupWizardPage /> : <Navigate to="/" replace />} />
           <Route path="/settings/checklist" element={can('settings:manage') ? <ChecklistPage /> : <Navigate to="/" replace />} />
           <Route path="/settings/prescription-templates" element={can('visit:write') ? <PrescriptionTemplatesPage /> : <Navigate to="/" replace />} />
           <Route path="/settings" element={can('settings:manage') ? <SettingsPage /> : <Navigate to="/" replace />} />

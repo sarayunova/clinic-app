@@ -32,6 +32,9 @@ export function registerBackupRoutes(app: FastifyInstance, { db, cfg }: Ctx): vo
    */
   app.post('/api/backups/self-test', async (req, reply) => {
     const user = requirePerm(req, 'backup:manage');
+    if (!cfg.backupPassphrase) {
+      throw badRequest('Backup encryption is not set up on this computer, so there is nothing to test yet. See "One-time setup" in docs/BACKUP-AND-RESTORE.md.');
+    }
     try {
       const backup = await runBackup(db, cfg, user.id);
       const restored = await restoreBackup({

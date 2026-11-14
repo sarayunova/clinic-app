@@ -222,6 +222,8 @@ describe('backup API', () => {
     const cookie = (setup.headers['set-cookie'] as string).split(';')[0]!;
     const res = await a2.inject({ method: 'POST', url: '/api/backups/self-test', headers: { cookie } });
     expect(res.statusCode).toBe(400);
+    // Says what is actually wrong (nothing set up), not a passphrase-length complaint about a passphrase that does not exist.
+    expect(res.body).toMatch(/not set up/);
   });
 
   it('warns that backups are off when no passphrase is configured', async () => {
