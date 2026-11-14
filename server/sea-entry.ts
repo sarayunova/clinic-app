@@ -20,6 +20,10 @@ async function main() {
       process.argv.splice(2, 1);
       await import('./cli/migrateDataDir.js');
       break;
+    case 'request-stop':
+      process.argv.splice(2, 1);
+      await import('./cli/requestStop.js');
+      break;
     case '--help':
     case '-h':
     case 'help':
@@ -31,6 +35,7 @@ Usage:
   clinic.exe restore <file.cbk>  Verify or restore a backup snapshot (--replace)
   clinic.exe cert [options]      Configure TLS certificates & CA
   clinic.exe migrate-data-dir    Copy an existing per-user database to the machine-wide location (--yes)
+  clinic.exe request-stop        Ask a running server to stop gracefully (--timeout <seconds>)
 
 Options for server:
   Set environment variables CLINIC_DATA_DIR, PORT, HOST, CLINIC_BACKUP_DIR, etc.

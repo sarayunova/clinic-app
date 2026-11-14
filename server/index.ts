@@ -6,7 +6,7 @@ import { ConfigError, defaultMachineDataDir, loadConfig } from './config.js';
 import { openDb } from './db.js';
 import { buildApp } from './app.js';
 import { startBackupScheduler } from './backup.js';
-import { pidFile, serverIsRunning } from './restore.js';
+import { pidFile, serverIsRunning, shutdownRequestFile } from './restore.js';
 import { TlsError, checkListenSafety, loadTls, startHttpRedirect } from './tls.js';
 import { restrictToServiceAndAdmins } from './windowsAcl.js';
 
@@ -72,13 +72,21 @@ async function main() {
   const stopBackups = startBackupScheduler(db, cfg);
 
   const shutdown = async () => {
+    clearInterval(stopRequestPoll);
     stopBackups();
     redirect?.close();
     fs.rmSync(pidFile(cfg), { force: true });
+    fs.rmSync(shutdownRequestFile(cfg), { force: true });
     await app.close();
     db.close();
     process.exit(0);
   };
+  // Windows cannot reliably deliver SIGTERM to an external process the way POSIX can, so the
+  // installer asks for a graceful stop via this sentinel file instead (server/restore.ts).
+  const stopRequestPoll = setInterval(() => {
+    if (fs.existsSync(shutdownRequestFile(cfg))) void shutdown();
+  }, 500);
+  stopRequestPoll.unref();
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
 }

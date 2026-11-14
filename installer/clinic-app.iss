@@ -35,11 +35,34 @@ Name: "autostart"; Description: "Start the clinic app automatically when Windows
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   ResultCode: Integer;
+  ExePath: String;
+  StoppedGracefully: Boolean;
 begin
-  // Forcefully stop any running clinic service and processes before extracting files
-  Exec('powershell.exe', '-NoProfile -ExecutionPolicy Bypass -Command "Stop-ScheduledTask -TaskName ClinicApp -ErrorAction SilentlyContinue; Stop-Process -Name clinic -Force -ErrorAction SilentlyContinue"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  Exec('taskkill.exe', '/F /IM clinic.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  Sleep(1500);
+  // Stop the scheduled task first so its supervisor loop does not relaunch clinic.exe out from
+  // under the graceful-stop attempt below. This does not reliably kill the already-launched child
+  // process by itself (expected - Windows does not tie a Scheduled Task's lifetime to its child
+  // processes); the graceful stop below is what actually stops that process.
+  Exec('powershell.exe', '-NoProfile -ExecutionPolicy Bypass -Command "Stop-ScheduledTask -TaskName ClinicApp -ErrorAction SilentlyContinue"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+  // Ask the already-installed server to stop cleanly - finishing any in-flight request and closing
+  // the database properly - rather than force-killing it immediately. On the one-time upgrade from
+  // a version that predates the `request-stop` command, the old binary instead tries to start a
+  // second server, which the existing second-instance guard safely rejects (non-zero exit), so this
+  // falls through to the force-kill fallback below exactly as it always has for that one upgrade.
+  StoppedGracefully := False;
+  ExePath := ExpandConstant('{app}\clinic.exe');
+  if FileExists(ExePath) then
+  begin
+    if Exec(ExePath, 'request-stop --timeout 30', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+      StoppedGracefully := (ResultCode = 0);
+  end;
+
+  if not StoppedGracefully then
+  begin
+    Exec('powershell.exe', '-NoProfile -ExecutionPolicy Bypass -Command "Stop-Process -Name clinic -Force -ErrorAction SilentlyContinue"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Exec('taskkill.exe', '/F /IM clinic.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Sleep(1500);
+  end;
   Result := '';
 end;
 
