@@ -115,7 +115,15 @@ $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoi
 if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
   Write-Host "Replacing the existing '$TaskName' task."
   Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
-  Stop-Process -Name clinic -Force -ErrorAction SilentlyContinue
+  # Stale server processes only (no arguments, or `server`; or, when the command line cannot be read,
+  # the one listening on our port), never a running backup/snapshot/health. Same rule as run-clinic.ps1.
+  $listening = @(Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue | ForEach-Object OwningProcess)
+  Get-CimInstance Win32_Process -Filter "Name = 'clinic.exe'" -ErrorAction SilentlyContinue |
+    Where-Object {
+      if ($_.CommandLine) { ($_.CommandLine -replace '^\s*("[^"]*"|\S+)', '').Trim() -in @('', 'server') }
+      else { $listening -contains [int]$_.ProcessId }
+    } |
+    ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
   Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
 }
 Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Principal $principal -Settings $settings `

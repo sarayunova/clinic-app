@@ -516,9 +516,18 @@ var
   Code: Integer;
   Output, Msg: String;
 begin
-  if (CurPageID <> wpFinished) or g_HealthChecked or not IsServerMode or not WizardIsTaskSelected('autostart') then
+  if (CurPageID <> wpFinished) or g_HealthChecked or not IsServerMode then
     Exit;
   g_HealthChecked := True;
+  // Without automatic start nothing has started the server, and a finish page that does not say so
+  // left a tester facing "can't reach this page" with no idea why (Windows Sandbox test, step A).
+  if not WizardIsTaskSelected('autostart') then
+  begin
+    WizardForm.FinishedLabel.Caption := 'The clinic server is installed but NOT running: automatic start was not chosen. ' +
+      'To start it, run this setup again and tick "Start the clinic app automatically", or run ' +
+      'scripts\install-autostart.ps1 -StartNow from ' + ExpandConstant('{app}') + ' in an administrator PowerShell.';
+    Exit;
+  end;
   WizardForm.FinishedLabel.Caption := 'Checking that the clinic server has started (this can take up to a minute and a half)...';
   WizardForm.Refresh;
   Code := RunAndCapture(ExpandConstant('{app}\clinic.exe'), 'health --timeout 90', Output);
