@@ -217,6 +217,14 @@ export function backupStatus(db: DB, cfg: Config): BackupStatus {
   else if (!ok) warnings.push('No backup has been taken yet.');
   else if (!healthy) warnings.push('The last successful backup is more than two backup intervals old.');
   if (bad && (!ok || bad.finished_at > ok.finished_at)) warnings.push(`The most recent backup attempt failed: ${bad.error}`);
+  // A status check must still answer when the folder is unreadable (permissions, a file in its
+  // place, a failing drive) - that is exactly when someone needs the status page.
+  let files: BackupFile[] = [];
+  try {
+    files = listBackups(cfg.backupDir);
+  } catch (e) {
+    warnings.push(`The backup folder ${cfg.backupDir} cannot be read: ${(e as NodeJS.ErrnoException).code ?? (e as Error).message}.`);
+  }
   if (configured && volumeOf(cfg.backupDir) === volumeOf(cfg.dataDir)) {
     warnings.push('Backups are on the same disk as the data. If this disk fails, both are lost. Copy the backup folder to another disk or a USB drive.');
   }
@@ -229,7 +237,7 @@ export function backupStatus(db: DB, cfg: Config): BackupStatus {
     lastFailure: bad && (!ok || bad.finished_at > ok.finished_at) ? { at: bad.finished_at, error: bad.error } : null,
     healthy,
     warnings,
-    files: listBackups(cfg.backupDir),
+    files,
   };
 }
 

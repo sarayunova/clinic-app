@@ -590,6 +590,30 @@ export interface BackupStatus {
   files: { name: string; sizeBytes: number; at: string }[];
 }
 
+/** GET /api/system/status (server/routes/system.ts): every value is measured when asked. */
+export interface SystemStatus {
+  version: string;
+  checkedAt: string;
+  serverStartedAt: string;
+  machineBootedAt: string;
+  dataDir: string;
+  dataDirSource: string;
+  legacyDataDirsFound: { path: string; sizeBytes: number }[];
+  database: { connected: boolean; integrity: string };
+  disks: { data: { path: string; freeBytes: number; totalBytes: number } | null; backup: { path: string; freeBytes: number; totalBytes: number } | null };
+  backupDisk: 'same-drive' | 'same-physical-disk' | 'separate-disk' | 'network' | 'unknown';
+  host: string;
+  port: number;
+  https: boolean;
+  certificateDaysLeft: number | null;
+  timezone: string;
+  uptimeSeconds: number;
+  restoreTest: { lastSuccess: { at: string; patients: number | null } | null; lastFailure: { at: string; error: string } | null; dueDays: number; overdue: boolean };
+  restarts: { crashesLast7Days: number; crashesLast24Hours: number; lastCrash: { at: string; exitCode: number } | null; logFound: boolean };
+  warnings: string[];
+  backup: BackupStatus;
+}
+
 export interface SecurityStatus {
   https: boolean;
   reachableFromNetwork: boolean;

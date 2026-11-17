@@ -57,6 +57,12 @@ export function registerBackupRoutes(app: FastifyInstance, { db, cfg }: Ctx): vo
         restoreVerify: restored.verify,
       });
     } catch (e) {
+      // Recorded so the status page can show a failed restore test, not just the last good one.
+      try {
+        audit(db, { actorId: user.id, action: 'backup.self_test_failed', entity: 'backup', detail: { message: (e as Error).message } });
+      } catch {
+        /* the database may be the problem; the error still reaches the caller */
+      }
       if (e instanceof BackupError) throw badRequest(e.message);
       throw e;
     }
