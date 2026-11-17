@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api, type SecurityStatus } from '../api';
 import { ErrorBanner } from './ui';
 
@@ -28,7 +29,10 @@ export function SecurityPanel() {
           )}
           {st.https && st.caAvailable && (
             <>
-              <div><a className="btn" href="/api/tls/ca.crt" download="clinic-ca.crt">Download the clinic certificate</a></div>
+              <div className="row wrap" style={{ gap: '0.5rem' }}>
+                <Link className="btn primary" to="/settings/connect">Connect a staff device (QR code)</Link>
+                <a className="btn" href="/api/tls/ca.crt" download="clinic-ca.crt">Download the clinic certificate</a>
+              </div>
               <p className="muted small">
                 Install this file once on each phone, tablet or computer that will open the app, so the browser trusts it and shows no warning.
                 It only identifies this clinic's server; it contains no secrets. Steps are in <code>docs/HTTPS-SETUP.md</code>.

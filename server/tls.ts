@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import forge from 'node-forge';
 import type { Config } from './config.js';
+import { restrictToServiceAndAdmins } from './windowsAcl.js';
 
 /**
  * Private HTTPS for the clinic network.
@@ -112,6 +113,8 @@ export interface SetupResult {
 /** Creates the CA if missing and (re)issues the server certificate. */
 export function setupTls(dir: string, passphrase: string, names: CertNames): SetupResult {
   fs.mkdirSync(dir, { recursive: true });
+  // server.key and the CA key are the only things here that are not already encrypted at rest.
+  restrictToServiceAndAdmins(dir);
   const f = tlsFiles(dir);
   let createdCa = false;
   if (!fs.existsSync(f.caCert) || !fs.existsSync(f.caKey)) {

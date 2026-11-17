@@ -76,10 +76,14 @@ export function Sheet({
               onPrint?.();
               window.print();
             }}
+            title="Open print dialog to print or choose 'Save as PDF'"
           >
-            🖨️ Print
+            🖨️ Print / Save as PDF
           </button>
         </div>
+      </div>
+      <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.6rem', fontSize: '0.8rem', color: '#64748b' }}>
+        💡 <em>To save as a PDF file, select <strong>&quot;Save as PDF&quot;</strong> or <strong>&quot;Microsoft Print to PDF&quot;</strong> in the destination dropdown.</em>
       </div>
 
       {controls && <div className="no-print" style={{ marginBottom: '0.75rem' }}>{controls}</div>}

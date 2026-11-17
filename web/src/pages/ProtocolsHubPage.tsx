@@ -16,6 +16,17 @@ export interface ProtocolItem {
 export const CLINICAL_PROTOCOLS: ProtocolItem[] = [
   // --- OBSTETRICS & MATERNAL ---
   {
+    id: 'obstetric-dic',
+    to: '/obstetric-dic',
+    title: 'Obstetric DIC & Fibrinogen-Guided Resuscitation',
+    category: 'obstetric',
+    icon: '🩸',
+    badge: 'Series 41',
+    urgency: 'immediate',
+    summary: 'Pregnancy-modified ISTH criteria, Fibrinogen target ≥ 200 mg/dL, Cryoprecipitate titration, and 1:1:1 balanced MTP bundle.',
+    keywords: ['dic', 'obstetric dic', 'fibrinogen', 'cryoprecipitate', 'mtp', 'coagulopathy', 'series 41', 'obstetric'],
+  },
+  {
     id: 'fetal-hydrops',
     to: '/fetal-hydrops',
     title: 'Non-Immune Fetal Hydrops & Mirror Syndrome',
@@ -348,6 +359,17 @@ export const CLINICAL_PROTOCOLS: ProtocolItem[] = [
 
   // --- NEONATAL & NICU ---
   {
+    id: 'neonatal-seizures',
+    to: '/neonatal-seizures',
+    title: 'Neonatal Seizures & Status Epilepticus Pathway',
+    category: 'neonatal',
+    icon: '⚡',
+    badge: 'Series 41',
+    urgency: 'immediate',
+    summary: 'WHO 2023 / ILAE semiology, weight-based Phenobarbital loading (20 mg/kg), second-line ASM, B6 trial, and emergency metabolic correction.',
+    keywords: ['neonatal seizures', 'status epilepticus', 'phenobarbital', 'levetiracetam', 'pyridoxine', 'series 41', 'neonatal'],
+  },
+  {
     id: 'neonatal-hyperammonemia',
     to: '/neonatal-hyperammonemia',
     title: 'Neonatal Inborn Error Hyperammonemia',
@@ -646,6 +668,17 @@ export const CLINICAL_PROTOCOLS: ProtocolItem[] = [
   },
 
   // --- PEDIATRIC & PICU ---
+  {
+    id: 'pediatric-acute-liver-failure',
+    to: '/palf',
+    title: 'Pediatric Acute Liver Failure (PALF) & Neuroprotection',
+    category: 'pediatric',
+    icon: '🫀',
+    badge: 'Series 41',
+    urgency: 'immediate',
+    summary: 'PALF Study Group criteria, King\'s College transplant prognostic scoring, 3% Hypertonic Saline, Mannitol, IV NAC, and ammonia clearance.',
+    keywords: ['palf', 'liver failure', 'hepatic encephalopathy', 'kings college', 'hypertonic saline', 'nac', 'series 41', 'pediatric'],
+  },
   {
     id: 'pediatric-refractory-asthma',
     to: '/pediatric-refractory-asthma',

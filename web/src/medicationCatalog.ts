@@ -400,7 +400,7 @@ export const MEDICINE_SUGGESTIONS: readonly string[] = Array.from(
  * Checks whether an item row is untouched / empty.
  */
 export function isItemBlank(item: MedicationItemForm): boolean {
-  return Object.values(item).every((v) => !v || v.trim() === '');
+  return Object.values(item).every((v) => !v || (typeof v === 'string' ? v.trim() === '' : false));
 }
 
 /**

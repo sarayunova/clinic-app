@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import type { FastifyInstance } from 'fastify';
 import { requirePerm, type Ctx } from '../app.js';
+import { connectInfo } from '../connect.js';
 import { notFound } from '../errors.js';
 import { tlsFiles, tlsStatus } from '../tls.js';
 
@@ -8,6 +9,12 @@ export function registerSecurityRoutes(app: FastifyInstance, { cfg, tls }: Ctx):
   app.get('/api/security', async (req) => {
     requirePerm(req, 'settings:manage');
     return { ...tlsStatus(tls ?? null, cfg.host), caAvailable: fs.existsSync(tlsFiles(cfg.tlsDir).caCert) };
+  });
+
+  // The addresses staff devices should use, for the doctor's "Connect a device" page and its QR code.
+  app.get('/api/connect-info', async (req) => {
+    requirePerm(req, 'settings:manage');
+    return connectInfo(cfg, tls ?? null);
   });
 
   // The CA certificate is public information (it only lets a device recognise this clinic's server), so it needs no login.

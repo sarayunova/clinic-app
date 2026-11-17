@@ -5,7 +5,7 @@ import { hashPassword } from '../server/auth.js';
 import { nowIso } from '../server/time.js';
 import { generateSyntheticCtgTrace } from '../web/src/ctgEngine.js';
 
-const DATA_DIR = path.resolve('.devdata');
+const DATA_DIR = process.env.CLINIC_DATA_DIR ? path.resolve(process.env.CLINIC_DATA_DIR) : path.resolve('.devdata');
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
@@ -5835,6 +5835,137 @@ async function seed() {
           ?, ?, ?
         )
       `).run(existingRast.id, aaravId, rl.t, rl.hrs, rl.rr, rl.hr, rl.spo2, rl.pco2, rl.ph, rl.terb, rl.ket, rl.ie, rl.ausc, rl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 41A: Neonatal Seizures & Status Epilepticus Pathway ---
+  db.prepare(`
+    INSERT OR IGNORE INTO neonatal_seizures_episodes (
+      patient_id, episode_number, diagnosis_datetime, gestational_age_weeks, postnatal_age_days, current_weight_kg,
+      seizure_semiology, seizure_duration_category, suspected_etiology, blood_glucose_mg_dl, ionized_calcium_mmol_l,
+      serum_magnesium_mg_dl, sodium_meq_l, first_line_phenobarbital_given, cumulative_phenobarbital_mg_kg,
+      second_line_anticonvulsant, second_line_given, pyridoxine_trial_done, pyridoxine_responsive,
+      respiratory_support_status, status, clinical_summary, created_by, created_at, updated_at
+    ) VALUES (
+      ?, 'NSZ-20261112-101', '2026-11-12T06:30:00', 38.5, 2, 3.15,
+      'clonic', 'recurrent_cluster', 'hie', 62.0, 1.18,
+      1.85, 137.0, 1, 20.0,
+      'levetiracetam', 0, 0, 0,
+      'cpap', 'stabilized',
+      'Term male infant admitted at 48 hours of life with acute focal clonic right upper extremity and facial twitching lasting 4-6 minutes per cluster. Background of moderate perinatal depression with Sarnat stage II encephalopathy undergoing therapeutic hypothermia. Continuous CFM aEEG demonstrated sharp wave electrographic seizure discharges. Weight 3.15 kg. Emergency metabolic screening confirmed normoglycemia (62 mg/dL) and normal ionized calcium (1.18 mmol/L). Loading dose of IV Phenobarbital 20 mg/kg (63 mg in 0.9% NaCl over 20 minutes) administered via dedicated IV line under continuous SpO2 and BP monitoring. Clinical seizures terminated within 15 minutes of completion of loading dose; CFM background transitioned to discontinuous voltage without electrographic paroxysms. Maintenance phenobarbital (3.5 mg/kg/day) scheduled for start at 24 hours post-load.',
+      ?, ?, ?
+    )
+  `).run(babyId, docId, now, now);
+
+  const existingNsz = db.prepare('SELECT id FROM neonatal_seizures_episodes WHERE episode_number = ?').get('NSZ-20261112-101') as any;
+  if (existingNsz) {
+    const nszLogs = [
+      { t: '2026-11-12T07:00:00', count: 2, state: 'active_clinical_seizures', hr: 148, rr: 46, spo2: 95.0, sbp: 64, dbp: 38, sed: 'mild_somnolence', med: 'Phenobarbital 20 mg/kg IV bolus initiated', eeg: 'burst_suppression', notes: 'Loading bolus running via infusion pump. Gentle tactile stimulation does not abort rhythmic jerks.' },
+      { t: '2026-11-12T08:00:00', count: 0, state: 'seizure_free', hr: 136, rr: 42, spo2: 97.0, sbp: 66, dbp: 40, sed: 'deep_stupor', med: 'Phenobarbital load complete (63 mg)', eeg: 'discontinuous', notes: 'Seizures ceased. Spontaneous respiration regular on bubble CPAP 5 cmH2O. Pupils equal and reactive.' },
+      { t: '2026-11-12T12:00:00', count: 0, state: 'seizure_free', hr: 132, rr: 38, spo2: 98.0, sbp: 68, dbp: 42, sed: 'normal_alert', med: 'None', eeg: 'normal', notes: 'Continuous CFM shows continuous normal voltage without epileptiform transients. Infant roused on cares.' },
+    ];
+    for (const nl of nszLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO neonatal_seizures_flowsheet_logs (
+          episode_id, recorded_at, seizure_count_past_hour, current_seizure_state,
+          heart_rate_bpm, respiratory_rate_bpm, spo2_percent, blood_pressure_sys,
+          blood_pressure_dia, sedation_score, medication_administered, eeg_background,
+          nurse_notes, recorded_by, created_at
+        ) VALUES (
+          ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingNsz.id, nl.t, nl.count, nl.state, nl.hr, nl.rr, nl.spo2, nl.sbp, nl.dbp, nl.sed, nl.med, nl.eeg, nl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 41B: Obstetric DIC & Fibrinogen-Guided Resuscitation Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO obstetric_dic_episodes (
+      patient_id, episode_number, diagnosis_datetime, gestational_age_weeks, clinical_trigger,
+      platelet_count_k_ul, fibrinogen_mg_dl, prothrombin_time_sec, control_pt_sec, inr, aptt_sec, d_dimer_ug_ml,
+      estimated_blood_loss_ml, overt_bleeding_sites, is_mtp_activated, prbc_units_given, ffp_units_given,
+      platelet_pools_given, cryoprecipitate_units_given, fibrinogen_concentrate_g_given, tranexamic_acid_given,
+      ionized_calcium_mmol_l, core_temperature_c, status, clinical_summary, created_by, created_at, updated_at
+    ) VALUES (
+      ?, 'DIC-20261112-101', '2026-11-12T04:15:00', 37.0, 'placental_abruption',
+      78.0, 135.0, 19.5, 12.0, 1.62, 52.0, 8.4,
+      1800, 'surgical_site_oozing', 1, 4, 4,
+      1, 10, 0, 1,
+      1.08, 35.6, 'stabilized',
+      'Gravida 3 Para 2 presenting with sudden severe abdominal pain, woody hard tender uterus, and moderate vaginal bleeding at 37 weeks. Emergency cesarean section confirmed complete retroplacental clot (abruption involving > 60% maternal surface). Intraoperatively developed intractable generalized surgical oozing from incisional margins, peritoneal edges, and uterine stitch tracks. Estimated blood loss reached 1,800 mL. Emergent STAT coagulogram revealed critical consumptive coagulopathy: Fibrinogen 135 mg/dL (critical deficit < 200 mg/dL pregnancy safety target), Platelets 78,000/µL, INR 1.62, D-Dimer 8.4 µg/mL FEU, fulfilling pregnancy-modified ISTH overt DIC criteria (Score 6/8). Massive Transfusion Protocol (MTP Pack 1) activated: 4 units PRBC, 4 units FFP, and 1 platelet apheresis pool transfused. Targeted fibrinogen replenishment with 10 units of Cryoprecipitate infused immediately. IV Tranexamic Acid 1g infused over 10 minutes. B-Lynch compression suture applied. Active rewarming with forced-air blankets and IV Calcium Gluconate 10% (20 mL) administered to correct hypocalcemia (ionized Ca 1.08 mmol/L). Post-resuscitation fibrinogen rebounded to 228 mg/dL with firm clot formation and hemostasis achieved.',
+      ?, ?, ?
+    )
+  `).run(sunitaId, docId, now, now);
+
+  const existingDic = db.prepare('SELECT id FROM obstetric_dic_episodes WHERE episode_number = ?').get('DIC-20261112-101') as any;
+  if (existingDic) {
+    const dicLogs = [
+      { t: '2026-11-12T05:00:00', sbp: 88, dbp: 52, hr: 124, spo2: 96.0, loss: 600, fib: 135.0, plt: 78.0, inr: 1.62, uo: 20, comps: 'MTP Pack 1 (4 PRBC, 4 FFP, 1 Plt) + 10 Cryo + TXA 1g', state: 'uncontrolled_diffuse_ooze', notes: 'Severe diffuse oozing from retroperitoneum and wound edges. Blood loss uncontained. Rapid warmer in use.' },
+      { t: '2026-11-12T06:30:00', sbp: 106, dbp: 68, hr: 104, spo2: 98.0, loss: 150, fib: 190.0, plt: 95.0, inr: 1.34, uo: 45, comps: 'Additional 5 Cryo + 1g Calcium Gluconate', state: 'partial_clot_formation', notes: 'Soft clots beginning to form in uterine incision bed. Vital signs stabilizing.' },
+      { t: '2026-11-12T09:00:00', sbp: 118, dbp: 74, hr: 84, spo2: 99.0, loss: 40, fib: 232.0, plt: 112.0, inr: 1.18, uo: 65, comps: 'Maintenance crystalloids', state: 'bleeding_controlled', notes: 'Hemostasis firm. Fibrinogen cleared to > 200 mg/dL target. Core temp 36.8 C. Transferred to Obstetric HDU.' },
+    ];
+    for (const dl of dicLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO obstetric_dic_flowsheet_logs (
+          episode_id, recorded_at, systolic_bp, diastolic_bp, heart_rate_bpm,
+          spo2_percent, hourly_blood_loss_ml, serial_fibrinogen_mg_dl,
+          serial_platelets_k_ul, serial_inr, urine_output_ml_hr, blood_components_infused,
+          clinical_hemostasis_state, nurse_notes, recorded_by, created_at
+        ) VALUES (
+          ?, ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?, ?
+        )
+      `).run(existingDic.id, dl.t, dl.sbp, dl.dbp, dl.hr, dl.spo2, dl.loss, dl.fib, dl.plt, dl.inr, dl.uo, dl.comps, dl.state, dl.notes, nurseId, now);
+    }
+  }
+
+  // --- SERIES 41C: Pediatric Acute Liver Failure (PALF) & Hepatic Encephalopathy Protocol ---
+  db.prepare(`
+    INSERT OR IGNORE INTO pediatric_acute_liver_failure_episodes (
+      patient_id, episode_number, diagnosis_datetime, age_months, weight_kg,
+      suspected_etiology, encephalopathy_stage, inr, total_bilirubin_mg_dl, direct_bilirubin_mg_dl,
+      alt_u_l, ast_u_l, serum_ammonia_umol_l, blood_glucose_mg_dl, serum_sodium_meq_l,
+      serum_creatinine_mg_dl, has_cerebral_edema, hypertonic_saline_3pct_active,
+      mannitol_administered, nac_infusion_active, lactulose_active, transplant_center_contacted,
+      status, clinical_summary, created_by, created_at, updated_at
+    ) VALUES (
+      ?, 'PALF-20261112-101', '2026-11-12T03:00:00', 54, 17.5,
+      'viral_hepatitis', 2, 2.85, 14.8, 9.6,
+      1820.0, 1940.0, 126.0, 74.0, 146.0,
+      0.58, 1, 1,
+      0, 1, 1, 1,
+      'active',
+      'A 4.5-year-old child (17.5 kg) presenting with a 5-day history of prodromal fever, progressive jaundice, and acute onset of day-night sleep reversal, marked lethargy, and flapping tremor (asterixis), consistent with Grade 2 Hepatic Encephalopathy. No prior history of chronic hepatopathy. Laboratory workup revealed marked biochemical liver necrosis: ALT 1,820 U/L, AST 1,940 U/L, Total Bilirubin 14.8 mg/dL, and uncorrectable coagulopathy with INR 2.85 (fulfilling PALF criteria: INR >= 1.5 with encephalopathy). Arterial ammonia elevated at 126 µmol/L (threshold for cerebral edema risk > 100). Viral serologies pending; autoimmune and metabolic screens sent. King''s College non-APAP criteria assessed: child fulfills 3 adverse prognostic indicators (age < 10 years, INR > 3.5 impending, non-APAP etiology), warranting urgent liver transplant center contact and pre-listing workup. Multi-modal PICU neuroprotection bundle initiated: 30-degree head elevation in midline, continuous 3% hypertonic saline infusion targeting serum sodium 145-150 mEq/L (current Na 146 mEq/L), continuous IV N-Acetylcysteine (NAC) 100 mg/kg/day antioxidant infusion, and oral lactulose (10 mL q8h) titrated to 3 soft stools per day. Continuous arterial line and pupillary reflex monitoring established.',
+      ?, ?, ?
+    )
+  `).run(aaravId, docId, now, now);
+
+  const existingPalf = db.prepare('SELECT id FROM pediatric_acute_liver_failure_episodes WHERE episode_number = ?').get('PALF-20261112-101') as any;
+  if (existingPalf) {
+    const palfLogs = [
+      { t: '2026-11-12T04:00:00', stage: 2, pup: 'brisk_equal', map: 70, hr: 112, gcs: 12, bg: 74, na: 144, nh3: 126, stools: 1, icp: 'Head elevated 30 deg; 3% NaCl at 1.8 mL/kg/hr running', notes: 'Child irritable, disoriented to place. Pupils 3mm brisk bilateral. Continuous D10W infusion running for glucose maintenance.' },
+      { t: '2026-11-12T08:00:00', stage: 2, pup: 'brisk_equal', map: 74, hr: 104, gcs: 13, bg: 88, na: 147, nh3: 110, stools: 2, icp: 'Target sodium achieved (147 mEq/L). ICP stable', notes: 'Ammonia down from 126 to 110. No focal neurological deficits. Second stool passed.' },
+      { t: '2026-11-12T12:00:00', stage: 1, pup: 'brisk_equal', map: 72, hr: 98, gcs: 14, bg: 92, na: 148, nh3: 94, stools: 3, icp: '3% NaCl maintained at 1.2 mL/kg/hr. Serum Na in safe target', notes: 'Encephalopathy improved to Grade 1. Child alert, recognizes parents. Transplant center confirmed bed on standby.' },
+    ];
+    for (const pl of palfLogs) {
+      db.prepare(`
+        INSERT OR IGNORE INTO pediatric_acute_liver_failure_flowsheet_logs (
+          episode_id, recorded_at, encephalopathy_stage, pupil_reactivity,
+          mean_arterial_pressure_mmhg, heart_rate_bpm, gcs_score, blood_glucose_mg_dl,
+          serum_sodium_meq_l, serum_ammonia_umol_l, daily_stool_count, icp_monitoring_notes,
+          nurse_notes, recorded_by, created_at
+        ) VALUES (
+          ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?
+        )
+      `).run(existingPalf.id, pl.t, pl.stage, pl.pup, pl.map, pl.hr, pl.gcs, pl.bg, pl.na, pl.nh3, pl.stools, pl.icp, pl.notes, nurseId, now);
     }
   }
 

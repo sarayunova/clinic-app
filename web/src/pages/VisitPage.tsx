@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { ApiError, api, type PrescriptionItem, type Visit, type VitalsEntry } from '../api';
 import { useAuth } from '../auth';
 import { VisitInvoice } from '../components/VisitInvoice';
@@ -17,7 +17,7 @@ import {
   ROUTE_CHIPS,
   MEDICINE_SUGGESTIONS,
 } from '../medicationCatalog';
-import { DictationToolbar, VoiceFieldMic } from '../components/VoiceDictation';
+import { DictationToolbar, VoiceFieldMic, useSpeechRecognition } from '../components/VoiceDictation';
 import { appendDictatedText } from '../voiceDictationUtils';
 import { CommunicationModal } from '../components/CommunicationModal';
 import { evaluatePrescriptionSafety, getRiskBadgeStyle } from '../pregnancyMedicationSafety';
@@ -78,13 +78,24 @@ const INSTR_OPTIONS = ['After food', 'Before food', 'Empty stomach', 'At bedtime
 
 const toForm = (v: Pick<Visit, FormKey>): Record<FormKey, string> =>
   Object.fromEntries(FORM_KEYS.map((k) => [k, v[k] ?? ''])) as Record<FormKey, string>;
-const toItemsForm = (items: PrescriptionItem[]): ItemForm[] =>
-  items.map((i) => Object.fromEntries(ITEM_FIELDS.map((f) => [f.key, i[f.key] ?? ''])) as ItemForm);
+const toItemsForm = (items?: PrescriptionItem[] | null): ItemForm[] =>
+  (items ?? []).map((i) =>
+    Object.fromEntries(
+      ITEM_FIELDS.map((f) => [f.key, i && i[f.key] != null ? String(i[f.key]) : ''])
+    ) as ItemForm
+  );
 /** Drops untouched blank rows and converts empty strings to null, matching what the server stores. */
 const normItems = (items: ItemForm[]): PrescriptionItem[] =>
-  items
-    .filter((i) => Object.values(i).some((x) => x.trim() !== ''))
-    .map((i) => Object.fromEntries(ITEM_FIELDS.map((f) => [f.key, i[f.key].trim() === '' ? null : i[f.key].trim()])) as unknown as PrescriptionItem);
+  (items ?? [])
+    .filter((i) => i && Object.values(i).some((x) => typeof x === 'string' && x.trim() !== ''))
+    .map((i) =>
+      Object.fromEntries(
+        ITEM_FIELDS.map((f) => [
+          f.key,
+          typeof i[f.key] === 'string' && i[f.key].trim() !== '' ? i[f.key].trim() : null,
+        ])
+      ) as unknown as PrescriptionItem
+    );
 
 function fmtVitals(v: VitalsEntry): string {
   const parts: string[] = [];
@@ -98,6 +109,7 @@ function fmtVitals(v: VitalsEntry): string {
 
 export function VisitPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { can } = useAuth();
   const [visit, setVisit] = useState<Visit | null>(null);
   const [loadError, setLoadError] = useState<unknown>(null);
@@ -115,11 +127,32 @@ export function VisitPage() {
   const [activeDictationField, setActiveDictationField] = useState<TextKey>('complaints');
   const [viewing, setViewing] = useState<{ no: number; snapshot: Record<string, unknown> & { prescriptionItems: PrescriptionItem[] } } | null>(null);
 
+  const activeDictationFieldRef = useRef<TextKey>('complaints');
+  activeDictationFieldRef.current = activeDictationField;
+
   const handleAppendDictation = (fieldKey: string, text: string) => {
     setForm((prev) => ({
       ...prev,
       [fieldKey]: appendDictatedText(prev[fieldKey as FormKey] || '', text),
     }));
+  };
+
+  const dictation = useSpeechRecognition({
+    onFinalText: (formatted) => {
+      handleAppendDictation(activeDictationFieldRef.current, formatted);
+    },
+  });
+
+  const toggleFieldDictation = (fieldKey: TextKey) => {
+    if (dictation.isListening && activeDictationField === fieldKey) {
+      dictation.stopListening();
+    } else {
+      setActiveDictationField(fieldKey);
+      activeDictationFieldRef.current = fieldKey;
+      if (!dictation.isListening) {
+        dictation.startListening();
+      }
+    }
   };
 
   const adopt = useCallback((v: Visit) => {
@@ -154,12 +187,33 @@ export function VisitPage() {
   const changes = useMemo(() => {
     const out: Record<string, string | null | PrescriptionItem[]> = {};
     if (!visit || !base) return out;
-    for (const k of FORM_KEYS) if (form[k] !== base[k]) out[k] = form[k].trim() === '' ? null : form[k].trim();
+    for (const k of FORM_KEYS) {
+      const formVal = (form[k] ?? '').trim();
+      const baseVal = (base[k] ?? '').trim();
+      if (formVal !== baseVal) out[k] = formVal === '' ? null : formVal;
+    }
     const now = normItems(items);
-    if (JSON.stringify(now) !== JSON.stringify(visit.prescriptionItems)) out.prescriptionItems = now;
+    if (JSON.stringify(now) !== JSON.stringify(visit.prescriptionItems ?? [])) out.prescriptionItems = now;
     return out;
   }, [visit, base, form, items]);
   const dirty = Object.keys(changes).length > 0;
+
+  const isMaternity = Boolean(visit?.lastMenstrualPeriod || visit?.gravida != null || visit?.antenatalNotes);
+  const currentGa = calculateGestationalAge(visit?.lastMenstrualPeriod);
+
+  const prescriptionSafetyAlerts = useMemo(() => {
+    if (!isMaternity) return [];
+    return (items ?? [])
+      .map((it, idx) => {
+        const med = typeof it?.medicine === 'string' ? it.medicine.trim() : '';
+        return {
+          index: idx,
+          medicine: med,
+          evaluation: med ? evaluatePrescriptionSafety(med, currentGa?.weeks ?? null) : null,
+        };
+      })
+      .filter((r) => r.evaluation && (r.evaluation.evaluatedRiskLevel === 'contraindicated' || r.evaluation.evaluatedRiskLevel === 'high_risk'));
+  }, [isMaternity, items, currentGa?.weeks]);
 
   if (loadError) return <div className="page narrow"><ErrorBanner error={loadError} /><Link to="/">Back to Today</Link></div>;
   if (!visit) return <p className="muted">Loading…</p>;
@@ -189,19 +243,6 @@ export function VisitPage() {
   const fe = fieldErrorsOf(error);
   const conflict = error instanceof ApiError && error.status === 409;
 
-  const isMaternity = Boolean(visit.lastMenstrualPeriod || visit.gravida != null || visit.antenatalNotes);
-  const currentGa = calculateGestationalAge(visit.lastMenstrualPeriod);
-
-  const prescriptionSafetyAlerts = useMemo(() => {
-    if (!isMaternity) return [];
-    return items
-      .map((it, idx) => ({
-        index: idx,
-        medicine: it.medicine.trim(),
-        evaluation: it.medicine.trim() ? evaluatePrescriptionSafety(it.medicine, currentGa?.weeks ?? null) : null,
-      }))
-      .filter((r) => r.evaluation && (r.evaluation.evaluatedRiskLevel === 'contraindicated' || r.evaluation.evaluatedRiskLevel === 'high_risk'));
-  }, [isMaternity, items, currentGa?.weeks]);
 
   async function run(fn: () => Promise<Visit | void>, okMsg?: string) {
     setBusy(true);
@@ -229,6 +270,36 @@ export function VisitPage() {
       if (dirty) v = await api<Visit>('PATCH', `/api/visits/${v.id}`, { version: v.version, ...changes });
       return api<Visit>('POST', `/api/visits/${v.id}/finalise`, { version: v.version });
     }, 'Consultation finalised. The notes are now locked; later corrections need a reason and are recorded.');
+  }
+
+  async function handleSaveAndPrint(finaliseFirst: boolean) {
+    setBusy(true);
+    setError(null);
+    try {
+      let v = visit!;
+      if (dirty) {
+        if (amending) {
+          if (reason.trim().length >= 5) {
+            v = await api<Visit>('POST', `/api/visits/${v.id}/amend`, { version: v.version, reason, ...changes });
+            setAmending(false);
+            setReason('');
+            adopt(v);
+          }
+        } else {
+          v = await api<Visit>('PATCH', `/api/visits/${v.id}`, { version: v.version, ...changes });
+          adopt(v);
+        }
+      }
+      if (finaliseFirst && v.status === 'draft') {
+        v = await api<Visit>('POST', `/api/visits/${v.id}/finalise`, { version: v.version });
+        adopt(v);
+      }
+      navigate(`/visits/${v.id}/print?autoPrint=1`);
+    } catch (e) {
+      setError(e);
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function submitAmendment(e: FormEvent) {
@@ -267,21 +338,46 @@ export function VisitPage() {
         </div>
         <span className={`badge ${isDraft ? 'warn' : 'ok'}`}>{isDraft ? 'Draft' : `Finalised${visit.finalisedByName ? ` by ${visit.finalisedByName}` : ''}`}</span>
       </header>
-      {!isDraft && (
-        <p className="row wrap" style={{ gap: '0.5rem' }}>
-          <Link className="btn small" to={`/visits/${visit.id}/print`}>
-            Print prescription
-          </Link>
-          <button
-            type="button"
-            className="btn small"
-            onClick={() => setShowCommModal(true)}
-            title="Share prescription advice via WhatsApp or SMS"
-          >
-            💬 Share Rx via WhatsApp
-          </button>
-        </p>
-      )}
+      <p className="row wrap" style={{ gap: '0.5rem' }}>
+        {isDraft ? (
+          <>
+            <button
+              type="button"
+              className="btn small"
+              disabled={busy || normItems(items).length === 0}
+              onClick={() => void handleSaveAndPrint(false)}
+              title="Save current prescription medicines and open print sheet in draft preview mode"
+            >
+              📄 Print / Save Rx PDF (Draft)
+            </button>
+            {can('visit:finalise') && (
+              <button
+                type="button"
+                className="btn small primary"
+                disabled={busy || normItems(items).length === 0}
+                onClick={() => void handleSaveAndPrint(true)}
+                title="Save changes, lock consultation with doctor's digital signature, and open printable PDF immediately"
+              >
+                ⚡ Finalise &amp; Print Official Rx
+              </button>
+            )}
+          </>
+        ) : (
+          <>
+            <Link className="btn small primary" to={`/visits/${visit.id}/print`}>
+              🖨️ Print / Save Rx PDF
+            </Link>
+            <button
+              type="button"
+              className="btn small"
+              onClick={() => setShowCommModal(true)}
+              title="Share prescription advice via WhatsApp or SMS"
+            >
+              💬 Share Rx via WhatsApp
+            </button>
+          </>
+        )}
+      </p>
       <div className={`allergy-banner ${visit.allergyStatus}`}>
         <AllergyBadge status={visit.allergyStatus} details={visit.allergyDetails} />
       </div>
@@ -349,8 +445,13 @@ export function VisitPage() {
             <DictationToolbar
               activeField={activeDictationField}
               fieldLabels={Object.fromEntries(TEXT_FIELDS.map((f) => [f.key, f.label]))}
-              onSelectField={(k) => setActiveDictationField(k as TextKey)}
+              onSelectField={(k) => {
+                const tk = k as TextKey;
+                setActiveDictationField(tk);
+                activeDictationFieldRef.current = tk;
+              }}
               onAppendText={handleAppendDictation}
+              speechRecognition={dictation}
             />
           )}
 
@@ -360,9 +461,13 @@ export function VisitPage() {
                 {editable && (
                   <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 1 }}>
                     <VoiceFieldMic
-                      isListening={activeDictationField === f.key}
-                      onToggle={() => setActiveDictationField(f.key)}
-                      title={`Select ${f.label} for voice dictation`}
+                      isListening={dictation.isListening && activeDictationField === f.key}
+                      onToggle={() => toggleFieldDictation(f.key)}
+                      title={
+                        dictation.isListening && activeDictationField === f.key
+                          ? `Click to stop listening to ${f.label}`
+                          : `Click to dictate into ${f.label} by voice`
+                      }
                     />
                   </div>
                 )}
@@ -370,7 +475,10 @@ export function VisitPage() {
                   <textarea
                     rows={3}
                     value={form[f.key]}
-                    onFocus={() => setActiveDictationField(f.key)}
+                    onFocus={() => {
+                      setActiveDictationField(f.key);
+                      activeDictationFieldRef.current = f.key;
+                    }}
                     onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
                   />
                 </Field>
@@ -636,6 +744,70 @@ export function VisitPage() {
               </button>
             </div>
           )}
+
+          {/* Immediate Action Bar right after entering prescription */}
+          <div
+            className="rx-immediate-actions-bar"
+            style={{
+              marginTop: '1.25rem',
+              padding: '0.85rem 1rem',
+              background: '#f8fafc',
+              border: '1.5px solid #cbd5e1',
+              borderRadius: '8px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '0.75rem',
+            }}
+          >
+            <div>
+              <div style={{ fontWeight: 600, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span>🖨️</span> Immediate Prescription Print &amp; PDF
+              </div>
+              <div className="muted small">
+                {normItems(items).length === 0
+                  ? 'Add at least one medicine above to print or generate prescription PDF.'
+                  : `${normItems(items).length} medicine${normItems(items).length === 1 ? '' : 's'} prescribed. Click below to take print or save PDF immediately.`}
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {isDraft ? (
+                <>
+                  <button
+                    type="button"
+                    className="btn small"
+                    disabled={busy || normItems(items).length === 0}
+                    onClick={() => void handleSaveAndPrint(false)}
+                    title="Save current prescription medicines and open print sheet in draft mode"
+                  >
+                    📄 Print / Save PDF (Draft)
+                  </button>
+                  {can('visit:finalise') && (
+                    <button
+                      type="button"
+                      className="btn small primary"
+                      disabled={busy || normItems(items).length === 0}
+                      onClick={() => void handleSaveAndPrint(true)}
+                      title="Save all changes, finalise consultation with doctor signature, and open printable PDF immediately"
+                    >
+                      ⚡ Finalise &amp; Print Official Rx
+                    </button>
+                  )}
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="btn small primary"
+                  disabled={busy}
+                  onClick={() => void handleSaveAndPrint(false)}
+                  title="Open official signed prescription for printing or saving as PDF"
+                >
+                  🖨️ Print / Save Rx PDF
+                </button>
+              )}
+            </div>
+          </div>
           {editable && <p className="muted small">Doses and medicines are entered by the doctor; the system never suggests them.</p>}
           <datalist id="rx-medicine-suggestions">
             {MEDICINE_SUGGESTIONS.map((m) => (
@@ -676,9 +848,22 @@ export function VisitPage() {
                     </button>
                   </>
                 ) : (
-                  <button type="button" className="btn primary" disabled={busy} onClick={() => setConfirmFinalise(true)}>
-                    Finalise consultation
-                  </button>
+                  <>
+                    <button type="button" className="btn primary" disabled={busy} onClick={() => setConfirmFinalise(true)}>
+                      Finalise consultation
+                    </button>
+                    {normItems(items).length > 0 && (
+                      <button
+                        type="button"
+                        className="btn primary"
+                        disabled={busy}
+                        onClick={() => void handleSaveAndPrint(true)}
+                        title="Finalise consultation and take print / save PDF immediately"
+                      >
+                        ⚡ Finalise &amp; Print Rx
+                      </button>
+                    )}
+                  </>
                 ))}
               {dirty && <span className="muted small">Unsaved changes</span>}
             </>
@@ -701,11 +886,11 @@ export function VisitPage() {
         </div>
       </form>
 
-      {visit.revisions.length > 0 && (
+      {(visit.revisions ?? []).length > 0 && (
         <section className="card stack">
           <h2>History of this record</h2>
           <ul className="cards">
-            {visit.revisions.map((r) => (
+            {(visit.revisions ?? []).map((r) => (
               <li key={r.revisionNo}>
                 <div className="row wrap">
                   <strong>{r.kind === 'final' ? 'Finalised' : `Amendment ${r.revisionNo - 1}`}</strong>
@@ -741,7 +926,7 @@ export function VisitPage() {
             doctorName: visit.finalisedByName ?? undefined,
             visitDate: visit.visitDate,
             items: (visit.prescriptionItems ?? []).map((it) => ({
-              name: it.medicine + (it.strength ? ` ${it.strength}` : ''),
+              name: (it.medicine ?? '') + (it.strength ? ` ${it.strength}` : ''),
               dose: it.dose,
               route: it.route,
               frequency: it.frequency,
@@ -757,7 +942,8 @@ export function VisitPage() {
   );
 }
 
-function Snapshot({ snapshot }: { snapshot: Record<string, unknown> & { prescriptionItems: PrescriptionItem[] } }) {
+function Snapshot({ snapshot }: { snapshot: Record<string, unknown> & { prescriptionItems?: PrescriptionItem[] | null } }) {
+  const rx = snapshot.prescriptionItems ?? [];
   return (
     <div className="snapshot">
       {TEXT_FIELDS.map((f) => (
@@ -765,9 +951,9 @@ function Snapshot({ snapshot }: { snapshot: Record<string, unknown> & { prescrip
       ))}
       <p><strong>Follow-up date:</strong> {(snapshot.followUpDate as string | null) ?? '—'}</p>
       <p><strong>Prescription:</strong></p>
-      {snapshot.prescriptionItems.length === 0 ? <p>—</p> : (
+      {rx.length === 0 ? <p>—</p> : (
         <ol>
-          {snapshot.prescriptionItems.map((i, n) => (
+          {rx.map((i, n) => (
             <li key={n}>{[i.medicine, i.strength, i.dose, i.route, i.frequency, i.duration, i.instructions].filter(Boolean).join(' · ')}</li>
           ))}
         </ol>
@@ -820,9 +1006,9 @@ function VitalsCard({ visit, canAdd, onAdded }: { visit: Visit; canAdd: boolean;
           </button>
         )}
       </div>
-      {visit.vitals.length === 0 && !open && <p className="muted">No vitals recorded yet.</p>}
+      {(visit.vitals ?? []).length === 0 && !open && <p className="muted">No vitals recorded yet.</p>}
       <ul className="cards">
-        {visit.vitals.map((v) => {
+        {(visit.vitals ?? []).map((v) => {
           const alerts = evaluateVitalsAlerts(v);
           return (
             <li key={v.id}>

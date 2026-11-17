@@ -9,6 +9,8 @@ import { build } from 'esbuild';
 
 const root = path.resolve(import.meta.dirname, '..');
 const outDir = path.join(root, 'dist-exe');
+// CLINIC_BUILD_VERSION is for test builds only (e.g. a 0.1.1-sandbox build to rehearse an upgrade).
+const version = process.env.CLINIC_BUILD_VERSION || JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version;
 fs.rmSync(outDir, { recursive: true, force: true });
 fs.mkdirSync(outDir, { recursive: true });
 
@@ -20,6 +22,8 @@ await build({
   format: 'cjs',
   target: 'node22',
   logLevel: 'info',
+  // Baked in so `clinic.exe` (and /api/health) report the version they were built as - see server/version.ts.
+  define: { __APP_VERSION__: JSON.stringify(version) },
 });
 
 execFileSync(process.execPath, ['--experimental-sea-config', path.join(root, 'sea-config.json')], {

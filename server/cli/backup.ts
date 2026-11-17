@@ -1,12 +1,18 @@
 import path from 'node:path';
 import { BackupError, runBackup } from '../backup.js';
-import { loadConfig } from '../config.js';
+import { ConfigError, loadConfig } from '../config.js';
 import { openDb } from '../db.js';
 
 // Wrapped in a function (rather than top-level await) so this file can be bundled as CommonJS
 // for the packaged single-executable build — esbuild's CJS output cannot contain top-level await.
 async function main() {
-  const cfg = loadConfig();
+  let cfg;
+  try {
+    cfg = loadConfig();
+  } catch (e) {
+    console.error(e instanceof ConfigError ? e.message : e);
+    process.exit(1);
+  }
   const db = openDb(cfg.dbFile);
   try {
     const r = await runBackup(db, cfg);

@@ -16,6 +16,13 @@ This page is for whoever looks after the clinic computer.
 
 ## One-time setup
 
+**If this computer was set up using the Windows installer (`ClinicAppSetup-*.exe`), this is already done.**
+The installer generates a strong random passphrase automatically, stores it restricted to
+administrators under `%ProgramData%\ClinicApp\secrets`, and shows it once on screen so it can be
+written down and kept somewhere other than this computer - see that screen's instructions. The
+steps below are only for a from-source checkout, or to replace the installer-generated passphrase
+with one of your own choosing.
+
 1. Choose a passphrase of at least 12 characters (a few random words is good).
 2. Save it in a text file that only the clinic's Windows account can read, for example
    `C:\ClinicSecrets\backup-passphrase.txt` (one line, nothing else).
@@ -42,37 +49,52 @@ Backups are encrypted, so a lost USB drive does not expose patient data, but kee
 
 ## Restore
 
-Stop the clinic app first (press Ctrl+C in its window).
+Restoring replaces **every** record in the app with the contents of a backup. Anything entered after the backup was taken
+will no longer appear. Use it to recover from lost or damaged data, not to undo one mistake.
 
-1. Check a backup without changing anything:
+### 1. Check the backup in the app (safe at any time)
 
-   ```powershell
-   npm run restore -- D:\ClinicBackups\clinic-20261031T140114Z.cbk
-   ```
+**Clinic → System status → Restore from a backup.** It lists the backups and the safety copies taken before upgrades.
+**Check** decrypts the chosen one into a temporary copy, checks it, and shows its patients, staff accounts and last
+recorded change next to the live ones, warning you if work entered since then would no longer appear. It never changes
+the live records. A wrong passphrase, or a damaged or altered file, is refused. So is a backup made by a **newer**
+version of the app: install that version first.
 
-   This decrypts it, checks the database, prints how many patients and users it holds, and writes a copy named
-   `restored-<time>.sqlite` next to the live database. The live database is not touched.
-   A wrong passphrase, a damaged file or a changed file is refused with a clear message.
-2. Replace the live database with the backup:
+### 2. Restore it on the clinic computer (administrator)
 
-   ```powershell
-   npm run restore -- D:\ClinicBackups\clinic-20261031T140114Z.cbk --replace
-   ```
+The page then shows the exact command for that backup. On the clinic computer, open PowerShell with **Run as
+administrator** and run it, for example:
 
-   The current database is **moved aside, not deleted** (`clinic.sqlite.before-restore-<time>`). Start the app and check
-   that the records you expect are there. Anything entered after the backup was taken is not in it.
-3. Delete the `restored-*.sqlite` copy and, once you are sure, the `before-restore` copy.
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\ClinicApp\scripts\restore-backup.ps1 -Backup D:\ClinicBackups\clinic-20261031T140114Z.cbk
+```
+
+The script:
+1. copies the backup into the data folder and checks it again
+2. asks you to type `RESTORE`
+3. stops the app gracefully
+4. takes an encrypted safety copy of the current records (into `pre-upgrade\`, listed on the restore page)
+5. restores; the current database is also kept beside it as `clinic.sqlite.before-restore-<time>`, and is put back
+   automatically if the restored one fails to open
+6. starts the app again and checks it answers.
+
+Every step is written to `logs\restore-<time>.log` in the data folder. If anything fails before step 5 completes, nothing
+has changed and the app is started again. Afterwards, open the app and check some recent patients. Once you are sure,
+the `before-restore` file can be deleted.
+
+A backup on a USB drive can be restored the same way: give the script its path. To only check one without the app,
+run `clinic.exe restore <file> --check` (it leaves no file behind).
 
 ## Practice the restore
 
-Do step 1 (check only) **once a month**, using a copy from the USB drive. A backup that has never been test-restored
-is a hope, not a backup. Before real patient data is entered, do a full practice restore on a spare folder and confirm the
-patient counts match.
+On **Clinic → System status**, **Test restore now** takes a backup and restores it into a separate copy through the same
+code a real restore uses, without touching the live records. The page shows when it last passed and warns when it has
+not passed in 90 days. Also check (step 1 above) a copy from the USB drive **once a month**: a backup that has never been
+test-restored is a hope, not a backup. Before real patient data is entered, do a full practice restore (step 2) on a
+spare computer and confirm the counts match.
 
-## Not covered yet
+## Not covered here
 
-- Attachments (scans, reports) do not exist in the app yet; when they do, backups must include them.
-- The app does not start by itself when Windows starts. Until it does, make sure it is running during clinic hours and overnight is not guaranteed.
 - This protects against loss and damage. It does not replace disk encryption (BitLocker) on the clinic computer.
 
 ## Uploaded documents are inside the backup

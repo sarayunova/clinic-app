@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   formatDictationTranscript,
-  appendDictatedText,
   CLINICAL_QUICK_PHRASES,
 } from '../voiceDictationUtils';
 
@@ -40,8 +39,31 @@ declare global {
   }
 }
 
+export const DICTATION_LANGUAGES = [
+  { code: 'en-IN', label: 'English (India)' },
+  { code: 'en-US', label: 'English (US)' },
+  { code: 'en-GB', label: 'English (UK)' },
+  { code: 'hi-IN', label: 'Hindi (हिन्दी)' },
+] as const;
+
+export interface SpeechRecognitionController {
+  isSupported: boolean;
+  isListening: boolean;
+  interimText: string;
+  error: string | null;
+  startListening: () => void;
+  stopListening: () => void;
+  toggleListening: () => void;
+  clearError: () => void;
+  lang: string;
+  setLang: (lang: string) => void;
+}
+
 /**
  * Hook managing browser Web Speech API recognition.
+ * Designed for clinical reliability: creates a fresh SpeechRecognition session
+ * each time to avoid browser-level InvalidStateError, and auto-restarts on
+ * silence pauses until the doctor explicitly stops dictating.
  */
 export function useSpeechRecognition({
   onFinalText,
@@ -49,112 +71,178 @@ export function useSpeechRecognition({
 }: {
   onFinalText: (formattedText: string) => void;
   lang?: string;
-}) {
+}): SpeechRecognitionController {
   const [isListening, setIsListening] = useState(false);
   const [interimText, setInterimText] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [currentLang, setCurrentLang] = useState(lang);
 
-  const isSupported = typeof window !== 'undefined' && Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
+  const isSupported =
+    typeof window !== 'undefined' &&
+    Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
+
   const recognitionRef = useRef<SpeechRecognitionInstanceLike | null>(null);
+  const shouldListenRef = useRef(false);
+  const restartTimerRef = useRef<number | null>(null);
   const onFinalTextRef = useRef(onFinalText);
   onFinalTextRef.current = onFinalText;
+  const currentLangRef = useRef(currentLang);
+  currentLangRef.current = currentLang;
 
-  useEffect(() => {
+  const cleanupInstance = useCallback(() => {
+    if (restartTimerRef.current != null) {
+      window.clearTimeout(restartTimerRef.current);
+      restartTimerRef.current = null;
+    }
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.abort();
+      } catch {
+        // ignore
+      }
+      recognitionRef.current = null;
+    }
+  }, []);
+
+  const createAndStartSession = useCallback(() => {
     if (!isSupported) return;
 
     const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!Ctor) return;
 
-    const recognition = new Ctor();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = lang;
+    cleanupInstance();
 
-    recognition.onstart = () => {
-      setIsListening(true);
-      setError(null);
-      setInterimText('');
-    };
+    try {
+      const recognition = new Ctor();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = currentLangRef.current || 'en-IN';
 
-    recognition.onend = () => {
-      setIsListening(false);
-      setInterimText('');
-    };
+      recognition.onstart = () => {
+        setIsListening(true);
+        setError(null);
+        setInterimText('');
+      };
 
-    recognition.onerror = (e) => {
-      setIsListening(false);
-      setInterimText('');
-      if (e.error === 'no-speech') {
-        // Ignorable idle event
-        return;
-      }
-      if (e.error === 'not-allowed') {
-        setError('Microphone permission denied. Allow microphone access in your browser to dictate.');
-      } else {
-        setError(`Speech recognition: ${e.error}`);
-      }
-    };
-
-    recognition.onresult = (event: SpeechRecognitionEventLike) => {
-      let finalChunk = '';
-      let currentInterim = '';
-
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        const item = event.results[i];
-        if (!item || !item[0]) continue;
-        const transcript = item[0].transcript;
-        if (item.isFinal) {
-          finalChunk += transcript + ' ';
+      recognition.onend = () => {
+        // If the doctor hasn't explicitly stopped, restart automatically so pauses don't cut off speech
+        if (shouldListenRef.current) {
+          restartTimerRef.current = window.setTimeout(() => {
+            if (shouldListenRef.current) {
+              createAndStartSession();
+            }
+          }, 150);
         } else {
-          currentInterim += transcript;
+          setIsListening(false);
+          setInterimText('');
         }
-      }
+      };
 
-      if (finalChunk.trim()) {
-        const formatted = formatDictationTranscript(finalChunk);
-        if (formatted) {
-          onFinalTextRef.current(formatted);
+      recognition.onerror = (e) => {
+        if (e.error === 'no-speech') {
+          // Normal idle event when speaker pauses; do not stop session
+          return;
         }
-      }
+        if (e.error === 'aborted') {
+          // Aborted during switch or stop; ignore
+          return;
+        }
+        if (e.error === 'not-allowed') {
+          shouldListenRef.current = false;
+          setIsListening(false);
+          setInterimText('');
+          setError('Microphone access blocked. Click the lock icon in your browser address bar and set Microphone to "Allow".');
+          return;
+        }
+        if (e.error === 'network') {
+          shouldListenRef.current = false;
+          setIsListening(false);
+          setInterimText('');
+          setError('Voice dictation network error: Chrome requires an active internet connection for cloud speech-to-text. Check your internet connection or use Quick Clinical Phrases.');
+          return;
+        }
+        if (e.error === 'audio-capture') {
+          shouldListenRef.current = false;
+          setIsListening(false);
+          setInterimText('');
+          setError('No microphone found on this device. Please connect a microphone or headset and try again.');
+          return;
+        }
 
-      setInterimText(currentInterim);
-    };
+        setError(`Speech recognition error: ${e.error}`);
+        if (!shouldListenRef.current) {
+          setIsListening(false);
+          setInterimText('');
+        }
+      };
 
-    recognitionRef.current = recognition;
+      recognition.onresult = (event: SpeechRecognitionEventLike) => {
+        try {
+          let finalChunk = '';
+          let currentInterim = '';
 
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            const item = event.results[i];
+            if (!item || !item[0]) continue;
+            const transcript = item[0].transcript;
+            if (item.isFinal) {
+              finalChunk += transcript + ' ';
+            } else {
+              currentInterim += transcript;
+            }
+          }
+
+          if (finalChunk.trim()) {
+            const formatted = formatDictationTranscript(finalChunk);
+            if (formatted) {
+              onFinalTextRef.current(formatted);
+            }
+          }
+
+          setInterimText(currentInterim);
+        } catch (err) {
+          console.error('Error handling speech recognition results:', err);
+        }
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err) {
+      console.warn('SpeechRecognition session start failed:', err);
+      shouldListenRef.current = false;
+      setIsListening(false);
+      setError('Unable to activate microphone. Please check browser speech permissions.');
+    }
+  }, [cleanupInstance, isSupported]);
+
+  const startListening = useCallback(() => {
+    shouldListenRef.current = true;
+    setError(null);
+    createAndStartSession();
+  }, [createAndStartSession]);
+
+  const stopListening = useCallback(() => {
+    shouldListenRef.current = false;
+    setIsListening(false);
+    setInterimText('');
+    cleanupInstance();
+  }, [cleanupInstance]);
+
+  const toggleListening = useCallback(() => {
+    if (shouldListenRef.current || isListening) {
+      stopListening();
+    } else {
+      startListening();
+    }
+  }, [isListening, startListening, stopListening]);
+
+  // Clean up on component unmount
+  useEffect(() => {
     return () => {
-      try {
-        recognition.abort();
-      } catch {
-        // cleanup ignore
-      }
-      recognitionRef.current = null;
+      shouldListenRef.current = false;
+      cleanupInstance();
     };
-  }, [isSupported, lang]);
-
-  const startListening = () => {
-    if (!recognitionRef.current) return;
-    try {
-      setError(null);
-      recognitionRef.current.start();
-    } catch {
-      // Recognition may already be running
-    }
-  };
-
-  const stopListening = () => {
-    if (!recognitionRef.current) return;
-    try {
-      recognitionRef.current.stop();
-    } catch {
-      // ignore
-    }
-  };
-
-  const toggleListening = () => {
-    if (isListening) stopListening();
-    else startListening();
-  };
+  }, [cleanupInstance]);
 
   return {
     isSupported,
@@ -165,11 +253,14 @@ export function useSpeechRecognition({
     stopListening,
     toggleListening,
     clearError: () => setError(null),
+    lang: currentLang,
+    setLang: setCurrentLang,
   };
 }
 
 /**
  * Compact microphone button placed next to individual field labels.
+ * Reflects whether THIS field is actively recording speech, and triggers dictation directly.
  */
 export function VoiceFieldMic({
   isListening,
@@ -185,7 +276,7 @@ export function VoiceFieldMic({
       type="button"
       className={`btn small ${isListening ? 'danger' : ''}`}
       onClick={onToggle}
-      title={isListening ? 'Click to stop listening' : title}
+      title={isListening ? 'Click to stop dictating' : title}
       style={{
         display: 'inline-flex',
         alignItems: 'center',
@@ -196,9 +287,16 @@ export function VoiceFieldMic({
         background: isListening ? '#fee2e2' : undefined,
         color: isListening ? '#b91c1c' : undefined,
         borderColor: isListening ? '#f87171' : undefined,
+        fontWeight: isListening ? 600 : 400,
+        boxShadow: isListening ? '0 0 0 2px rgba(239, 68, 68, 0.2)' : undefined,
       }}
     >
-      <span aria-hidden="true">{isListening ? '🔴' : '🎤'}</span>
+      <span
+        aria-hidden="true"
+        style={isListening ? { display: 'inline-block', animation: 'fadein 0.8s infinite alternate' } : undefined}
+      >
+        {isListening ? '🔴' : '🎤'}
+      </span>
       <span>{isListening ? 'Listening…' : 'Dictate'}</span>
     </button>
   );
@@ -209,6 +307,7 @@ interface DictationToolbarProps {
   fieldLabels: Record<string, string>;
   onSelectField: (fieldKey: string) => void;
   onAppendText: (fieldKey: string, text: string) => void;
+  speechRecognition?: SpeechRecognitionController;
   disabled?: boolean;
 }
 
@@ -220,16 +319,20 @@ export function DictationToolbar({
   fieldLabels,
   onSelectField,
   onAppendText,
+  speechRecognition,
   disabled = false,
 }: DictationToolbarProps) {
   const [showPhrases, setShowPhrases] = useState(false);
   const [activeCategory, setActiveCategory] = useState(0);
 
-  const { isSupported, isListening, interimText, error, toggleListening } = useSpeechRecognition({
+  // Fallback to internal hook if not passed from parent
+  const internalRec = useSpeechRecognition({
     onFinalText: (formatted) => {
       onAppendText(activeField, formatted);
     },
   });
+
+  const rec = speechRecognition ?? internalRec;
 
   const insertPunctuation = (punct: string) => {
     onAppendText(activeField, punct);
@@ -245,8 +348,8 @@ export function DictationToolbar({
       style={{
         marginBottom: '0.8rem',
         padding: '0.7rem 1rem',
-        background: isListening ? '#fef2f2' : '#f8fafc',
-        border: `1px solid ${isListening ? '#fca5a5' : '#cbd5e1'}`,
+        background: rec.isListening ? '#fef2f2' : '#f8fafc',
+        border: `1.5px solid ${rec.isListening ? '#f87171' : '#cbd5e1'}`,
         transition: 'all 0.2s ease',
       }}
     >
@@ -258,8 +361,8 @@ export function DictationToolbar({
             <select
               value={activeField}
               onChange={(e) => onSelectField(e.target.value)}
-              disabled={disabled || isListening}
-              style={{ fontSize: '0.85rem', padding: '0.25rem 0.5rem' }}
+              disabled={disabled}
+              style={{ fontSize: '0.85rem', padding: '0.25rem 0.5rem', fontWeight: 500 }}
             >
               {Object.entries(fieldLabels).map(([key, label]) => (
                 <option key={key} value={key}>
@@ -269,12 +372,27 @@ export function DictationToolbar({
             </select>
           </div>
 
+          {/* Language selector */}
+          <select
+            value={rec.lang}
+            onChange={(e) => rec.setLang(e.target.value)}
+            disabled={disabled || rec.isListening}
+            title="Dictation language model"
+            style={{ fontSize: '0.8rem', padding: '0.25rem 0.4rem' }}
+          >
+            {DICTATION_LANGUAGES.map((l) => (
+              <option key={l.code} value={l.code}>
+                {l.label}
+              </option>
+            ))}
+          </select>
+
           {/* Voice Microphone Toggle */}
-          {isSupported ? (
+          {rec.isSupported ? (
             <button
               type="button"
-              className={`btn small ${isListening ? 'danger' : 'primary'}`}
-              onClick={toggleListening}
+              className={`btn small ${rec.isListening ? 'danger' : 'primary'}`}
+              onClick={rec.toggleListening}
               disabled={disabled}
               style={{
                 display: 'inline-flex',
@@ -283,8 +401,8 @@ export function DictationToolbar({
                 fontWeight: 600,
               }}
             >
-              <span aria-hidden="true">{isListening ? '🛑' : '🎙️'}</span>
-              <span>{isListening ? 'Stop Listening' : 'Voice Dictate'}</span>
+              <span aria-hidden="true">{rec.isListening ? '🛑' : '🎙️'}</span>
+              <span>{rec.isListening ? 'Stop Listening' : 'Voice Dictate'}</span>
             </button>
           ) : (
             <span className="small muted">
@@ -342,32 +460,51 @@ export function DictationToolbar({
       </div>
 
       {/* Live Interim Streaming Transcript */}
-      {isListening && (
+      {rec.isListening && (
         <div
           style={{
             marginTop: '0.4rem',
-            padding: '0.4rem 0.6rem',
+            padding: '0.5rem 0.8rem',
             background: '#ffffff',
-            borderRadius: '4px',
-            border: '1px solid #f87171',
-            fontSize: '0.85rem',
-            color: '#b91c1c',
+            borderRadius: '6px',
+            border: '1.5px solid #ef4444',
+            fontSize: '0.88rem',
+            color: '#991b1b',
+            boxShadow: '0 2px 4px rgba(239, 68, 68, 0.1)',
           }}
         >
-          <div className="row" style={{ alignItems: 'center', gap: '0.4rem' }}>
-            <span style={{ animation: 'pulse 1s infinite' }}>🔴</span>
+          <div className="row wrap" style={{ alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '1rem', display: 'inline-block' }}>🔴</span>
             <strong>Listening to {fieldLabels[activeField] || activeField}:</strong>
-            <span>{interimText || 'Speak clearly into microphone…'}</span>
-          </div>
-          <div className="small muted" style={{ marginTop: '0.2rem', color: '#6b7280' }}>
-            Tip: Say "full stop", "comma", "new line" to punctuate automatically.
+            <span style={{ fontStyle: rec.interimText ? 'normal' : 'italic', color: rec.interimText ? '#1e293b' : '#64748b' }}>
+              {rec.interimText || 'Speak clearly into your microphone… (say "full stop", "comma", "new line" to punctuate)'}
+            </span>
           </div>
         </div>
       )}
 
-      {error && (
-        <div className="banner error small" style={{ marginTop: '0.4rem' }}>
-          {error}
+      {/* Error Message with Dismiss Button */}
+      {rec.error && (
+        <div
+          className="banner warn small"
+          style={{
+            marginTop: '0.4rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.6rem',
+            padding: '0.5rem 0.8rem',
+          }}
+        >
+          <span>⚠️ {rec.error}</span>
+          <button
+            type="button"
+            className="btn small"
+            onClick={rec.clearError}
+            style={{ padding: '0.15rem 0.45rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+          >
+            Dismiss
+          </button>
         </div>
       )}
 

@@ -14,11 +14,23 @@ const MIGRATIONS_DIR = isSea()
       : path.join(path.dirname(process.execPath), '..', 'server', 'migrations'))
   : path.join(path.dirname(fileURLToPath(import.meta.url)), 'migrations');
 
+/** The migration names this build knows how to apply. A database with any other is from a newer version. */
+export function knownMigrations(): string[] {
+  return fs.readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith('.sql')).sort();
+}
+
 export function openDb(file: string): DB {
   if (file !== ':memory:') fs.mkdirSync(path.dirname(file), { recursive: true });
   const db = new DatabaseSync(file);
-  db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;');
-  migrate(db);
+  try {
+    db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;');
+    migrate(db);
+  } catch (e) {
+    // Release the file: a caller that recovers (e.g. restore putting the previous database back)
+    // must be able to move it, which Windows refuses while it is open.
+    db.close();
+    throw e;
+  }
   return db;
 }
 

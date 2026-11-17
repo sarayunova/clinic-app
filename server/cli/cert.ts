@@ -1,4 +1,4 @@
-import { loadConfig } from '../config.js';
+import { ConfigError, loadConfig } from '../config.js';
 import { MIN_CA_PASSPHRASE, TlsError, defaultNames, loadTls, setupTls } from '../tls.js';
 
 const args = process.argv.slice(2);
@@ -13,7 +13,13 @@ if (args.includes('--help')) {
   console.log(usage);
   process.exit(0);
 }
-const cfg = loadConfig();
+let cfg;
+try {
+  cfg = loadConfig();
+} catch (e) {
+  console.error(e instanceof ConfigError ? e.message : e);
+  process.exit(1);
+}
 const passphrase = process.env.CLINIC_CA_PASSPHRASE;
 if (!passphrase) {
   console.error(`CLINIC_CA_PASSPHRASE is not set.\n${usage}`);

@@ -60,6 +60,27 @@ Get-ChildItem -LiteralPath $logDir -File -ErrorAction SilentlyContinue |
   Remove-Item -Force -ErrorAction SilentlyContinue
 
 Write-Log "Supervisor started (data: $DataDir, port: $Port, host: $ListenHost)"
+Write-Log "Cleaning up any stale clinic server processes or pid files..."
+# Only stale SERVER processes (clinic.exe with no arguments or `server`). Not every clinic.exe:
+# the installer's `clinic.exe health` check runs at exactly this moment (it is waiting for this
+# server to come up), and an administrator may be running `backup`, `snapshot` or `restore`.
+# Killing those was a real bug, found in the Windows Sandbox installer test.
+# A process counts as a server if its command line says so, or - when the command line cannot be
+# read (another session or integrity level) - if it is the pid in server.pid or is listening on our port.
+$serverPids = @()
+try { $serverPids += [int](Get-Content -LiteralPath (Join-Path $DataDir 'server.pid') -TotalCount 1 -ErrorAction Stop) } catch { }
+$serverPids += Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue | ForEach-Object OwningProcess
+Get-CimInstance Win32_Process -Filter "Name = 'clinic.exe'" -ErrorAction SilentlyContinue |
+  Where-Object {
+    if ($_.CommandLine) { ($_.CommandLine -replace '^\s*("[^"]*"|\S+)', '').Trim() -in @('', 'server') }
+    else { $serverPids -contains [int]$_.ProcessId }
+  } |
+  ForEach-Object {
+    Write-Log "Stopping stale server process $($_.ProcessId)"
+    Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+  }
+Start-Sleep -Seconds 1
+Remove-Item -LiteralPath (Join-Path $DataDir 'server.pid') -Force -ErrorAction SilentlyContinue
 $delay = 5
 while ($true) {
   $day = Get-Date -Format 'yyyyMMdd'

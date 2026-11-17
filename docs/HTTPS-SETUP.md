@@ -46,7 +46,16 @@ the browser shows the padlock and no warnings. Nothing is sent to any outside se
 
 ## Install the clinic certificate on each device (once)
 
-Get `ca.crt` onto the device: the doctor can open **Clinic** in the menu and press *Download the clinic certificate*
+**Easiest: the guided page.** The doctor opens **Clinic → Connect a staff device**. It shows a QR code and the address to
+type, and the certificate's fingerprint; print it and keep it by the clinic computer. On the new device, join the clinic
+Wi-Fi and scan the code. It opens a setup page (no sign-in needed, no patient data) with the steps for that kind of device.
+The browser will warn the first time, because the device does not trust the clinic yet; that is expected for this one visit.
+**Always compare the fingerprint the device shows with the one on the clinic computer or the printed sheet** before trusting
+the certificate: that check is what proves the file came from the real clinic computer and not an impostor on the network.
+The QR code only ever contains a private network address that is on the certificate; if HTTPS is not set up, or the app is not
+listening on the network, the page says what to fix instead of showing a code.
+
+Or by hand: get `ca.crt` onto the device: the doctor can open **Clinic** in the menu and press *Download the clinic certificate*
 (do this on a device you already trust, or copy the file from the `tls` folder using a USB drive or a message to yourself).
 It contains no secrets.
 
@@ -56,6 +65,10 @@ It contains no secrets.
   (accept the warning: you are trusting the clinic's own authority).
 - **iPhone / iPad:** open the file → Settings → *Profile Downloaded* → Install; then Settings → General → About →
   Certificate Trust Settings → switch on full trust for *Clinic Local CA*.
+
+Once the certificate is trusted, staff can add the app to the home screen (Android: Chrome menu → *Add to Home screen*;
+iPhone/iPad: Safari *Share* → *Add to Home Screen*). It opens like an app but always loads from the clinic computer:
+nothing is cached on the device for offline use.
 
 Only install this certificate on devices the clinic controls. A device that trusts it will trust anything signed with the CA key,
 which is why that key is encrypted and kept off the computer.
