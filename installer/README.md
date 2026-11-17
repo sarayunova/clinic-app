@@ -64,7 +64,7 @@ The installer's first page asks how this computer is being used:
   - `clinic.exe` - Single executable running server and CLI tools.
   - `dist/web/` - Production web frontend assets.
   - `migrations/` - SQLite database migrations.
-  - `scripts/` - Autostart and supervisor PowerShell scripts (`run-clinic.ps1`, `install-autostart.ps1`, `uninstall-autostart.ps1`).
+  - `scripts/` - Autostart and supervisor PowerShell scripts (`run-clinic.ps1`, `install-autostart.ps1`, `uninstall-autostart.ps1`) and the guided restore (`restore-backup.ps1`).
   - `docs/` - Operational guides (`AUTO-START.md`, `BACKUP-AND-RESTORE.md`, `HTTPS-SETUP.md`, `CLINIC-OPERATIONS-MANUAL.md`).
   - Runs prerequisite checks (free disk space on both the install and `ProgramData` drives, Windows 10/Server 2016+, and whether the server's port is already in use by something else) before copying anything.
   - Generates a backup encryption passphrase and a certificate-authority passphrase automatically (cryptographically random, never typed by anyone), stores them restricted to administrators under `%ProgramData%\ClinicApp\secrets`, wires the backup passphrase into the autostart registration so automatic backups are on from first boot, and shows the passphrases once on screen to be written down and kept somewhere other than this computer. An upgrade/repair never regenerates an existing passphrase - doing so would make backups taken under the old one unrecoverable.
@@ -115,8 +115,10 @@ clinic.exe
 # Run an encrypted backup snapshot
 clinic.exe backup
 
-# Verify or restore from a backup file
-clinic.exe restore path\to\backup.cbk [--replace]
+# Check a backup (nothing left behind), or restore it (server stopped; refuses a newer version's backup,
+# keeps the old database, rolls back if the restored one fails to open). For a guided restore use
+# scripts\restore-backup.ps1 -Backup <file> in an administrator PowerShell.
+clinic.exe restore path\to\backup.cbk [--check | --replace]
 
 # Generate or update clinic TLS certificates
 clinic.exe cert [--name <computer-name>] [--ip <ip-address>]

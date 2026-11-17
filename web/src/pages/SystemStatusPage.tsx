@@ -100,6 +100,7 @@ export function SystemStatusPage() {
         <button className="btn primary" onClick={() => void testRestore()} disabled={testing || !b?.configured}>
           {testing ? 'Testing restore…' : 'Test restore now'}
         </button>
+        <Link className="btn" to="/settings/restore">Restore from a backup…</Link>
       </div>
       <ErrorBanner error={error} />
       {testMsg && <div className="banner ok" role="status" style={{ marginBottom: '1rem' }}>{testMsg}</div>}

@@ -552,6 +552,7 @@ Source: "..\server\migrations\*.sql"; DestDir: "{app}\migrations"; Flags: ignore
 Source: "..\scripts\run-clinic.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion; Check: IsServerMode
 Source: "..\scripts\install-autostart.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion; Check: IsServerMode
 Source: "..\scripts\uninstall-autostart.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion; Check: IsServerMode
+Source: "..\scripts\restore-backup.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion; Check: IsServerMode
 Source: "..\docs\AUTO-START.md"; DestDir: "{app}\docs"; Flags: ignoreversion; Check: IsServerMode
 Source: "..\docs\HTTPS-SETUP.md"; DestDir: "{app}\docs"; Flags: ignoreversion
 Source: "..\docs\BACKUP-AND-RESTORE.md"; DestDir: "{app}\docs"; Flags: ignoreversion; Check: IsServerMode

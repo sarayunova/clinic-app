@@ -614,6 +614,28 @@ export interface SystemStatus {
   backup: BackupStatus;
 }
 
+export interface RestorePoint {
+  source: 'backup' | 'pre-upgrade';
+  name: string;
+  sizeBytes: number;
+  at: string;
+}
+
+/** POST /api/backups/check: a backup decrypted into a temporary copy and compared with the live records. */
+export interface BackupCheck {
+  name: string;
+  source: RestorePoint['source'];
+  path: string;
+  sizeBytes: number;
+  takenAt: string;
+  verify: { integrity: string; migrations: number; patients: number; users: number };
+  newestActivityAt: string | null;
+  newerMigrations: string[];
+  canRestoreHere: boolean;
+  live: { patients: number; users: number; newestActivityAt: string | null } | null;
+  restoreCommand: string;
+}
+
 export interface SecurityStatus {
   https: boolean;
   reachableFromNetwork: boolean;
